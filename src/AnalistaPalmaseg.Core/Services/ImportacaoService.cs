@@ -8,9 +8,7 @@ namespace AnalistaPalmaseg.Core.Services;
 
 public class ImportacaoService(AppDbContext context)
 {
-    // Status values recognized as "renewed"
-    private static readonly HashSet<string> StatusRenovado = ["ren.palma", "ren.outro"];
-    private static readonly HashSet<string> StatusPendente = ["procurado", "pendente", "agendado"];
+    private readonly LibreOfficeDecryptorService _decryptor = new();
 
     public async Task<Importacao> ImportarAsync(string caminhoArquivo, string? senhaArquivo = null)
     {
@@ -42,28 +40,42 @@ public class ImportacaoService(AppDbContext context)
         context.Importacoes.Add(importacao);
         await context.SaveChangesAsync();
 
-        using var stream = File.Open(caminhoArquivo, FileMode.Open, FileAccess.Read);
+        // If encrypted ODS, decrypt via LibreOffice first
+        string arquivoParaLer = caminhoArquivo;
+        string? tempDir = null;
 
-        IExcelDataReader reader;
-        var config = new ExcelReaderConfiguration();
-        if (!string.IsNullOrEmpty(senhaArquivo))
-            config.Password = senhaArquivo;
-
-        reader = ExcelReaderFactory.CreateReader(stream, config);
-
-        var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
+        if (!string.IsNullOrEmpty(senhaArquivo) && LibreOfficeDecryptorService.IsEncryptedOds(caminhoArquivo))
         {
-            ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
-        });
-        reader.Dispose();
+            arquivoParaLer = await _decryptor.DecryptToXlsxAsync(caminhoArquivo, senhaArquivo);
+            tempDir = Path.GetDirectoryName(arquivoParaLer);
+        }
 
-        foreach (DataTable table in dataSet.Tables)
+        try
         {
-            var sheetName = table.TableName.ToLower();
-            if (sheetName == "ren")
-                ParseRenovacoes(table, importacao);
-            else if (sheetName == "novos")
-                ParseNovosNegocios(table, importacao);
+            using var stream = File.Open(arquivoParaLer, FileMode.Open, FileAccess.Read);
+
+            var config = new ExcelReaderConfiguration();
+            var reader = ExcelReaderFactory.CreateReader(stream, config);
+
+            var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
+            {
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
+            });
+            reader.Dispose();
+
+            foreach (DataTable table in dataSet.Tables)
+            {
+                var sheetName = table.TableName.ToLower();
+                if (sheetName == "ren")
+                    ParseRenovacoes(table, importacao);
+                else if (sheetName == "novos")
+                    ParseNovosNegocios(table, importacao);
+            }
+        }
+        finally
+        {
+            if (tempDir != null)
+                LibreOfficeDecryptorService.DeleteTempDirectory(arquivoParaLer);
         }
 
         await context.SaveChangesAsync();
