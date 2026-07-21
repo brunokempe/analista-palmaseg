@@ -40,20 +40,27 @@ public class LibreOfficeDecryptorService
 
         var tempOutput = Path.Combine(Path.GetTempPath(), $"palmaseg_{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempOutput);
+        var outputFile = Path.Combine(tempOutput, "output.xlsx");
 
+        // Write a password file so we don't expose it on the command line
+        var pwFile = Path.Combine(Path.GetTempPath(), $"palmaseg_pw_{Guid.NewGuid():N}.txt");
         var scriptPath = Path.Combine(Path.GetTempPath(), $"palmaseg_convert_{Guid.NewGuid():N}.py");
 
-        // LibreOffice UNO Python script: open with password, save as xlsx
-        var escapedOds = odsPath.Replace("\\", "\\\\");
-        var escapedOut = tempOutput.Replace("\\", "\\\\");
-        var escapedPw = password.Replace("\\", "\\\\").Replace("'", "\\'");
-
-        var script = $@"
+        // Paths and password are passed via argv / file — no string interpolation in the script body
+        var script = @"
 import sys, os, time
 sys.path.insert(0, r'C:\Program Files\LibreOffice\program')
 
 import uno
 from com.sun.star.beans import PropertyValue
+
+# Args: script ods_path out_file pw_file
+ods_path = sys.argv[1]
+out_file  = sys.argv[2]
+pw_file   = sys.argv[3]
+
+with open(pw_file, 'r', encoding='utf-8') as f:
+    password = f.read().strip()
 
 def make_prop(name, value):
     p = PropertyValue()
@@ -65,16 +72,15 @@ ctx = uno.getComponentContext()
 resolver = ctx.ServiceManager.createInstanceWithContext(
     'com.sun.star.bridge.UnoUrlResolver', ctx)
 
-# Retry connection a few times
 connected = False
-for _ in range(5):
+for _ in range(10):
     try:
         remote_ctx = resolver.resolve(
             'uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext')
         connected = True
         break
     except:
-        time.sleep(1)
+        time.sleep(0.5)
 
 if not connected:
     print('ERROR: Could not connect to LibreOffice UNO server')
@@ -83,9 +89,9 @@ if not connected:
 smgr = remote_ctx.ServiceManager
 desktop = smgr.createInstanceWithContext('com.sun.star.frame.Desktop', remote_ctx)
 
-ods_url = uno.systemPathToFileUrl(r'{escapedOds}')
+ods_url = uno.systemPathToFileUrl(ods_path)
 props = (
-    make_prop('Password', '{escapedPw}'),
+    make_prop('Password', password),
     make_prop('Hidden', True),
     make_prop('MacroExecutionMode', 4),
 )
@@ -95,9 +101,7 @@ if doc is None:
     print('ERROR: Could not open file (wrong password?)')
     sys.exit(2)
 
-out_file = os.path.join(r'{escapedOut}', 'output.xlsx')
 out_url = uno.systemPathToFileUrl(out_file)
-
 filter_props = (
     make_prop('FilterName', 'Calc MS Excel 2007 XML'),
     make_prop('Overwrite', True),
@@ -108,19 +112,26 @@ print('SUCCESS:' + out_file)
 sys.exit(0)
 ";
 
-        await File.WriteAllTextAsync(scriptPath, script);
+        await File.WriteAllTextAsync(scriptPath, script, System.Text.Encoding.UTF8);
+        await File.WriteAllTextAsync(pwFile, password, System.Text.Encoding.UTF8);
 
         try
         {
             var psi = new ProcessStartInfo
             {
                 FileName = LoPython,
-                Arguments = $"\"{scriptPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8,
             };
+            // Use ArgumentList for correct quoting of paths with spaces/special chars
+            psi.ArgumentList.Add(scriptPath);
+            psi.ArgumentList.Add(odsPath);
+            psi.ArgumentList.Add(outputFile);
+            psi.ArgumentList.Add(pwFile);
 
             using var proc = Process.Start(psi)!;
             var stdout = await proc.StandardOutput.ReadToEndAsync();
@@ -129,19 +140,19 @@ sys.exit(0)
 
             if (proc.ExitCode != 0 || !stdout.Contains("SUCCESS:"))
             {
-                var msg = stdout.Contains("ERROR:") ? stdout : stderr;
-                throw new InvalidOperationException($"Falha ao descriptografar o arquivo: {msg.Trim()}");
+                var detail = !string.IsNullOrWhiteSpace(stderr) ? stderr : stdout;
+                throw new InvalidOperationException($"Falha ao descriptografar o arquivo:\n{detail.Trim()}");
             }
 
-            var outputFile = Path.Combine(tempOutput, "output.xlsx");
             if (!File.Exists(outputFile))
-                throw new InvalidOperationException("Arquivo convertido não encontrado.");
+                throw new InvalidOperationException("Arquivo convertido não encontrado após a exportação.");
 
             return outputFile;
         }
         finally
         {
             File.Delete(scriptPath);
+            File.Delete(pwFile);
         }
     }
 
