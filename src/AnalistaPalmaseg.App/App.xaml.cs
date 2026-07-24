@@ -18,6 +18,19 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // Força cultura pt-BR para que StringFormat=C2 exiba R$
+        var culture = new System.Globalization.CultureInfo("pt-BR");
+        System.Threading.Thread.CurrentThread.CurrentCulture = culture;
+        System.Threading.Thread.CurrentThread.CurrentUICulture = culture;
+        System.Windows.FrameworkElement.LanguageProperty.OverrideMetadata(
+            typeof(System.Windows.FrameworkElement),
+            new System.Windows.FrameworkPropertyMetadata(
+                System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag)));
+
+        // Evita que o app feche automaticamente enquanto a janela de login está aberta
+        // (ShutdownMode padrão OnLastWindowClose dispara quando o dialog fecha)
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
@@ -29,15 +42,37 @@ public partial class App : Application
                 services.AddDbContext<AppDbContext>(opts =>
                     opts.UseSqlite($"Data Source={dbPath}"));
 
+                services.AddSingleton<SessaoService>();
+
                 services.AddTransient<DatabaseInitializer>();
                 services.AddTransient<ImportacaoService>();
                 services.AddTransient<RelatorioService>();
+                services.AddTransient<ApoliceService>();
+                services.AddTransient<SeguroNovoService>();
+                services.AddTransient<UsuarioService>();
+                services.AddTransient<RelatorioRenovacaoService>();
+                services.AddTransient<FolhaAmarelaService>();
+                services.AddTransient<AnexoService>();
 
+                services.AddTransient<LoginViewModel>();
+                services.AddTransient<LoginWindow>();
+
+                services.AddTransient<InicioViewModel>();
                 services.AddTransient<DashboardViewModel>();
                 services.AddTransient<RenovacoesViewModel>();
                 services.AddTransient<NovosNegociosViewModel>();
                 services.AddTransient<PendentesViewModel>();
                 services.AddTransient<RetencaoViewModel>();
+                services.AddTransient<ComparacaoViewModel>();
+                services.AddTransient<ResultadosViewModel>();
+                services.AddTransient<ApolicesDashboardViewModel>();
+                services.AddTransient<FuncionariosDashboardViewModel>();
+                services.AddTransient<GerenciarUsuariosViewModel>();
+                services.AddTransient<AcompanhamentoRenovacoesViewModel>();
+                services.AddTransient<GerenciadorRenovacoesViewModel>();
+                services.AddTransient<GerenciadorCotacoesViewModel>();
+                services.AddTransient<EmissaoDashboardViewModel>();
+                services.AddTransient<SeguroNovosViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<MainWindow>();
             })
@@ -48,19 +83,31 @@ public partial class App : Application
         var initializer = _host.Services.GetRequiredService<DatabaseInitializer>();
         initializer.Initialize();
 
-        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        var loginWindow = _host.Services.GetRequiredService<LoginWindow>();
+        if (loginWindow.ShowDialog() != true)
+        {
+            Shutdown();
+            return;
+        }
 
-        // Register DataTemplates for view routing
+        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow = mainWindow;
+
         RegisterDataTemplates();
 
-        // Load initial data
-        var dashVm = _host.Services.GetRequiredService<MainViewModel>();
-        await dashVm.DashboardVm.CarregarAsync();
-        await dashVm.RenovacoesVm.CarregarAsync();
-        await dashVm.NovosNegociosVm.CarregarAsync();
-        await dashVm.PendentesVm.CarregarAsync();
-        await dashVm.RetencaoVm.CarregarAsync();
+        var mainVm = (MainViewModel)mainWindow.DataContext;
+        await mainVm.InicioVm.CarregarAsync();
+        await mainVm.DashboardVm.CarregarAsync();
+        await mainVm.RenovacoesVm.CarregarAsync();
+        await mainVm.NovosNegociosVm.CarregarAsync();
+        await mainVm.PendentesVm.CarregarAsync();
+        await mainVm.RetencaoVm.CarregarAsync();
+        await mainVm.ComparacaoVm.CarregarAsync();
+        await mainVm.ResultadosVm.CarregarAsync();
+        await mainVm.FuncionariosDashboardVm.CarregarAsync();
 
+        // Agora que a janela principal está aberta, usa o modo padrão
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
         mainWindow.Show();
     }
 
@@ -68,25 +115,29 @@ public partial class App : Application
     {
         var resources = Current.Resources;
 
-        var dashTemplate = new DataTemplate(typeof(DashboardViewModel));
-        dashTemplate.VisualTree = new FrameworkElementFactory(typeof(DashboardView));
-        resources.Add(new DataTemplateKey(typeof(DashboardViewModel)), dashTemplate);
+        void Add<TViewModel, TView>() where TView : new()
+        {
+            var t = new DataTemplate(typeof(TViewModel));
+            t.VisualTree = new FrameworkElementFactory(typeof(TView));
+            resources.Add(new DataTemplateKey(typeof(TViewModel)), t);
+        }
 
-        var renTemplate = new DataTemplate(typeof(RenovacoesViewModel));
-        renTemplate.VisualTree = new FrameworkElementFactory(typeof(RenovacoesView));
-        resources.Add(new DataTemplateKey(typeof(RenovacoesViewModel)), renTemplate);
-
-        var novosTemplate = new DataTemplate(typeof(NovosNegociosViewModel));
-        novosTemplate.VisualTree = new FrameworkElementFactory(typeof(NovosNegociosView));
-        resources.Add(new DataTemplateKey(typeof(NovosNegociosViewModel)), novosTemplate);
-
-        var pendTemplate = new DataTemplate(typeof(PendentesViewModel));
-        pendTemplate.VisualTree = new FrameworkElementFactory(typeof(PendentesView));
-        resources.Add(new DataTemplateKey(typeof(PendentesViewModel)), pendTemplate);
-
-        var retTemplate = new DataTemplate(typeof(RetencaoViewModel));
-        retTemplate.VisualTree = new FrameworkElementFactory(typeof(RetencaoView));
-        resources.Add(new DataTemplateKey(typeof(RetencaoViewModel)), retTemplate);
+        Add<InicioViewModel, InicioView>();
+        Add<DashboardViewModel, DashboardView>();
+        Add<RenovacoesViewModel, RenovacoesView>();
+        Add<NovosNegociosViewModel, NovosNegociosView>();
+        Add<PendentesViewModel, PendentesView>();
+        Add<RetencaoViewModel, RetencaoView>();
+        Add<ComparacaoViewModel, ComparacaoView>();
+        Add<ResultadosViewModel, ResultadosView>();
+        Add<ApolicesDashboardViewModel, ApolicesDashboardView>();
+        Add<FuncionariosDashboardViewModel, FuncionariosDashboardView>();
+        Add<GerenciarUsuariosViewModel, GerenciarUsuariosView>();
+        Add<AcompanhamentoRenovacoesViewModel, AcompanhamentoRenovacoesView>();
+        Add<GerenciadorRenovacoesViewModel, GerenciadorRenovacoesView>();
+        Add<GerenciadorCotacoesViewModel, GerenciadorCotacoesView>();
+        Add<EmissaoDashboardViewModel, EmissaoDashboardView>();
+        Add<SeguroNovosViewModel, SeguroNovosView>();
     }
 
     protected override async void OnExit(ExitEventArgs e)

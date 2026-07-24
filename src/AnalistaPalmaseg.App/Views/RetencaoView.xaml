@@ -3,43 +3,62 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-             Background="#F8FAFC">
-
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Colors.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </UserControl.Resources>
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
 
     <DockPanel Margin="24,20,24,24">
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,16">
             <TextBlock Text="Produtor:" VerticalAlignment="Center"
-                       FontSize="13" Foreground="#64748B" Margin="0,0,12,0" />
+                       FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,12,0" />
             <ComboBox ItemsSource="{Binding Produtores}"
                       SelectedItem="{Binding ProdutorSelecionado}"
                       Width="200"
                       Style="{StaticResource MaterialDesignOutlinedComboBox}" />
         </StackPanel>
 
-        <materialDesign:Card DockPanel.Dock="Bottom" Padding="16">
+        <materialDesign:Card DockPanel.Dock="Bottom" Padding="20">
             <StackPanel>
-                <TextBlock Text="Evolução da taxa de retenção por período" FontSize="13" FontWeight="Medium"
-                           Foreground="#0F172A" Margin="0,0,0,12" />
+                <TextBlock Text="Evolução da taxa de retenção por período" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14" />
                 <lvc:CartesianChart Series="{Binding Series}"
                                     XAxes="{Binding AxesX}"
                                     Height="360" LegendPosition="Bottom" />
-                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                    <Border Background="#DCFCE7" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
-                        <TextBlock Text="≥ 90%  Boa retenção" FontSize="12" Foreground="#15803D" />
+
+                <!-- Legend with Palma brand colors -->
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Border Background="{StaticResource SuccessLightBrush}" CornerRadius="4"
+                            Padding="10,5" Margin="0,0,8,0"
+                            BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="10" Height="10" CornerRadius="2"
+                                    Background="{StaticResource SuccessBrush}" Margin="0,0,6,0"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Text="≥ 90%  Boa retenção" FontSize="12"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
                     </Border>
-                    <Border Background="#FEF9C3" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
-                        <TextBlock Text="80–89%  Atenção" FontSize="12" Foreground="#854D0E" />
+                    <Border Background="{StaticResource WarningLightBrush}" CornerRadius="4"
+                            Padding="10,5" Margin="0,0,8,0"
+                            BorderBrush="{StaticResource WarningBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="10" Height="10" CornerRadius="2"
+                                    Background="{StaticResource WarningBrush}" Margin="0,0,6,0"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Text="80–89%  Atenção" FontSize="12"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
                     </Border>
-                    <Border Background="#FEE2E2" CornerRadius="4" Padding="8,4">
-                        <TextBlock Text="&lt; 80%  Crítico" FontSize="12" Foreground="#991B1B" />
+                    <Border Background="{StaticResource DangerLightBrush}" CornerRadius="4"
+                            Padding="10,5"
+                            BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="10" Height="10" CornerRadius="2"
+                                    Background="{StaticResource DangerBrush}" Margin="0,0,6,0"
+                                    VerticalAlignment="Center" />
+                            <TextBlock Text="&lt; 80%  Crítico" FontSize="12"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </StackPanel>

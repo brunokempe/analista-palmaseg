@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 
 namespace AnalistaPalmaseg.App.ViewModels;
@@ -9,9 +8,9 @@ public partial class PendentesViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
 
-    [ObservableProperty] private ObservableCollection<ResumoImportacao> _importacoes = [];
-    [ObservableProperty] private ResumoImportacao? _importacaoSelecionada;
-    [ObservableProperty] private ObservableCollection<Renovacao> _pendentes = [];
+    [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
+    [ObservableProperty] private string? _nomeSelecionado;
+    [ObservableProperty] private ObservableCollection<PeriodoPendentesVm> _periodos = [];
 
     public PendentesViewModel(RelatorioService relatorioService)
     {
@@ -20,19 +19,36 @@ public partial class PendentesViewModel : ObservableObject
 
     public async Task CarregarAsync()
     {
-        var lista = await _relatorioService.GetResumoAsync();
-        Importacoes = new ObservableCollection<ResumoImportacao>(lista);
-        ImportacaoSelecionada = Importacoes.FirstOrDefault();
+        var produtores = await _relatorioService.GetProdutoresAsync();
+        NomesDisponiveis = new ObservableCollection<string>(produtores);
+
+        if (NomeSelecionado != null && NomesDisponiveis.Contains(NomeSelecionado))
+            await CarregarPeriodosAsync(NomeSelecionado);
+        else
+            NomeSelecionado = NomesDisponiveis.FirstOrDefault();
     }
 
-    partial void OnImportacaoSelecionadaChanged(ResumoImportacao? value)
+    partial void OnNomeSelecionadoChanged(string? value)
     {
-        if (value != null) _ = CarregarPendentesAsync(value.Importacao.Id);
+        if (!string.IsNullOrEmpty(value))
+            _ = CarregarPeriodosAsync(value);
+        else
+            Periodos = [];
     }
 
-    private async Task CarregarPendentesAsync(int importacaoId)
+    private async Task CarregarPeriodosAsync(string produtor)
     {
-        var lista = await _relatorioService.GetPendentesAsync(importacaoId);
-        Pendentes = new ObservableCollection<Renovacao>(lista);
+        try
+        {
+            var timeline = await _relatorioService.GetTimelinePendentesAsync(produtor);
+            Periodos = new ObservableCollection<PeriodoPendentesVm>(
+                timeline.Select(t => new PeriodoPendentesVm(t.Resumo, t.Pendentes))
+            );
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Timeline Pendentes] ERRO: {ex}");
+            Periodos = [];
+        }
     }
 }

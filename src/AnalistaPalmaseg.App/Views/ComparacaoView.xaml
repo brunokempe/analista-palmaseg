@@ -1,0 +1,49 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.ComparacaoView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <DockPanel Margin="24,20,24,24">
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Text="Todos os produtores importados, comparados lado a lado."
+                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+        </StackPanel>
+
+        <materialDesign:Card DockPanel.Dock="Bottom">
+            <DataGrid ItemsSource="{Binding Resumos}" AutoGenerateColumns="False"
+                      IsReadOnly="True" CanUserAddRows="False"
+                      Style="{StaticResource MaterialDesignDataGrid}"
+                      VirtualizingPanel.IsVirtualizing="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Produtor"
+                        Binding="{Binding Importacao.Produtor}" Width="*" />
+                    <DataGridTextColumn Header="Período"
+                        Binding="{Binding Importacao.Periodo}" Width="80" />
+                    <DataGridTextColumn Header="Retenção"
+                        Binding="{Binding Retencao, Converter={StaticResource PercentFormatConverter}}"
+                        Width="90" />
+                    <DataGridTextColumn Header="PL base"
+                        Binding="{Binding PlBase, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="PL renovado"
+                        Binding="{Binding PlRenovado, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="Novos PL"
+                        Binding="{Binding NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="Participação"
+                        Binding="{Binding Participacao, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="Qtd novos"
+                        Binding="{Binding NovosQtd}" Width="90" />
+                    <DataGridTextColumn Header="Não renovados"
+                        Binding="{Binding NaoRenovado}" Width="110" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+
+    </DockPanel>
+</UserControl>

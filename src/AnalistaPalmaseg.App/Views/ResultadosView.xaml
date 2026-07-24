@@ -1,0 +1,70 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.ResultadosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <DockPanel Margin="24,20,24,24">
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,16">
+            <ComboBox ItemsSource="{Binding Importacoes}"
+                      SelectedItem="{Binding ImportacaoSelecionada}"
+                      Width="220"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                      materialDesign:HintAssist.Hint="Período">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <Run Text="{Binding Importacao.Produtor, Mode=OneWay}" />
+                            <Run Text=" — " />
+                            <Run Text="{Binding Importacao.Periodo, Mode=OneWay}" />
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <materialDesign:Card DockPanel.Dock="Bottom">
+            <DataGrid ItemsSource="{Binding Resultados}" AutoGenerateColumns="False"
+                      IsReadOnly="True" CanUserAddRows="False"
+                      Style="{StaticResource MaterialDesignDataGrid}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Seguradora"
+                        Binding="{Binding Funcionario}" Width="*" />
+                    <DataGridTextColumn Header="Meta"
+                        Binding="{Binding Meta, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="140" />
+                    <DataGridTextColumn Header="Realizado"
+                        Binding="{Binding Realizado, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="140" />
+                    <DataGridTextColumn Header="% Atingimento"
+                        Binding="{Binding PercentualAtingimento, Converter={StaticResource PercentFormatConverter}}"
+                        Width="120" />
+                    <DataGridTemplateColumn Header="Status" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border x:Name="StatusBorder" CornerRadius="3" Padding="8,3"
+                                        HorizontalAlignment="Center">
+                                    <TextBlock x:Name="StatusText" FontSize="11" FontWeight="Medium"
+                                               Foreground="White" />
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding BateuMeta}" Value="True">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#A7CF45" />
+                                        <Setter TargetName="StatusText" Property="Text" Value="✓ Bateu meta" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding BateuMeta}" Value="False">
+                                        <Setter TargetName="StatusBorder" Property="Background" Value="#EC3237" />
+                                        <Setter TargetName="StatusText" Property="Text" Value="✗ Não bateu" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+
+    </DockPanel>
+</UserControl>

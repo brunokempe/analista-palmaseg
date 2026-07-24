@@ -1,7 +1,5 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -13,9 +11,12 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class DashboardViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
+    private List<ResumoImportacao> _todosResumos = [];
 
-    [ObservableProperty] private ObservableCollection<ResumoImportacao> _resumos = [];
-    [ObservableProperty] private ResumoImportacao? _resumoSelecionado;
+    [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
+    [ObservableProperty] private string? _nomeSelecionado;
+    [ObservableProperty] private ObservableCollection<ResumoImportacao> _periodos = [];
+    [ObservableProperty] private ResumoImportacao? _resumoAtual;
     [ObservableProperty] private ObservableCollection<ParticipacaoSeguradora> _participacao = [];
     [ObservableProperty] private ISeries[] _seriesStatus = [];
     [ObservableProperty] private ISeries[] _seriesParticipacao = [];
@@ -28,41 +29,53 @@ public partial class DashboardViewModel : ObservableObject
 
     public async Task CarregarAsync()
     {
-        var lista = await _relatorioService.GetResumoAsync();
-        Resumos = new ObservableCollection<ResumoImportacao>(lista);
-        ResumoSelecionado = Resumos.FirstOrDefault();
-        if (ResumoSelecionado != null)
-            await AtualizarGraficosAsync(ResumoSelecionado);
+        _todosResumos = await _relatorioService.GetResumoAsync();
+
+        var nomes = _todosResumos
+            .Select(r => r.Importacao.Produtor)
+            .Distinct()
+            .OrderBy(n => n)
+            .ToList();
+
+        NomesDisponiveis = new ObservableCollection<string>(nomes);
+
+        if (NomeSelecionado != null && NomesDisponiveis.Contains(NomeSelecionado))
+            await AtualizarPeriodosAsync(NomeSelecionado);
+        else
+            NomeSelecionado = NomesDisponiveis.FirstOrDefault();
     }
 
-    partial void OnResumoSelecionadoChanged(ResumoImportacao? value)
+    partial void OnNomeSelecionadoChanged(string? value)
     {
-        if (value != null)
-            _ = AtualizarGraficosAsync(value);
+        if (!string.IsNullOrEmpty(value))
+            _ = AtualizarPeriodosAsync(value);
+        else
+        {
+            Periodos = [];
+            ResumoAtual = null;
+        }
+    }
+
+    private async Task AtualizarPeriodosAsync(string produtor)
+    {
+        var filtrados = _todosResumos
+            .Where(r => r.Importacao.Produtor == produtor)
+            .ToList();
+
+        Periodos = new ObservableCollection<ResumoImportacao>(filtrados);
+        ResumoAtual = Periodos.FirstOrDefault();
+
+        if (ResumoAtual != null)
+            await AtualizarGraficosAsync(ResumoAtual);
     }
 
     private async Task AtualizarGraficosAsync(ResumoImportacao resumo)
     {
         SeriesStatus =
         [
-            new PieSeries<int>
-            {
-                Name = "Ren. Palma",
-                Values = [resumo.RenovadasPalma],
-                Fill = new SolidColorPaint(SKColor.Parse("#22c55e"))
-            },
-            new PieSeries<int>
-            {
-                Name = "Pendentes",
-                Values = [resumo.Pendentes],
-                Fill = new SolidColorPaint(SKColor.Parse("#f59e0b"))
-            },
-            new PieSeries<int>
-            {
-                Name = "Não renovado",
-                Values = [resumo.NaoRenovado],
-                Fill = new SolidColorPaint(SKColor.Parse("#ef4444"))
-            }
+            new PieSeries<int> { Name = "Ren. Palma",   Values = [resumo.RenovadasPalma], Fill = new SolidColorPaint(SKColor.Parse("#22c55e")) },
+            new PieSeries<int> { Name = "Pendentes",    Values = [resumo.Pendentes],       Fill = new SolidColorPaint(SKColor.Parse("#f59e0b")) },
+            new PieSeries<int> { Name = "Não renovado", Values = [resumo.NaoRenovado],     Fill = new SolidColorPaint(SKColor.Parse("#ef4444")) }
         ];
 
         var part = await _relatorioService.GetParticipacaoAsync(resumo.Importacao.Id);
@@ -70,12 +83,7 @@ public partial class DashboardViewModel : ObservableObject
 
         AxesParticipacaoX =
         [
-            new Axis
-            {
-                Labels = part.Select(p => p.Cia).ToArray(),
-                LabelsRotation = -30,
-                TextSize = 11
-            }
+            new Axis { Labels = part.Select(p => p.Cia).ToArray(), LabelsRotation = -30, TextSize = 11 }
         ];
 
         SeriesParticipacao =

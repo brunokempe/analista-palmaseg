@@ -1,0 +1,208 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.FuncionariosDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <DockPanel Margin="24,20,24,24">
+
+        <!-- Seletor de funcionário -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,20">
+            <ComboBox ItemsSource="{Binding NomesDisponiveis}"
+                      SelectedItem="{Binding NomeSelecionado}"
+                      Width="280"
+                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                      materialDesign:HintAssist.Hint="Funcionário"
+                      HorizontalAlignment="Left" />
+        </StackPanel>
+
+        <!-- Estado vazio -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="0,60,0,0">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Periodos.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <materialDesign:PackIcon Kind="ChartTimeline" Width="48" Height="48"
+                                     HorizontalAlignment="Center"
+                                     Foreground="{StaticResource TextMutedBrush}" />
+            <TextBlock Text="Nenhum dado de participação encontrado"
+                       FontSize="14" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+            <TextBlock Text="Importe uma planilha com a aba Participação para ver a timeline."
+                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Timeline de períodos -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Periodos.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
+
+            <ItemsControl ItemsSource="{Binding Periodos}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <materialDesign:Card Margin="0,0,0,16" UniformCornerRadius="10"
+                                             materialDesign:ElevationAssist.Elevation="Dp2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Cabeçalho do período -->
+                                <Border Grid.Row="0" Background="{StaticResource AccentBlueBrush}"
+                                        Padding="20,14">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Período -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="PERÍODO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Importacao.Periodo}"
+                                                       FontSize="22" FontWeight="Bold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- PL Vendido -->
+                                        <StackPanel Grid.Column="2" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="PL VENDIDO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding TotalPremio, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Meta -->
+                                        <StackPanel Grid.Column="3" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="META"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding TotalMeta, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- % Atingimento -->
+                                        <StackPanel Grid.Column="4" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="ATINGIMENTO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding PercentualAtingimento, Converter={StaticResource PercentFormatConverter}}"
+                                                       Foreground="{Binding PercentualAtingimento, Converter={StaticResource AtingimentoColorConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Comissão -->
+                                        <StackPanel Grid.Column="5" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="COMISSÃO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding TotalComissao, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="#FF69F0AE" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Tabela por seguradora -->
+                                <DataGrid Grid.Row="1"
+                                          ItemsSource="{Binding PorSeguradora}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True" CanUserAddRows="False"
+                                          Style="{StaticResource MaterialDesignDataGrid}"
+                                          VirtualizingPanel.IsVirtualizing="False"
+                                          materialDesign:DataGridAssist.CellPadding="14 7 14 7"
+                                          materialDesign:DataGridAssist.ColumnHeaderPadding="14 9 14 9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Seguradora"
+                                                            Binding="{Binding Seguradora}"
+                                                            Width="*" />
+                                        <DataGridTextColumn Header="PL Vendido"
+                                                            Binding="{Binding Premio, Converter={StaticResource CurrencyFormatConverter}}"
+                                                            Width="150">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Meta"
+                                                            Binding="{Binding Meta, Converter={StaticResource CurrencyFormatConverter}}"
+                                                            Width="150">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="% Atingimento"
+                                                            Binding="{Binding PercentualAtingimento, Converter={StaticResource PercentFormatConverter}}"
+                                                            Width="120">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Comissão"
+                                                            Binding="{Binding Comissao, Converter={StaticResource CurrencyFormatConverter}}"
+                                                            Width="150">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="% Comissão"
+                                                            Binding="{Binding PercentualComissao, Converter={StaticResource PercentFormatConverter}}"
+                                                            Width="110">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </materialDesign:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </DockPanel>
+</UserControl>

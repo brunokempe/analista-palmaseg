@@ -11,6 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\Palma_Logo_Horizontal.png" />
+    <Resource Include="Resources\Palma_Icone_Png.png" />
+    <Resource Include="Resources\Palma_Icone.ico" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -19,6 +25,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>AnalistaPalmaseg</AssemblyName>
     <RootNamespace>AnalistaPalmaseg.App</RootNamespace>
+    <ApplicationIcon>Resources\Palma_Icone.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

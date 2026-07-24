@@ -1,0 +1,232 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.GerenciarUsuariosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             FontFamily="Lato, Segoe UI">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,20,24,24" MaxWidth="860">
+
+            <!-- Card: Adicionar novo usuário -->
+            <materialDesign:Card Padding="20,18" Margin="0,0,0,16" UniformCornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Adicionar novo colaborador"
+                               FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Margin="0,0,0,14" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding NovoLogin, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Login"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,10,0"
+                                 FontSize="13" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding TiposAcesso}"
+                                  SelectedItem="{Binding NovoTipo}"
+                                  materialDesign:HintAssist.Hint="Tipo"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  Margin="0,0,10,0"
+                                  FontSize="13" />
+
+                        <PasswordBox x:Name="NovaSenhaBox"
+                                     Grid.Column="2"
+                                     materialDesign:HintAssist.Hint="Senha"
+                                     Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                     Margin="0,0,10,0"
+                                     FontSize="13"
+                                     PasswordChanged="NovaSenhaBox_PasswordChanged" />
+
+                        <Button Grid.Column="3"
+                                Command="{Binding AdicionarCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Background="{StaticResource PrimaryBrush}"
+                                Foreground="White"
+                                Height="44"
+                                Padding="16,0"
+                                materialDesign:ButtonAssist.CornerRadius="6">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountPlusOutline"
+                                                         Width="16" Height="16"
+                                                         VerticalAlignment="Center"
+                                                         Margin="0,0,6,0" />
+                                <TextBlock Text="Adicionar" VerticalAlignment="Center" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Feedback -->
+            <Border Padding="12,8" CornerRadius="6" Margin="0,0,0,12"
+                    Visibility="{Binding Mensagem, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource SuccessLightBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMensagemErro}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding Mensagem}" FontSize="13" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMensagemErro}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+
+            <!-- Lista de usuários -->
+            <materialDesign:Card Padding="0" UniformCornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Colaboradores cadastrados"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="20,16,20,12" />
+
+                    <DataGrid ItemsSource="{Binding Usuarios}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              GridLinesVisibility="Horizontal"
+                              BorderThickness="0"
+                              Margin="0,0,0,8">
+
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="Login"
+                                                Binding="{Binding Login}"
+                                                Width="*"
+                                                ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}" />
+
+                            <DataGridTemplateColumn Header="Tipo" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding TipoAcesso}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0" FontSize="13" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Status" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   FontSize="12" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Inativo" />
+                                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Ativo}" Value="True">
+                                                            <Setter Property="Text" Value="Ativo" />
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn Header="Ações" Width="260">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="4,2">
+
+                                            <Button Command="{Binding DataContext.AlterarSenhaCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Foreground="{StaticResource AccentBlueBrush}"
+                                                    Padding="8,4" Height="32" FontSize="12"
+                                                    ToolTip="Alterar senha">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="KeyOutline" Width="14" Height="14"
+                                                                             VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                    <TextBlock Text="Senha" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Command="{Binding DataContext.ToggleAtivoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,4" Height="32" FontSize="12"
+                                                    ToolTip="Ativar / desativar acesso">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                        <Setter Property="Content">
+                                                            <Setter.Value>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <materialDesign:PackIcon Kind="AccountOffOutline" Width="14" Height="14"
+                                                                                             VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                                    <TextBlock Text="Desativar" VerticalAlignment="Center" />
+                                                                </StackPanel>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Ativo}" Value="False">
+                                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                                                <Setter Property="Content">
+                                                                    <Setter.Value>
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <materialDesign:PackIcon Kind="AccountCheckOutline" Width="14" Height="14"
+                                                                                                     VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                                            <TextBlock Text="Ativar" VerticalAlignment="Center" />
+                                                                        </StackPanel>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+
+                                            <Button Command="{Binding DataContext.RemoverCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Foreground="{StaticResource DangerBrush}"
+                                                    Padding="8,4" Height="32" FontSize="12"
+                                                    ToolTip="Remover usuário">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Kind="TrashCanOutline" Width="14" Height="14"
+                                                                             VerticalAlignment="Center" Margin="0,0,4,0" />
+                                                    <TextBlock Text="Remover" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Button>
+
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </materialDesign:Card>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

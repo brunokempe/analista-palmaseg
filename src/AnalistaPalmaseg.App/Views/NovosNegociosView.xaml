@@ -2,35 +2,18 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             Background="#F8FAFC">
-
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Colors.xaml" />
-                <ResourceDictionary Source="../Styles/Converters.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </UserControl.Resources>
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
 
     <DockPanel Margin="24,20,24,24">
 
+        <!-- Filtros -->
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,16">
-            <ComboBox ItemsSource="{Binding Importacoes}"
-                      SelectedItem="{Binding ImportacaoSelecionada}"
-                      Width="200" Margin="0,0,12,0"
+            <ComboBox ItemsSource="{Binding NomesDisponiveis}"
+                      SelectedItem="{Binding NomeSelecionado}"
+                      Width="280" Margin="0,0,12,0"
                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                      materialDesign:HintAssist.Hint="Período">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock>
-                            <Run Text="{Binding Importacao.Produtor}" />
-                            <Run Text=" — " />
-                            <Run Text="{Binding Importacao.Periodo}" />
-                        </TextBlock>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+                      materialDesign:HintAssist.Hint="Funcionário" />
 
             <TextBox Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
                      Width="220" Margin="0,0,12,0"
@@ -44,40 +27,174 @@
                       materialDesign:HintAssist.Hint="Status" />
         </StackPanel>
 
-        <materialDesign:Card DockPanel.Dock="Bottom">
-            <DataGrid ItemsSource="{Binding Negocios}" AutoGenerateColumns="False"
-                      IsReadOnly="True" CanUserAddRows="False"
-                      Style="{StaticResource MaterialDesignDataGrid}"
-                      VirtualizingPanel.IsVirtualizing="True">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Vigência" Binding="{Binding Vigencia}" Width="100" />
-                    <DataGridTextColumn Header="Segurado" Binding="{Binding Segurado}" Width="*" />
-                    <DataGridTextColumn Header="Seguradora" Binding="{Binding Cia}" Width="90" />
-                    <DataGridTextColumn Header="Segmento" Binding="{Binding Segmento}" Width="130" />
-                    <DataGridTemplateColumn Header="Status" Width="110">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Border Background="{Binding Status, Converter={StaticResource StatusColorConverter}}"
-                                        CornerRadius="3" Padding="6,2" HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding Status}" Foreground="White"
-                                               FontSize="11" FontWeight="Medium" />
+        <!-- Estado vazio -->
+        <StackPanel DockPanel.Dock="Top" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="0,60,0,0">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Periodos.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <materialDesign:PackIcon Kind="PlusCircleOutline" Width="48" Height="48"
+                                     HorizontalAlignment="Center"
+                                     Foreground="{StaticResource TextMutedBrush}" />
+            <TextBlock Text="Nenhum novo negócio encontrado"
+                       FontSize="14" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+            <TextBlock Text="Importe uma planilha para ver a timeline de novos negócios."
+                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                       HorizontalAlignment="Center" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Timeline -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Periodos.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
+
+            <ItemsControl ItemsSource="{Binding Periodos}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <materialDesign:Card Margin="0,0,0,16" UniformCornerRadius="10"
+                                             materialDesign:ElevationAssist.Elevation="Dp2">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Cabeçalho do período -->
+                                <Border Grid.Row="0" Background="{StaticResource AccentBlueBrush}"
+                                        Padding="20,14">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Período -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="PERÍODO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Resumo.Importacao.Periodo}"
+                                                       FontSize="22" FontWeight="Bold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Quantidade -->
+                                        <StackPanel Grid.Column="2" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="QTD"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Resumo.NovosQtd}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- PL Total -->
+                                        <StackPanel Grid.Column="3" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="PL TOTAL"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Resumo.NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="White" Margin="0,2,0,0" />
+                                        </StackPanel>
+
+                                        <!-- Comissão (Participação) -->
+                                        <StackPanel Grid.Column="4" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="COMISSÃO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Resumo.Participacao, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="#FF69F0AE" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="PL"
-                        Binding="{Binding Pl, Converter={StaticResource CurrencyFormatConverter}}"
-                        Width="110" />
-                    <DataGridTextColumn Header="Fator"
-                        Binding="{Binding Fator, Converter={StaticResource PercentFormatConverter}}"
-                        Width="70" />
-                    <DataGridTextColumn Header="Comissão"
-                        Binding="{Binding Comissao, Converter={StaticResource CurrencyFormatConverter}}"
-                        Width="110" />
-                    <DataGridTextColumn Header="Emitido por" Binding="{Binding EmitidoPor}" Width="90" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </materialDesign:Card>
+
+                                <!-- DataGrid de novos negócios -->
+                                <DataGrid Grid.Row="1"
+                                          ItemsSource="{Binding Negocios}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True" CanUserAddRows="False"
+                                          Style="{StaticResource MaterialDesignDataGrid}"
+                                          VirtualizingPanel.IsVirtualizing="False"
+                                          materialDesign:DataGridAssist.CellPadding="14 7 14 7"
+                                          materialDesign:DataGridAssist.ColumnHeaderPadding="14 9 14 9">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Vigência" Binding="{Binding Vigencia}" Width="100" />
+                                        <DataGridTextColumn Header="Segurado" Binding="{Binding Segurado}" Width="*" />
+                                        <DataGridTextColumn Header="Seguradora" Binding="{Binding Cia}" Width="90" />
+                                        <DataGridTextColumn Header="Segmento" Binding="{Binding Segmento}" Width="130" />
+                                        <DataGridTemplateColumn Header="Status" Width="110">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{Binding Status, Converter={StaticResource StatusColorConverter}}"
+                                                            CornerRadius="3" Padding="6,2" HorizontalAlignment="Center">
+                                                        <TextBlock Text="{Binding Status}" Foreground="White"
+                                                                   FontSize="11" FontWeight="Medium" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="PL"
+                                            Binding="{Binding Pl, Converter={StaticResource CurrencyFormatConverter}}"
+                                            Width="110">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Fator"
+                                            Binding="{Binding Fator, Converter={StaticResource PercentFormatConverter}}"
+                                            Width="70">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Comissão"
+                                            Binding="{Binding Comissao, Converter={StaticResource CurrencyFormatConverter}}"
+                                            Width="110">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Emitido por" Binding="{Binding EmitidoPor}" Width="90" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </materialDesign:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
     </DockPanel>
 </UserControl>

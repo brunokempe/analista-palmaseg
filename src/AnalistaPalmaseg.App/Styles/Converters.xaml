@@ -5,5 +5,8 @@
     <conv:StatusColorConverter x:Key="StatusColorConverter" />
     <conv:PercentFormatConverter x:Key="PercentFormatConverter" />
     <conv:CurrencyFormatConverter x:Key="CurrencyFormatConverter" />
+    <conv:BoolToChevronAngleConverter x:Key="BoolToChevronAngleConverter" />
     <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    <conv:ApoliceStatusColorConverter x:Key="ApoliceStatusColorConverter" />
+    <conv:AtingimentoColorConverter x:Key="AtingimentoColorConverter" />
 </ResourceDictionary>

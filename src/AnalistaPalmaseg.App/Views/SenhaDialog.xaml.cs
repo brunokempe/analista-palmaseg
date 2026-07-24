@@ -8,6 +8,12 @@ public partial class SenhaDialog : System.Windows.Window
 
     public SenhaDialog() => InitializeComponent();
 
+    public SenhaDialog(string titulo, string prompt) : this()
+    {
+        Title = titulo;
+        PromptText.Text = prompt;
+    }
+
     private void OK_Click(object sender, System.Windows.RoutedEventArgs e)
     {
         Senha = PasswordBox.Password;

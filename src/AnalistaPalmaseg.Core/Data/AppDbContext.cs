@@ -5,9 +5,17 @@ namespace AnalistaPalmaseg.Core.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Importacao> Importacoes { get; set; }
     public DbSet<Renovacao> Renovacoes { get; set; }
     public DbSet<NovoNegocio> NovosNegocios { get; set; }
+    public DbSet<ResultadoMeta> Resultados { get; set; }
+    public DbSet<FuncionarioResultado> FuncionariosResultados { get; set; }
+    public DbSet<ImportacaoApolice> ImportacoesApolice { get; set; }
+    public DbSet<Apolice> Apolices { get; set; }
+    public DbSet<RelatorioRenovacao> RelatorioRenovacoes { get; set; }
+    public DbSet<Anexo> Anexos { get; set; }
+    public DbSet<SeguroNovo> SeguroNovos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +39,48 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Pl).HasColumnType("decimal(18,2)");
             e.Property(x => x.Fator).HasColumnType("decimal(10,4)");
             e.Property(x => x.Comissao).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<ResultadoMeta>(e =>
+        {
+            e.Property(x => x.Meta).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Realizado).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<FuncionarioResultado>(e =>
+        {
+            e.Property(x => x.Premio).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Meta).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Comissao).HasColumnType("decimal(18,2)");
+            e.Property(x => x.PercentualComissao).HasColumnType("decimal(10,4)");
+            e.Ignore(x => x.PercentualAtingimento);
+        });
+
+        modelBuilder.Entity<Apolice>(e =>
+        {
+            e.Property(x => x.Premio).HasColumnType("decimal(18,2)");
+            e.Ignore(x => x.DiasParaVencimento);
+            e.Ignore(x => x.StatusLabel);
+            e.Ignore(x => x.DiasLabel);
+        });
+
+        modelBuilder.Entity<RelatorioRenovacao>(e =>
+        {
+            e.HasIndex(x => x.Proposta).IsUnique();
+            e.Ignore(x => x.DiaDaSemana);
+            e.Ignore(x => x.IsChecked);
+        });
+
+        modelBuilder.Entity<Anexo>(e =>
+        {
+            e.HasIndex(x => x.RelatorioRenovacaoId);
+        });
+
+        modelBuilder.Entity<SeguroNovo>(e =>
+        {
+            e.Property(x => x.Pl).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Fator).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Valor).HasColumnType("decimal(18,2)");
         });
     }
 }

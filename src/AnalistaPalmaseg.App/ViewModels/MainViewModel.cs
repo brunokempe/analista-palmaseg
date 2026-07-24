@@ -1,77 +1,211 @@
 using System.IO;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AnalistaPalmaseg.Core.Data;
 using AnalistaPalmaseg.Core.Services;
+using AnalistaPalmaseg.Core.Models;
 
 namespace AnalistaPalmaseg.App.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
     private readonly ImportacaoService _importacaoService;
-    private readonly RelatorioService _relatorioService;
     private readonly AppDbContext _context;
+    private readonly SessaoService _sessao;
+    private readonly RelatorioRenovacaoService _relatorioRenovacaoService;
+
+    [ObservableProperty] private ObservableObject? _currentView;
+    [ObservableProperty] private string _tituloAtivo = "Início";
+    [ObservableProperty] private bool _isLoading;
+
+    public bool IsAdmin => _sessao.IsAdmin;
+    public string NomeUsuario => _sessao.NomeUsuario;
+
+    // ── Sidebar / seções ──────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SidebarWidth),
+                              nameof(CarteiraItemsVisibility),
+                              nameof(RelatoriosItemsVisibility),
+                              nameof(ApolicesItemsVisibility),
+                              nameof(GerenciadorItemsVisibility))]
+    private bool _isSidebarExpanded = true;
 
     [ObservableProperty]
-    private ObservableObject? _currentView;
+    [NotifyPropertyChangedFor(nameof(CarteiraItemsVisibility))]
+    private bool _isCarteiraExpanded = false;
 
     [ObservableProperty]
-    private string _tituloAtivo = "Dashboard";
+    [NotifyPropertyChangedFor(nameof(RelatoriosItemsVisibility))]
+    private bool _isRelatoriosExpanded = false;
 
     [ObservableProperty]
-    private bool _isLoading;
+    [NotifyPropertyChangedFor(nameof(ApolicesItemsVisibility))]
+    private bool _isApolicesExpanded = false;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GerenciadorItemsVisibility))]
+    private bool _isGerenciadorExpanded = false;
+
+    public double SidebarWidth => IsSidebarExpanded ? 220 : 56;
+    public Visibility CarteiraItemsVisibility    => !IsSidebarExpanded || IsCarteiraExpanded    ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility RelatoriosItemsVisibility  => !IsSidebarExpanded || IsRelatoriosExpanded  ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ApolicesItemsVisibility    => !IsSidebarExpanded || IsApolicesExpanded    ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility GerenciadorItemsVisibility => !IsAdmin ? Visibility.Collapsed :
+                                                    (!IsSidebarExpanded || IsGerenciadorExpanded ? Visibility.Visible : Visibility.Collapsed);
+
+    // Análise de Carteira
+    public InicioViewModel InicioVm { get; }
     public DashboardViewModel DashboardVm { get; }
     public RenovacoesViewModel RenovacoesVm { get; }
     public NovosNegociosViewModel NovosNegociosVm { get; }
     public PendentesViewModel PendentesVm { get; }
     public RetencaoViewModel RetencaoVm { get; }
+    public ComparacaoViewModel ComparacaoVm { get; }
+    public ResultadosViewModel ResultadosVm { get; }
+
+    // Acompanhamento de Apólices
+    public ApolicesDashboardViewModel ApolicesDashboardVm { get; }
+
+    // Dashboard de Funcionários
+    public FuncionariosDashboardViewModel FuncionariosDashboardVm { get; }
+
+    // Admin
+    public GerenciarUsuariosViewModel GerenciarUsuariosVm { get; }
+
+    // Acompanhamento de Renovações (todos os usuários)
+    public AcompanhamentoRenovacoesViewModel AcompanhamentoRenovacoesVm { get; }
+
+    // Seguros Novos
+    public SeguroNovosViewModel SeguroNovosVm { get; }
+
+    // Gerenciador (admin)
+    public GerenciadorRenovacoesViewModel GerenciadorRenovacoesVm { get; }
+    public GerenciadorCotacoesViewModel GerenciadorCotacoesVm { get; }
+    public EmissaoDashboardViewModel EmissaoDashboardVm { get; }
 
     public MainViewModel(
         ImportacaoService importacaoService,
-        RelatorioService relatorioService,
         AppDbContext context,
+        SessaoService sessao,
+        InicioViewModel inicioVm,
         DashboardViewModel dashboardVm,
         RenovacoesViewModel renovacoesVm,
         NovosNegociosViewModel novosNegociosVm,
         PendentesViewModel pendentesVm,
-        RetencaoViewModel retencaoVm)
+        RetencaoViewModel retencaoVm,
+        ComparacaoViewModel comparacaoVm,
+        ResultadosViewModel resultadosVm,
+        ApolicesDashboardViewModel apolicesDashboardVm,
+        FuncionariosDashboardViewModel funcionariosDashboardVm,
+        GerenciarUsuariosViewModel gerenciarUsuariosVm,
+        AcompanhamentoRenovacoesViewModel acompanhamentoRenovacoesVm,
+        GerenciadorRenovacoesViewModel gerenciadorRenovacoesVm,
+        GerenciadorCotacoesViewModel gerenciadorCotacoesVm,
+        EmissaoDashboardViewModel emissaoDashboardVm,
+        SeguroNovosViewModel seguroNovosVm,
+        RelatorioRenovacaoService relatorioRenovacaoService)
     {
         _importacaoService = importacaoService;
-        _relatorioService = relatorioService;
         _context = context;
+        _sessao = sessao;
 
+        InicioVm = inicioVm;
         DashboardVm = dashboardVm;
         RenovacoesVm = renovacoesVm;
         NovosNegociosVm = novosNegociosVm;
         PendentesVm = pendentesVm;
         RetencaoVm = retencaoVm;
+        ComparacaoVm = comparacaoVm;
+        ResultadosVm = resultadosVm;
+        ApolicesDashboardVm = apolicesDashboardVm;
+        FuncionariosDashboardVm = funcionariosDashboardVm;
+        GerenciarUsuariosVm = gerenciarUsuariosVm;
+        AcompanhamentoRenovacoesVm = acompanhamentoRenovacoesVm;
+        GerenciadorRenovacoesVm = gerenciadorRenovacoesVm;
+        GerenciadorCotacoesVm = gerenciadorCotacoesVm;
+        EmissaoDashboardVm = emissaoDashboardVm;
+        SeguroNovosVm = seguroNovosVm;
+        _relatorioRenovacaoService = relatorioRenovacaoService;
 
-        _currentView = dashboardVm;
+        _currentView = inicioVm;
+    }
+
+    // ── Toggle sidebar / seções ───────────────────────────────
+    [RelayCommand] private void ToggleSidebar()      => IsSidebarExpanded      = !IsSidebarExpanded;
+    [RelayCommand] private void ToggleCarteira()     => IsCarteiraExpanded     = !IsCarteiraExpanded;
+    [RelayCommand] private void ToggleRelatorios()   => IsRelatoriosExpanded   = !IsRelatoriosExpanded;
+    [RelayCommand] private void ToggleApolices()     => IsApolicesExpanded     = !IsApolicesExpanded;
+    [RelayCommand] private void ToggleGerenciador()  => IsGerenciadorExpanded  = !IsGerenciadorExpanded;
+
+    // ── Navegação ──────────────────────────────────────────────
+    [RelayCommand] private void NavInicio()           { CurrentView = InicioVm;           TituloAtivo = "Início"; }
+    [RelayCommand] private void NavDashboard()        { CurrentView = DashboardVm;         TituloAtivo = "Dashboard"; }
+    [RelayCommand] private void NavRenovacoes()       { CurrentView = RenovacoesVm;        TituloAtivo = "Renovações"; }
+    [RelayCommand] private void NavNovosNegocios()    { CurrentView = NovosNegociosVm;     TituloAtivo = "Novos negócios"; }
+    [RelayCommand] private void NavPendentes()        { CurrentView = PendentesVm;         TituloAtivo = "Pendentes em aberto"; }
+    [RelayCommand] private void NavRetencao()         { CurrentView = RetencaoVm;          TituloAtivo = "Evolução da retenção"; }
+    [RelayCommand] private void NavComparacao()       { CurrentView = ComparacaoVm;        TituloAtivo = "Comparação de produtores"; }
+    [RelayCommand] private void NavResultados()       { CurrentView = ResultadosVm;        TituloAtivo = "Resultado — Metas"; }
+    [RelayCommand] private void NavApolicesDashboard()    { CurrentView = ApolicesDashboardVm;    TituloAtivo = "Acompanhamento de Apólices"; }
+    [RelayCommand] private void NavFuncionariosDashboard(){ CurrentView = FuncionariosDashboardVm; TituloAtivo = "Dashboard de Funcionários"; }
+
+    [RelayCommand]
+    private async Task NavSeguroNovosAsync()
+    {
+        await SeguroNovosVm.CarregarAsync();
+        CurrentView = SeguroNovosVm;
+        TituloAtivo = "Seguros Novos";
     }
 
     [RelayCommand]
-    private void NavDashboard() { CurrentView = DashboardVm; TituloAtivo = "Dashboard"; }
+    private async Task NavAcompanhamentoRenovacoesAsync()
+    {
+        await AcompanhamentoRenovacoesVm.CarregarAsync();
+        CurrentView = AcompanhamentoRenovacoesVm;
+        TituloAtivo = "Acompanhamento de Renovações";
+    }
+    [RelayCommand] private void Sair() => Application.Current.Shutdown();
+
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    private async Task NavGerenciarUsuariosAsync()
+    {
+        await GerenciarUsuariosVm.CarregarAsync();
+        CurrentView = GerenciarUsuariosVm;
+        TituloAtivo = "Gerenciar Usuários";
+    }
+
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    private async Task NavGerenciadorRenovacoesAsync()
+    {
+        await GerenciadorRenovacoesVm.CarregarAsync();
+        CurrentView = GerenciadorRenovacoesVm;
+        TituloAtivo = "Renovações";
+    }
+
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    private void NavGerenciadorCotacoes()
+    {
+        CurrentView = GerenciadorCotacoesVm;
+        TituloAtivo = "Cotações";
+    }
 
     [RelayCommand]
-    private void NavRenovacoes() { CurrentView = RenovacoesVm; TituloAtivo = "Renovações"; }
+    private async Task NavEmissaoDashboardAsync()
+    {
+        await EmissaoDashboardVm.CarregarAsync();
+        CurrentView = EmissaoDashboardVm;
+        TituloAtivo = "Dashboard de Emissão";
+    }
 
-    [RelayCommand]
-    private void NavNovosNegocios() { CurrentView = NovosNegociosVm; TituloAtivo = "Novos negócios"; }
-
-    [RelayCommand]
-    private void NavPendentes() { CurrentView = PendentesVm; TituloAtivo = "Pendentes em aberto"; }
-
-    [RelayCommand]
-    private void NavRetencao() { CurrentView = RetencaoVm; TituloAtivo = "Evolução da retenção"; }
-
-    [RelayCommand]
-    private async Task ImportarArquivoAsync()
+    // ── Importação — Relatório de Renovações ─────────────────
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    private async Task ImportarRelatorioRenovacaoAsync()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Selecionar planilha do produtor",
-            Filter = "Planilhas ODS|*.ods|Todas as planilhas|*.ods;*.xlsx",
+            Title = "Selecionar relatório de renovações",
+            Filter = "Planilhas Excel|*.xlsx;*.xls",
             Multiselect = false
         };
 
@@ -80,27 +214,105 @@ public partial class MainViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            string? senha = null;
-
-            var ext = Path.GetExtension(dialog.FileName).ToLower();
-            if (ext == ".ods")
-            {
-                var senhaDialog = new Views.SenhaDialog();
-                if (senhaDialog.ShowDialog() == true)
-                    senha = senhaDialog.Senha;
-            }
-
-            var importacao = await _importacaoService.ImportarAsync(dialog.FileName, senha);
-
-            await DashboardVm.CarregarAsync();
-            await RenovacoesVm.CarregarAsync();
-            await NovosNegociosVm.CarregarAsync();
-            await PendentesVm.CarregarAsync();
-            await RetencaoVm.CarregarAsync();
+            var inseridos = await _relatorioRenovacaoService.ImportarAsync(dialog.FileName);
+            System.Windows.MessageBox.Show(
+                $"Importação concluída! {inseridos} novo(s) registro(s) inserido(s).",
+                "Relatório importado",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information);
+            await NavGerenciadorRenovacoesAsync();
+        }
+        catch (IOException ex) when (ex.HResult == unchecked((int)0x80070020)
+            || ex.Message.Contains("used by another process", StringComparison.OrdinalIgnoreCase))
+        {
+            System.Windows.MessageBox.Show(
+                "O arquivo está aberto em outro programa. Feche-o e tente novamente.",
+                "Arquivo em uso", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(ex.Message, "Erro ao importar",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
         finally
         {
             IsLoading = false;
         }
     }
+
+    // ── Importação — Análise de Carteira ──────────────────────
+    [RelayCommand]
+    private async Task ImportarArquivoAsync()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Selecionar planilhas do produtor",
+            Filter = "Planilhas ODS|*.ods|Todas as planilhas|*.ods;*.xlsx",
+            Multiselect = true
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        var arquivos = dialog.FileNames;
+        IsLoading = true;
+        try
+        {
+            string? senha = null;
+            var temOds = arquivos.Any(f => Path.GetExtension(f).Equals(".ods", StringComparison.OrdinalIgnoreCase));
+            if (temOds)
+            {
+                var senhaDialog = new Views.SenhaDialog
+                {
+                    Owner = System.Windows.Application.Current.MainWindow
+                };
+                if (senhaDialog.ShowDialog() == true)
+                    senha = senhaDialog.Senha;
+            }
+
+            var erros = new List<string>();
+            foreach (var arquivo in arquivos)
+            {
+                try
+                {
+                    var arquivoSenha = arquivo.EndsWith(".ods", StringComparison.OrdinalIgnoreCase) ? senha : null;
+                    await _importacaoService.ImportarAsync(arquivo, arquivoSenha);
+                }
+                catch (IOException ex) when (ex.HResult == unchecked((int)0x80070020)
+                    || ex.Message.Contains("used by another process", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("sendo usado", StringComparison.OrdinalIgnoreCase))
+                {
+                    erros.Add($"• {Path.GetFileName(arquivo)}: arquivo aberto em outro programa. Feche-o e tente novamente.");
+                }
+                catch (Exception ex)
+                {
+                    erros.Add($"• {Path.GetFileName(arquivo)}: {ex.Message}");
+                }
+            }
+
+            if (erros.Count > 0)
+                System.Windows.MessageBox.Show(string.Join("\n", erros), "Erro ao importar",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+
+            await RefreshCarteiraViewsAsync();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // ── Refresh ───────────────────────────────────────────────
+    private async Task RefreshCarteiraViewsAsync()
+    {
+        await InicioVm.CarregarAsync();
+        await DashboardVm.CarregarAsync();
+        await RenovacoesVm.CarregarAsync();
+        await NovosNegociosVm.CarregarAsync();
+        await PendentesVm.CarregarAsync();
+        await RetencaoVm.CarregarAsync();
+        await ComparacaoVm.CarregarAsync();
+        await ResultadosVm.CarregarAsync();
+        await FuncionariosDashboardVm.CarregarAsync();
+    }
+
 }

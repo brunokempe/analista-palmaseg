@@ -14,20 +14,72 @@ public class ImportacaoService(AppDbContext context)
     {
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        var nomeArquivo = Path.GetFileNameWithoutExtension(caminhoArquivo);
-        var (produtor, mes, ano) = ExtrairMetadados(nomeArquivo);
-
-        var existente = context.Importacoes
-            .FirstOrDefault(x => x.Produtor == produtor && x.Mes == mes && x.Ano == ano);
-
-        if (existente != null)
+        // Passo 1: descriptografar se necessário
+        string arquivoParaLer = caminhoArquivo;
+        string? tempDir = null;
+        if (!string.IsNullOrEmpty(senhaArquivo) && LibreOfficeDecryptorService.IsEncryptedOds(caminhoArquivo))
         {
-            context.Renovacoes.RemoveRange(context.Renovacoes.Where(r => r.ImportacaoId == existente.Id));
-            context.NovosNegocios.RemoveRange(context.NovosNegocios.Where(n => n.ImportacaoId == existente.Id));
-            context.Importacoes.Remove(existente);
+            arquivoParaLer = await _decryptor.DecryptToXlsxAsync(caminhoArquivo, senhaArquivo);
+            tempDir = Path.GetDirectoryName(arquivoParaLer);
+        }
+
+        // Passo 2: ler todas as abas em memória
+        DataSet? dataSet = null;
+        try
+        {
+            using var stream = File.Open(arquivoParaLer, FileMode.Open, FileAccess.Read);
+            var reader = ExcelReaderFactory.CreateReader(stream, new ExcelReaderConfiguration());
+            dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
+            {
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
+            });
+            reader.Dispose();
+        }
+        finally
+        {
+            if (tempDir != null)
+                LibreOfficeDecryptorService.DeleteTempDirectory(arquivoParaLer);
+        }
+
+        System.Diagnostics.Debug.WriteLine(
+            $"[Import] Abas encontradas: {string.Join(", ", dataSet!.Tables.Cast<DataTable>().Select(t => $"'{t.TableName}'"))}");
+
+        // Passo 3: identificar nome/período — prefere dados da aba Participação; usa nome do arquivo como fallback
+        var (produtor, mes, ano) = ExtrairMetadados(Path.GetFileNameWithoutExtension(caminhoArquivo));
+        foreach (DataTable table in dataSet.Tables)
+        {
+            var sn = table.TableName.ToLower().Trim();
+            if (sn is "resultado" or "resultados" or "result" or "results" || sn.Contains("particip"))
+            {
+                var (nomeSheet, mesSheet, anoSheet) = ExtrairMetadadosParticipacao(table);
+                if (!string.IsNullOrWhiteSpace(nomeSheet)) produtor = nomeSheet;
+                if (mesSheet > 0) mes = mesSheet;
+                if (anoSheet > 0) ano = anoSheet;
+                break;
+            }
+        }
+        System.Diagnostics.Debug.WriteLine($"[Import] Identificação: produtor='{produtor}', mes={mes}, ano={ano}");
+
+        // Passo 4: dedup — compara nome normalizado (sem acentos, maiúsculas) para não
+        // criar duplicatas quando o nome vem do arquivo vs. da planilha com grafia diferente.
+        var produtorNorm = NormalizarNome(produtor);
+        var existentes = context.Importacoes
+            .Where(x => x.Mes == mes && x.Ano == ano)
+            .AsEnumerable()
+            .Where(x => NormalizarNome(x.Produtor) == produtorNorm)
+            .ToList();
+        if (existentes.Count > 0)
+        {
+            var ids = existentes.Select(e => e.Id).ToList();
+            context.Renovacoes.RemoveRange(context.Renovacoes.Where(r => ids.Contains(r.ImportacaoId)));
+            context.NovosNegocios.RemoveRange(context.NovosNegocios.Where(n => ids.Contains(n.ImportacaoId)));
+            context.Resultados.RemoveRange(context.Resultados.Where(r => ids.Contains(r.ImportacaoId)));
+            context.FuncionariosResultados.RemoveRange(context.FuncionariosResultados.Where(f => ids.Contains(f.ImportacaoId)));
+            context.Importacoes.RemoveRange(existentes);
             await context.SaveChangesAsync();
         }
 
+        // Passo 5: criar registro de importação
         var importacao = new Importacao
         {
             Produtor = produtor,
@@ -36,46 +88,29 @@ public class ImportacaoService(AppDbContext context)
             ImportadoEm = DateTime.Now,
             ArquivoOrigem = Path.GetFileName(caminhoArquivo)
         };
-
         context.Importacoes.Add(importacao);
         await context.SaveChangesAsync();
 
-        // If encrypted ODS, decrypt via LibreOffice first
-        string arquivoParaLer = caminhoArquivo;
-        string? tempDir = null;
-
-        if (!string.IsNullOrEmpty(senhaArquivo) && LibreOfficeDecryptorService.IsEncryptedOds(caminhoArquivo))
+        // Passo 6: processar abas
+        foreach (DataTable table in dataSet.Tables)
         {
-            arquivoParaLer = await _decryptor.DecryptToXlsxAsync(caminhoArquivo, senhaArquivo);
-            tempDir = Path.GetDirectoryName(arquivoParaLer);
-        }
+            var sheetName = table.TableName.ToLower().Trim();
+            System.Diagnostics.Debug.WriteLine($"[Import] Processando aba: '{table.TableName}' ({table.Rows.Count} linhas, {table.Columns.Count} colunas)");
 
-        try
-        {
-            using var stream = File.Open(arquivoParaLer, FileMode.Open, FileAccess.Read);
-
-            var config = new ExcelReaderConfiguration();
-            var reader = ExcelReaderFactory.CreateReader(stream, config);
-
-            var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
+            if (sheetName == "ren")
+                ParseRenovacoes(table, importacao);
+            else if (sheetName == "novos")
+                ParseNovosNegocios(table, importacao);
+            else if (sheetName is "resultado" or "resultados" or "result" or "results" || sheetName.Contains("particip"))
             {
-                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
-            });
-            reader.Dispose();
-
-            foreach (DataTable table in dataSet.Tables)
-            {
-                var sheetName = table.TableName.ToLower();
-                if (sheetName == "ren")
-                    ParseRenovacoes(table, importacao);
-                else if (sheetName == "novos")
-                    ParseNovosNegocios(table, importacao);
+                System.Diagnostics.Debug.WriteLine($"[Import] → Aba Participação detectada.");
+                ParseResultados(table, importacao);
+                System.Diagnostics.Debug.WriteLine($"[Import] → Resultados: {importacao.Resultados.Count} registros.");
+                ParseFuncionarios(table, importacao);
+                System.Diagnostics.Debug.WriteLine($"[Import] → Funcionários: {importacao.FuncionariosResultados.Count} registros.");
             }
-        }
-        finally
-        {
-            if (tempDir != null)
-                LibreOfficeDecryptorService.DeleteTempDirectory(arquivoParaLer);
+            else
+                System.Diagnostics.Debug.WriteLine($"[Import] → Aba ignorada.");
         }
 
         await context.SaveChangesAsync();
@@ -153,6 +188,171 @@ public class ImportacaoService(AppDbContext context)
         }
     }
 
+    private void ParseResultados(DataTable table, Importacao importacao)
+    {
+        // Aba "Participação": seguro por coluna (col 3..N), linhas chave detectadas dinamicamente.
+        // Procura a linha "PL Vendido" (Realizado) e "PL META" (Meta) na coluna 2.
+        int rowVendido = -1, rowMeta = -1;
+        for (int r = 0; r < table.Rows.Count; r++)
+        {
+            var raw = GetString(table.Rows[r], 2);
+            var label = NormalizeText(raw);
+            if (!string.IsNullOrWhiteSpace(raw))
+                System.Diagnostics.Debug.WriteLine($"[ParseResultados] Linha {r} col2: '{raw}' → normalizado: '{label}'");
+            if (rowVendido < 0 && label.Contains("vendido") && !label.Contains("meta"))
+                rowVendido = r;
+            if (rowMeta < 0 && label.Contains("meta") && (label.Contains("pl") || label.Contains("vendido")))
+                rowMeta = r;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ParseResultados] rowVendido={rowVendido}, rowMeta={rowMeta}");
+        if (rowVendido < 0 || rowMeta < 0) return;
+
+        // Cabeçalhos das seguradoras: linha 4 (+ linha 5 para sublinhas como "Itaú" / "Yelum")
+        // Colunas de dados começam na coluna 3 e vão até a última não vazia
+        int maxCol = table.Columns.Count - 1;
+
+        for (int col = 3; col <= maxCol; col++)
+        {
+            // Monta o nome da seguradora combinando as linhas de cabeçalho
+            var partes = new List<string>();
+            for (int headerRow = 4; headerRow <= 6 && headerRow < table.Rows.Count; headerRow++)
+            {
+                var parte = GetString(table.Rows[headerRow], col).Trim();
+                if (!string.IsNullOrWhiteSpace(parte) && parte != "---")
+                    partes.Add(parte);
+            }
+            if (partes.Count == 0) continue;
+            var seguradora = string.Join("/", partes);
+
+            if (seguradora.Equals("TOTAIS", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var realizado = ParseDecimal(GetString(table.Rows[rowVendido], col));
+            var meta      = ParseDecimal(GetString(table.Rows[rowMeta],    col));
+
+            if (meta == 0 && realizado == 0) continue;
+
+            importacao.Resultados.Add(new ResultadoMeta
+            {
+                ImportacaoId = importacao.Id,
+                Funcionario  = seguradora,
+                Meta         = meta,
+                Realizado    = realizado
+            });
+        }
+    }
+
+    private void ParseFuncionarios(DataTable table, Importacao importacao)
+    {
+        // Aba Participação: mesma estrutura de colunas do ParseResultados.
+        // Col 2 = rótulo (PL Vendido, Participação, etc.)
+        // Col 3+ = dados por seguradora (Porto/Itaú, Unimed, …, TOTAIS)
+        // Linhas 4-6 (0-indexed): cabeçalhos das seguradoras
+        const int colLabel = 2, colSegStart = 3;
+
+        if (table.Columns.Count <= colSegStart) return;
+        int maxCol = table.Columns.Count - 1;
+
+        // Monta mapa col → nome da seguradora (idêntico ao ParseResultados)
+        var seguradoras = new Dictionary<int, string>();
+        for (int col = colSegStart; col <= maxCol; col++)
+        {
+            var partes = new List<string>();
+            for (int hr = 4; hr <= 6 && hr < table.Rows.Count; hr++)
+            {
+                var parte = GetString(table.Rows[hr], col).Trim();
+                if (!string.IsNullOrWhiteSpace(parte) && parte != "---" && parte != "0")
+                    partes.Add(parte);
+            }
+            if (partes.Count > 0)
+                seguradoras[col] = string.Join("/", partes);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ParseFuncionarios] {seguradoras.Count} seguradoras: {string.Join(", ", seguradoras.Values)}");
+        if (seguradoras.Count == 0) return;
+
+        // Localiza linhas-chave pelo rótulo na coluna 2
+        int rowPremio = -1, rowMeta = -1, rowComissao = -1, rowMedia = -1;
+        for (int r = 0; r < table.Rows.Count; r++)
+        {
+            var l = NormalizeText(GetString(table.Rows[r], colLabel));
+            if (string.IsNullOrWhiteSpace(l)) continue;
+            System.Diagnostics.Debug.WriteLine($"[ParseFuncionarios] Linha {r} col{colLabel}: '{GetString(table.Rows[r], colLabel)}' → norm: '{l}'");
+
+            // Captura a primeira linha "Média" antes do bloco de dados — contém a taxa de comissão
+            // como fração decimal (ex: 0,1864 = 18,64%) armazenada na planilha
+            if (rowPremio < 0 && rowMedia < 0 && l.Contains("media"))
+                rowMedia = r;
+
+            if (rowPremio < 0 && l.Contains("vendido") && !l.Contains("meta"))
+                rowPremio = r;
+            else if (rowPremio >= 0 && rowMeta < 0 && l.Contains("meta") && l.Contains("pl"))
+                rowMeta = r;
+            else if (rowPremio >= 0 && rowComissao < 0 && l.Contains("participac"))
+                rowComissao = r;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ParseFuncionarios] rowPremio={rowPremio} rowMeta={rowMeta} rowComissao={rowComissao} rowMedia={rowMedia}");
+        if (rowPremio < 0 || rowComissao < 0) return;
+
+        var nome = importacao.Produtor;
+
+        foreach (var (col, seguradora) in seguradoras)
+        {
+            var premio   = ParseDecimal(GetString(table.Rows[rowPremio],   col));
+            var meta     = rowMeta >= 0 ? ParseDecimal(GetString(table.Rows[rowMeta], col)) : 0;
+            var comissao = ParseDecimal(GetString(table.Rows[rowComissao], col));
+
+            // % comissão: lê da linha "Média" (rowMedia) que armazena a taxa como fração decimal
+            // (ex: 0,1864 = 18,64%). Fallback: calcula a partir de comissão/prêmio.
+            decimal percentualComissao;
+            if (rowMedia >= 0)
+                percentualComissao = Math.Round(ParseDecimal(GetString(table.Rows[rowMedia], col)) * 100m, 2);
+            else
+                percentualComissao = premio > 0 ? Math.Round(comissao / premio * 100m, 2) : 0;
+
+            System.Diagnostics.Debug.WriteLine($"[ParseFuncionarios] {seguradora} col{col}: premio={premio} meta={meta} comissao={comissao} %com={percentualComissao}");
+
+            if (premio == 0 && comissao == 0 && meta == 0) continue;
+
+            importacao.FuncionariosResultados.Add(new FuncionarioResultado
+            {
+                ImportacaoId       = importacao.Id,
+                Nome               = nome,
+                Seguradora         = seguradora,
+                Premio             = premio,
+                Meta               = meta,
+                Comissao           = comissao,
+                PercentualComissao = percentualComissao
+            });
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[ParseFuncionarios] Total inseridos: {importacao.FuncionariosResultados.Count}");
+    }
+
+    private static string NormalizarNome(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        var normalized = value.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in normalized)
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        return sb.ToString().ToUpperInvariant().Trim();
+    }
+
+    private static string NormalizeText(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        // Remove diacríticos e converte para minúsculas para comparação robusta
+        var normalized = value.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in normalized)
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        return sb.ToString().ToLowerInvariant();
+    }
+
     private static (string produtor, int mes, int ano) ExtrairMetadados(string nomeArquivo)
     {
         // Expected format: "2026-05 NomeProdutor" or "2026-05 Nome Produtor"
@@ -165,6 +365,24 @@ public class ImportacaoService(AppDbContext context)
             return (produtor, mes, ano);
         }
         return (nomeArquivo, DateTime.Now.Month, DateTime.Now.Year);
+    }
+
+    // Lê nome do funcionário (linha 0, col 1) e data (linha 0, col 3) da aba Participação.
+    // Formato de data esperado: "01/05/2026 00:00:00 -03:00" → mes=5, ano=2026.
+    private static (string nome, int mes, int ano) ExtrairMetadadosParticipacao(DataTable table)
+    {
+        if (table.Rows.Count == 0) return (string.Empty, 0, 0);
+
+        var nome = GetString(table.Rows[0], 1).Trim();
+        var dataStr = GetString(table.Rows[0], 3);
+        var match = Regex.Match(dataStr, @"(\d{2})/(\d{2})/(\d{4})");
+
+        if (!match.Success || string.IsNullOrWhiteSpace(nome))
+            return (nome, 0, 0);
+
+        var mes = int.Parse(match.Groups[2].Value);
+        var ano = int.Parse(match.Groups[3].Value);
+        return (nome, mes, ano);
     }
 
     private static string GetString(DataRow row, int col)
@@ -195,7 +413,10 @@ public class ImportacaoService(AppDbContext context)
         var clean = value.Replace("%", "").Replace(",", ".").Trim();
         if (!decimal.TryParse(clean, System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture, out var result)) return 0;
-        return result > 1 ? result / 100m : result;
+        // If the spreadsheet stores the raw fraction (e.g. 0.03 for 3%), convert to percentage value.
+        // Values > 1 are already percentages (e.g. "3" for 3%), keep as-is.
+        if (result > 0 && result <= 1) return result * 100m;
+        return result;
     }
 
     private static DateOnly? ParseDate(string value)

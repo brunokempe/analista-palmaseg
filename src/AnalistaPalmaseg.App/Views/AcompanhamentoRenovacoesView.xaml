@@ -1,0 +1,462 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.AcompanhamentoRenovacoesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             x:Name="Root"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Filtros -->
+        <materialDesign:Card Grid.Row="0" Margin="12,12,12,0" Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Buscar por cliente, apólice, proposta..."
+                         Margin="0,0,8,0" Height="40" VerticalContentAlignment="Center" FontSize="13" />
+
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding SituacoesFiltrar}"
+                          SelectedItem="{Binding FiltroSituacao}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                          materialDesign:HintAssist.Hint="Situação"
+                          Margin="0,0,8,0" Height="40" FontSize="13" />
+
+                <!-- Filtro por Produtor (visível apenas para admin) -->
+                <ComboBox Grid.Column="2"
+                          ItemsSource="{Binding ProdutoresDisponiveis}"
+                          SelectedItem="{Binding FiltroProdutor}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                          materialDesign:HintAssist.Hint="Produtor"
+                          Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}"
+                          Margin="0,0,8,0" Height="40" FontSize="13" />
+
+                <Button Grid.Column="3"
+                        Command="{Binding LimparFiltrosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        ToolTip="Limpar filtros" Height="40" Width="40" Padding="0">
+                    <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="18" Height="18" />
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Abas por mês de vencimento -->
+        <Border Grid.Row="1" Background="White"
+                BorderBrush="#E5E7EB" BorderThickness="0,1,0,1"
+                Margin="12,6,12,0">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Hidden">
+                <ListBox ItemsSource="{Binding MesesDisponiveis}"
+                         SelectedItem="{Binding MesSelecionado}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="14,8" />
+                            <Setter Property="FontSize" Value="12" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="SnapsToDevicePixels" Value="True" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Bd"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{StaticResource PrimaryBrush}"
+                                                BorderThickness="0"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="BorderThickness" Value="0,0,0,3" />
+                                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </Trigger>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="IsMouseOver" Value="True" />
+                                                    <Condition Property="IsSelected" Value="False" />
+                                                </MultiTrigger.Conditions>
+                                                <Setter TargetName="Bd" Property="Background" Value="#F3F4F6" />
+                                            </MultiTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Resumo -->
+        <Border Grid.Row="2" Background="{StaticResource SidebarBgDarkBrush}"
+                Padding="16,6" Margin="12,6,12,0">
+            <TextBlock Text="{Binding Resumo}" FontSize="12"
+                       Foreground="#9CA3AF" FontStyle="Italic" />
+        </Border>
+
+        <!-- Barra de ações (visível quando há registro selecionado) -->
+        <Border Grid.Row="3"
+                Visibility="{Binding TemRegistroSelecionado, Converter={StaticResource BoolToVisibilityConverter}}"
+                Background="#F8F9FA" BorderBrush="#E5E7EB" BorderThickness="0,1,0,1"
+                Padding="16,5" Margin="12,0,12,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <materialDesign:PackIcon Kind="FileDocumentOutline" Width="15" Height="15"
+                                         VerticalAlignment="Center" Foreground="#6B7280" Margin="0,0,8,0" />
+                <TextBlock Text="{Binding RegistroSelecionado.NomeCliente}"
+                           FontSize="12" FontWeight="SemiBold" Foreground="#374151"
+                           VerticalAlignment="Center" Margin="0,0,16,0" />
+                <Button Command="{Binding GerarFolhaAmarelaCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="30" Padding="10,0" FontSize="12" Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileDocument" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Folha Amarela" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding AbrirPastaAnexosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="30" Padding="10,0" FontSize="12">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FolderOpen" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Anexos" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Grid de registros -->
+        <DataGrid Grid.Row="4"
+                  ItemsSource="{Binding RegistrosView}"
+                  SelectedItem="{Binding RegistroSelecionado}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  SelectionMode="Single"
+                  AlternationCount="2"
+                  RowHeight="34"
+                  Margin="12,6,12,12"
+                  Style="{StaticResource MaterialDesignDataGrid}"
+                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                  EnableRowVirtualization="True"
+                  VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                  VirtualizingPanel.ScrollUnit="Pixel"
+                  ScrollViewer.CanContentScroll="True">
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                    <Style.Triggers>
+                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                            <Setter Property="Background" Value="#F9FAFB"/>
+                        </Trigger>
+                        <DataTrigger Binding="{Binding RenovacaoRealizada}" Value="True">
+                            <Setter Property="Background" Value="#C8E6C9"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="GroupItem">
+                                        <Expander IsExpanded="True">
+                                            <Expander.Header>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <!-- Nome do cliente é a chave do grupo -->
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               FontSize="12" Foreground="{StaticResource PrimaryBrush}" />
+                                                    <!-- CPF/CNPJ via ContentControl (Items[0] é object) -->
+                                                    <ContentControl Content="{Binding Items[0]}">
+                                                        <ContentControl.ContentTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text=" — " FontSize="12"
+                                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                                    <TextBlock Text="{Binding DocumentoPrincipal}"
+                                                                               FontSize="11" VerticalAlignment="Center"
+                                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ContentControl.ContentTemplate>
+                                                    </ContentControl>
+                                                    <TextBlock Text=" · " FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                    <TextBlock Text="{Binding ItemCount}" FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                    <TextBlock Text=" apólice(s)" FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                </StackPanel>
+                                            </Expander.Header>
+                                            <ItemsPresenter />
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+
+            <DataGrid.Columns>
+
+                <!-- Situação (ComboBox direto na célula) -->
+                <DataGridTemplateColumn Width="130" Header="Situação" SortMemberPath="SituacaoAcompanhamento">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedItem="{Binding SituacaoAcompanhamento, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{Binding DataContext.SituacoesEditar,
+                                                   RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                      FontSize="12"
+                                      VerticalContentAlignment="Center"
+                                      BorderThickness="0"
+                                      Background="Transparent"
+                                      Padding="4,0" Margin="2,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Produtor (visível apenas para admin) -->
+                <DataGridTemplateColumn Header="Produtor" Width="110"
+                                        Visibility="{Binding DataContext.IsAdmin,
+                                                     ElementName=Root,
+                                                     Converter={StaticResource BoolToVisibilityConverter}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding NovoProdutor}" VerticalAlignment="Center"
+                                       FontSize="12" Margin="4,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
+                                    Width="*" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="CPF/CNPJ" Binding="{Binding DocumentoPrincipal}"
+                                    Width="130" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Seguradora" Binding="{Binding Seguradora}"
+                                    Width="140" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Ramo" Binding="{Binding Ramo}"
+                                    Width="90" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Vencimento"
+                                    Binding="{Binding VigenciaFinal, StringFormat='{}{0:dd/MM/yyyy}'}"
+                                    Width="100" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Dia" Binding="{Binding DiaDaSemana}"
+                                    Width="80" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Prêmio"
+                                    Binding="{Binding PremioTotal, StringFormat=C2}"
+                                    Width="110" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,8,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}"
+                                    Width="100" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Assinatura feita (toggle administrativo) -->
+                <DataGridTemplateColumn Header="Assinatura" Width="100" CanUserSort="False">
+                    <DataGridTemplateColumn.HeaderStyle>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTemplateColumn.HeaderStyle>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DataContext.ToggleAssinaturaCommand,
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    Height="28" Padding="6,0"
+                                    HorizontalAlignment="Center"
+                                    ToolTip="Clique para alternar">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Width="16" Height="16" VerticalAlignment="Center"
+                                                             Margin="0,0,4,0">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="CheckCircle"/>
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                        <Setter Property="Kind" Value="CloseCircle"/>
+                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Feita"/>
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                        <Setter Property="Text" Value="Pendente"/>
+                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Seguro emitido (toggle administrativo) -->
+                <DataGridTemplateColumn Header="Emitido" Width="100" CanUserSort="False">
+                    <DataGridTemplateColumn.HeaderStyle>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        </Style>
+                    </DataGridTemplateColumn.HeaderStyle>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding DataContext.ToggleSeguroEmitidoCommand,
+                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    Height="28" Padding="6,0"
+                                    HorizontalAlignment="Center"
+                                    ToolTip="Clique para alternar">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Width="16" Height="16" VerticalAlignment="Center"
+                                                             Margin="0,0,4,0">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="ShieldCheck"/>
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                        <Setter Property="Kind" Value="ShieldOff"/>
+                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Sim"/>
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                        <Setter Property="Text" Value="Não"/>
+                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Overlay de carregamento -->
+        <Grid Grid.Row="0" Grid.RowSpan="5"
+              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Rectangle Fill="#80000000" />
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         IsIndeterminate="True" Width="40" Height="40"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+    </Grid>
+</UserControl>

@@ -2,150 +2,353 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="PalmaSeg Analista" Height="700" Width="1100" MinHeight="600" MinWidth="900"
+        Title="Palma Seguros - Estagiário" Height="720" Width="1150" MinHeight="600" MinWidth="640"
+        WindowState="Maximized"
+        Icon="/Resources/Palma_Icone_Png.png"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
         Background="{DynamicResource MaterialDesign.Brush.Background}"
-        TextElement.FontFamily="{materialDesign:MaterialDesignFont}"
+        FontFamily="Lato, Segoe UI"
         WindowStartupLocation="CenterScreen">
-
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Colors.xaml" />
-                <ResourceDictionary Source="../Styles/Converters.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="210" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBgBrush}">
-            <DockPanel>
-                <!-- Logo -->
-                <Border DockPanel.Dock="Top" Padding="20,20,20,16"
-                        BorderBrush="#334155" BorderThickness="0,0,0,1">
-                    <StackPanel>
-                        <TextBlock Text="PalmaSeg" FontSize="18" FontWeight="Bold"
-                                   Foreground="White" />
-                        <TextBlock Text="Analista de Carteira" FontSize="11"
-                                   Foreground="{StaticResource SidebarTextBrush}" Margin="0,3,0,0" />
+        <!-- ══ SIDEBAR ══ -->
+        <Grid Grid.Column="0"
+              Width="{Binding SidebarWidth}"
+              ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.RowSpan="2" Background="{StaticResource SidebarBgBrush}" />
+
+            <!-- ── Navegação ── -->
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,4,0,8">
+
+                    <!-- Toggle sidebar -->
+                    <Button Command="{Binding ToggleSidebarCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="40" Padding="0" ToolTip="Recolher/expandir menu">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Width="18" Height="18"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Kind" Value="MenuOpen" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                                <Setter Property="Kind" Value="Menu" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </Button>
+
+                    <!-- Início -->
+                    <Button Command="{Binding NavInicioCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="44" Padding="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="HomeOutline"
+                                                     Width="18" Height="18"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Início"
+                                       VerticalAlignment="Center" FontSize="13" />
+                        </Grid>
+                    </Button>
+
+                    <!-- ─ separador ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <!-- ══ APÓLICES ══ -->
+                    <Button Command="{Binding ToggleApolicesCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="36" Padding="0"
+                            Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="20,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="APÓLICES"
+                                       FontSize="9.5" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource SidebarTextBrush}" />
+                            <materialDesign:PackIcon Grid.Column="1" Kind="ChevronDown"
+                                                     Width="14" Height="14" VerticalAlignment="Center"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                <materialDesign:PackIcon.RenderTransform>
+                                    <RotateTransform Angle="{Binding IsApolicesExpanded, Converter={StaticResource BoolToChevronAngleConverter}}" />
+                                </materialDesign:PackIcon.RenderTransform>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </Button>
+
+                    <StackPanel Visibility="{Binding ApolicesItemsVisibility}">
+
+                        <Button Command="{Binding NavAcompanhamentoRenovacoesCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardCheckOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Acompanhamento" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding NavSeguroNovosCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ShieldPlusOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Seguros Novos" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Dashboard de Emissão (visível a todos) -->
+                        <Button Command="{Binding NavEmissaoDashboardCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FileCheckOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Emissão" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
                     </StackPanel>
-                </Border>
 
-                <!-- Import Button -->
-                <Border DockPanel.Dock="Bottom" Padding="12,12">
-                    <Button Command="{Binding ImportarArquivoCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            Background="#2563EB" BorderBrush="#2563EB"
-                            Foreground="White" HorizontalAlignment="Stretch"
-                            Height="38" FontSize="13">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Upload" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Importar ODS" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                </Border>
+                    <!-- ─ separador gerenciador (admin) ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
+                               Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                <!-- Navigation -->
-                <StackPanel DockPanel.Dock="Top" Margin="0,8,0,0">
-                    <TextBlock Text="PRINCIPAL" FontSize="10" FontWeight="SemiBold"
-                               Foreground="#475569" Margin="20,8,0,4" />
-
-                    <Button Command="{Binding NavDashboardCommand}"
+                    <!-- ══ GERENCIADOR ══ -->
+                    <Button Command="{Binding ToggleGerenciadorCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            Foreground="{StaticResource SidebarTextBrush}" Padding="20,10"
-                            Height="42">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ViewDashboard" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock Text="Dashboard" VerticalAlignment="Center" />
-                        </StackPanel>
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="36" Padding="0"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="20,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="GERENCIADOR"
+                                       FontSize="9.5" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource SidebarTextBrush}" />
+                            <materialDesign:PackIcon Grid.Column="1" Kind="ChevronDown"
+                                                     Width="14" Height="14" VerticalAlignment="Center"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                <materialDesign:PackIcon.RenderTransform>
+                                    <RotateTransform Angle="{Binding IsGerenciadorExpanded, Converter={StaticResource BoolToChevronAngleConverter}}" />
+                                </materialDesign:PackIcon.RenderTransform>
+                            </materialDesign:PackIcon>
+                        </Grid>
                     </Button>
 
-                    <Button Command="{Binding NavRenovacoesCommand}"
+                    <StackPanel Visibility="{Binding GerenciadorItemsVisibility}">
+
+                        <!-- Renovações -->
+                        <Button Command="{Binding NavGerenciadorRenovacoesCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FileRefreshOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+
+                        <!-- Importar relatório de renovações -->
+                        <Border Background="#1A000000" Margin="8,4,8,4" CornerRadius="6">
+                            <Button Command="{Binding ImportarRelatorioRenovacaoCommand}"
+                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                    Height="40" Padding="0"
+                                    ToolTip="Importar relatório de renovações (.xlsx)">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="56" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <materialDesign:PackIcon Grid.Column="0" Kind="FileExcelOutline"
+                                                             Width="17" Height="17"
+                                                             Foreground="#10B981"
+                                                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="Importar relatório"
+                                               VerticalAlignment="Center" FontSize="12"
+                                               Foreground="#10B981"
+                                               FontWeight="SemiBold" />
+                                </Grid>
+                            </Button>
+                        </Border>
+
+                    </StackPanel>
+
+                    <!-- ─ separador admin ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
+                               Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <!-- ══ ADMINISTRAÇÃO ══ -->
+                    <Button Command="{Binding NavGerenciarUsuariosCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            Foreground="{StaticResource SidebarTextBrush}" Padding="20,10"
-                            Height="42">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="Autorenew" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock Text="Renovações" VerticalAlignment="Center" />
-                        </StackPanel>
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="44" Padding="0"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="AccountCogOutline"
+                                                     Width="18" Height="18"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Usuários" VerticalAlignment="Center" FontSize="13" />
+                        </Grid>
                     </Button>
 
-                    <Button Command="{Binding NavNovosNegociosCommand}"
+                    <!-- ─ separador sair ─ -->
+                    <Rectangle Height="1" Margin="16,8,16,0" Fill="#3D3F4A" />
+
+                    <!-- Sair -->
+                    <Button Command="{Binding SairCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            Foreground="{StaticResource SidebarTextBrush}" Padding="20,10"
-                            Height="42">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="StarOutline" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock Text="Novos negócios" VerticalAlignment="Center" />
-                        </StackPanel>
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="#EF4444"
+                            Height="44" Padding="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="LogoutVariant"
+                                                     Width="18" Height="18"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Sair" VerticalAlignment="Center" FontSize="13" />
+                        </Grid>
                     </Button>
 
-                    <Button Command="{Binding NavPendentesCommand}"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            Foreground="{StaticResource SidebarTextBrush}" Padding="20,10"
-                            Height="42">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="AlertCircleOutline" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock Text="Pendentes" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-
-                    <TextBlock Text="RELATÓRIOS" FontSize="10" FontWeight="SemiBold"
-                               Foreground="#475569" Margin="20,16,0,4" />
-
-                    <Button Command="{Binding NavRetencaoCommand}"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                            Foreground="{StaticResource SidebarTextBrush}" Padding="20,10"
-                            Height="42">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ChartLine" Width="18" Height="18"
-                                                     VerticalAlignment="Center" Margin="0,0,10,0" />
-                            <TextBlock Text="Evolução retenção" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
-            </DockPanel>
-        </Border>
+            </ScrollViewer>
 
-        <!-- Main Content -->
+            <!-- ── Logo no rodapé ── -->
+            <Border Grid.Row="1" Background="White" Padding="10,12">
+                <Grid>
+                    <!-- Logo horizontal (sidebar expandido) -->
+                    <Image Source="/Resources/Palma_Logo_Horizontal.png"
+                           Height="110"
+                           HorizontalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <!-- Ícone (sidebar recolhido) -->
+                    <Image Source="/Resources/Palma_Icone_Png.png"
+                           Width="80" Height="80"
+                           HorizontalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </Grid>
+            </Border>
+
+        </Grid>
+
+        <!-- ══ CONTEÚDO PRINCIPAL ══ -->
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="56" />
+                <RowDefinition Height="52" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Top Bar -->
             <Border Grid.Row="0" Background="White"
-                    BorderBrush="#E2E8F0" BorderThickness="0,0,0,1"
-                    Padding="24,0">
+                    BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="28,0">
                 <DockPanel>
-                    <TextBlock Text="{Binding TituloAtivo}" FontSize="16" FontWeight="Medium"
-                               VerticalAlignment="Center" Foreground="#0F172A" />
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="3" Height="18" CornerRadius="2"
+                                Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding TituloAtivo}" FontSize="15" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="Lato, Segoe UI" />
+                    </StackPanel>
                     <ProgressBar DockPanel.Dock="Right" IsIndeterminate="True"
                                  Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
-                                 Width="120" Height="4" VerticalAlignment="Center"
+                                 Width="120" Height="3" VerticalAlignment="Center"
+                                 Foreground="{StaticResource PrimaryBrush}"
                                  Style="{StaticResource MaterialDesignLinearProgressBar}" />
                 </DockPanel>
             </Border>
 
-            <!-- Content -->
-            <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="0" />
+            <Border Grid.Row="1" Background="{StaticResource PageBgBrush}">
+                <ContentControl Content="{Binding CurrentView}" Margin="0" />
+            </Border>
         </Grid>
     </Grid>
 </Window>

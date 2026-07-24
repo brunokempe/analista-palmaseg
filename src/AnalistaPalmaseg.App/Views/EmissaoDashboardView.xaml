@@ -1,0 +1,499 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.EmissaoDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:AnalistaPalmaseg.App.Converters">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Loading overlay -->
+        <Grid Panel.ZIndex="10"
+              Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Rectangle Fill="#80000000"/>
+            <ProgressBar IsIndeterminate="True" Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+
+        <DockPanel>
+            <!-- ── Cabeçalho ── -->
+            <Border DockPanel.Dock="Top" Background="{StaticResource PrimaryBrush}" Padding="20,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileCheckOutline" Width="26" Height="26"
+                                                 Foreground="White" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Dashboard de Emissão" FontSize="18" FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Acompanhamento das renovações Ren. Palma"
+                                       FontSize="12" Foreground="#CCFFFFFF"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Button Grid.Column="1" Command="{Binding RecarregarCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Foreground="White" ToolTip="Recarregar dados">
+                        <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ── Cards de resumo ── -->
+            <UniformGrid DockPanel.Dock="Top" Rows="1" Margin="16,12,16,0">
+
+                <!-- Total Ren. Palma -->
+                <Border Margin="0,0,8,0" Background="White" CornerRadius="8" Padding="16,12"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileSign" Width="20" Height="20"
+                                                     Foreground="{StaticResource AccentBlueBrush}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Total Ren. Palma" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TotalRenPalma}" FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBlueBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="contratos fechados" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Prêmio Total -->
+                <Border Margin="8,0" Background="White" CornerRadius="8" Padding="16,12"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CurrencyUsd" Width="20" Height="20"
+                                                     Foreground="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Prêmio Líquido Total" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding PremioTotal, StringFormat=C2}" FontSize="22" FontWeight="Bold"
+                                   Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="soma dos fechamentos" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Assinaturas Pendentes -->
+                <Border Margin="8,0" Background="White" CornerRadius="8" Padding="16,12"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileEditOutline" Width="20" Height="20"
+                                                     Foreground="{StaticResource WarningBrush}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Assinaturas Pendentes" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding AssinaturasPendentes}" FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource WarningBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="aguardando assinatura" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Emissões Pendentes -->
+                <Border Margin="8,0,0,0" Background="White" CornerRadius="8" Padding="16,12"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ShieldOff" Width="20" Height="20"
+                                                     Foreground="{StaticResource DangerBrush}" Margin="0,0,8,0"/>
+                            <TextBlock Text="Emissões Pendentes" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding EmissoesPendentes}" FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource DangerBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="aguardando emissão" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                    </StackPanel>
+                </Border>
+
+            </UniformGrid>
+
+            <!-- ── Conteúdo principal ── -->
+            <Grid Margin="16,12,16,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- ── Painel esquerdo: Por Produtor ── -->
+                <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="0"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="{StaticResource AccentBlueBrush}"
+                                CornerRadius="8,8,0,0" Padding="14,10">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="AccountGroup" Width="18" Height="18"
+                                                         Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Por Produtor" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="White" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <DataGrid ItemsSource="{Binding ResumoProdutor}"
+                                  IsReadOnly="True" AutoGenerateColumns="False"
+                                  CanUserSortColumns="True" CanUserResizeColumns="False"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F0F0F0"
+                                  Style="{StaticResource MaterialDesignDataGrid}"
+                                  RowStyle="{StaticResource MaterialDesignDataGridRow}"
+                                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                                  FontSize="12">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Produtor" Binding="{Binding Produtor}"
+                                                    Width="*" SortMemberPath="Produtor">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Qtd" Binding="{Binding Total}"
+                                                    Width="40" SortMemberPath="Total">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Assin." Binding="{Binding AssinaturaOk}"
+                                                    Width="50" SortMemberPath="AssinaturaOk">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Header="Emitido" Width="70" SortMemberPath="EmitidoOk">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock FontSize="11" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Progresso}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Pendentes}" Value="0">
+                                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+
+                <!-- ── Painel direito: Detalhes ── -->
+                <Border Grid.Column="2" Background="White" CornerRadius="8"
+                        Effect="{StaticResource MaterialDesignShadowDepth1}">
+                    <DockPanel>
+                        <!-- Cabeçalho + filtro -->
+                        <Border DockPanel.Dock="Top" CornerRadius="8,8,0,0"
+                                BorderBrush="#F0F0F0" BorderThickness="0,0,0,1" Padding="14,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="TableLarge" Width="18" Height="18"
+                                                             Foreground="{StaticResource AccentBlueBrush}"
+                                                             VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Contratos Ren. Palma" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <TextBlock Text="Filtrar por produtor:" VerticalAlignment="Center"
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                               Margin="0,0,8,0"/>
+                                    <ComboBox ItemsSource="{Binding ProdutoresDisponiveis}"
+                                              SelectedItem="{Binding FiltroProdutor}"
+                                              Width="160" FontSize="12"
+                                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                              materialDesign:HintAssist.Hint="Todos">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" FontSize="12">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding}" Value="">
+                                                                    <Setter Property="Text" Value="Todos"/>
+                                                                    <Setter Property="FontStyle" Value="Italic"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Grid de detalhes -->
+                        <DataGrid x:Name="DetalheGrid"
+                                  ItemsSource="{Binding Registros}"
+                                  IsReadOnly="True" AutoGenerateColumns="False"
+                                  CanUserSortColumns="True" CanUserResizeColumns="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F0F0F0"
+                                  Style="{StaticResource MaterialDesignDataGrid}"
+                                  RowStyle="{StaticResource MaterialDesignDataGridRow}"
+                                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                                  FontSize="12" VirtualizingPanel.IsVirtualizing="True">
+
+                            <DataGrid.Columns>
+
+                                <!-- Cliente -->
+                                <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
+                                                    Width="160" SortMemberPath="NomeCliente">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Vigência Final -->
+                                <DataGridTextColumn Header="Vigência Final"
+                                                    Binding="{Binding VigenciaFinal, StringFormat=dd/MM/yyyy}"
+                                                    Width="100" SortMemberPath="VigenciaFinal">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Produtor -->
+                                <DataGridTextColumn Header="Produtor" Binding="{Binding NovoProdutor}"
+                                                    Width="110" SortMemberPath="NovoProdutor">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Seguradora Fechamento -->
+                                <DataGridTextColumn Header="Seguradora" Binding="{Binding FechamentoSeguradora}"
+                                                    Width="130" SortMemberPath="FechamentoSeguradora">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Prêmio Líquido -->
+                                <DataGridTextColumn Header="Prêmio Líq."
+                                                    Binding="{Binding FechamentoPremioLiquido, StringFormat=C2}"
+                                                    Width="100" SortMemberPath="FechamentoPremioLiquido">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                            <Setter Property="Margin" Value="0,0,8,0"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Comissão -->
+                                <DataGridTextColumn Header="Comissão"
+                                                    Binding="{Binding FechamentoComissao, StringFormat=C2}"
+                                                    Width="90" SortMemberPath="FechamentoComissao">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                            <Setter Property="Margin" Value="0,0,8,0"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Forma de Pagamento -->
+                                <DataGridTextColumn Header="Forma Pgto" Binding="{Binding FechamentoFormaPagamento}"
+                                                    Width="100" SortMemberPath="FechamentoFormaPagamento">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Parcelamento -->
+                                <DataGridTextColumn Header="Parcelas" Binding="{Binding FechamentoParcelamento}"
+                                                    Width="75" SortMemberPath="FechamentoParcelamento">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Tipo de Assinatura -->
+                                <DataGridTextColumn Header="Tipo Assinatura" Binding="{Binding FechamentoAssinatura}"
+                                                    Width="110" SortMemberPath="FechamentoAssinatura">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <!-- Assinatura Feita (toggle) -->
+                                <DataGridTemplateColumn Header="Assinatura" Width="95" CanUserSort="False">
+                                    <DataGridTemplateColumn.HeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader"
+                                               BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTemplateColumn.HeaderStyle>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.ToggleAssinaturaCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Height="28" Padding="4,0"
+                                                    HorizontalAlignment="Center"
+                                                    ToolTip="Clique para alternar">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="0,0,3,0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="CheckCircle"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                                        <Setter Property="Kind" Value="CloseCircle"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="Feita"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                                        <Setter Property="Text" Value="Pendente"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Seguro Emitido (toggle) -->
+                                <DataGridTemplateColumn Header="Emitido" Width="85" CanUserSort="False">
+                                    <DataGridTemplateColumn.HeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader"
+                                               BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTemplateColumn.HeaderStyle>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.ToggleSeguroEmitidoCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Height="28" Padding="4,0"
+                                                    HorizontalAlignment="Center"
+                                                    ToolTip="Clique para alternar">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="0,0,3,0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="ShieldCheck"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                                        <Setter Property="Kind" Value="ShieldOff"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="Sim"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                                        <Setter Property="Text" Value="Não"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</UserControl>

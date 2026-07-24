@@ -11,6 +11,8 @@ public class Importacao
 
     public ICollection<Renovacao> Renovacoes { get; set; } = [];
     public ICollection<NovoNegocio> NovosNegocios { get; set; } = [];
+    public ICollection<ResultadoMeta> Resultados { get; set; } = [];
+    public ICollection<FuncionarioResultado> FuncionariosResultados { get; set; } = [];
 
     public string Periodo => $"{Mes:D2}/{Ano}";
 }

@@ -1,0 +1,81 @@
+<Window x:Class="AnalistaPalmaseg.App.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Palma Seguros - Estagiário"
+        Width="380" Height="500"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Resources/Palma_Icone_Png.png"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        Background="White"
+        FontFamily="Lato, Segoe UI">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="160" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Cabeçalho com logo -->
+        <Border Grid.Row="0" Background="{StaticResource SidebarBgBrush}">
+            <Image Source="/Resources/Palma_Logo_Horizontal.png"
+                   Height="90"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Margin="24"
+                   RenderOptions.BitmapScalingMode="HighQuality" />
+        </Border>
+
+        <!-- Formulário de login -->
+        <StackPanel Grid.Row="1" Margin="40,28,40,24" VerticalAlignment="Top">
+
+            <TextBlock Text="Acesso à plataforma"
+                       FontSize="15" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       Margin="0,0,0,20" />
+
+            <TextBox x:Name="LoginBox"
+                     Text="{Binding LoginText, UpdateSourceTrigger=PropertyChanged}"
+                     materialDesign:HintAssist.Hint="Usuário"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Margin="0,0,0,14"
+                     FontSize="14"
+                     KeyDown="Input_KeyDown" />
+
+            <PasswordBox x:Name="SenhaBox"
+                         materialDesign:HintAssist.Hint="Senha"
+                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                         Margin="0,0,0,4"
+                         FontSize="14"
+                         PasswordChanged="SenhaBox_PasswordChanged"
+                         KeyDown="Input_KeyDown" />
+
+            <TextBlock Text="{Binding MensagemErro}"
+                       Foreground="#EC3237"
+                       FontSize="12"
+                       MinHeight="18"
+                       Margin="0,6,0,16"
+                       TextWrapping="Wrap" />
+
+            <Button Content="ENTRAR"
+                    Command="{Binding EntrarCommand}"
+                    Height="44"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Background="{StaticResource PrimaryBrush}"
+                    Foreground="White"
+                    IsEnabled="{Binding CanEntrar}"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    materialDesign:ButtonAssist.CornerRadius="6" />
+
+            <ProgressBar IsIndeterminate="True"
+                         Visibility="{Binding IsProcessando, Converter={StaticResource BoolToVisibilityConverter}}"
+                         Margin="0,12,0,0"
+                         Height="3"
+                         Foreground="{StaticResource PrimaryBrush}"
+                         Style="{StaticResource MaterialDesignLinearProgressBar}" />
+
+        </StackPanel>
+    </Grid>
+</Window>

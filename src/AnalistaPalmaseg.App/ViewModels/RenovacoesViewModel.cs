@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 
 namespace AnalistaPalmaseg.App.ViewModels;
@@ -8,11 +7,10 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class RenovacoesViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
-    private List<Renovacao> _todasRenovacoes = [];
 
-    [ObservableProperty] private ObservableCollection<ResumoImportacao> _importacoes = [];
-    [ObservableProperty] private ResumoImportacao? _importacaoSelecionada;
-    [ObservableProperty] private ObservableCollection<Renovacao> _renovacoes = [];
+    [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
+    [ObservableProperty] private string? _nomeSelecionado;
+    [ObservableProperty] private ObservableCollection<PeriodoRenovacoesVm> _periodos = [];
     [ObservableProperty] private string _filtroTexto = string.Empty;
     [ObservableProperty] private string _filtroStatus = "Todos";
 
@@ -25,37 +23,46 @@ public partial class RenovacoesViewModel : ObservableObject
 
     public async Task CarregarAsync()
     {
-        var lista = await _relatorioService.GetResumoAsync();
-        Importacoes = new ObservableCollection<ResumoImportacao>(lista);
-        ImportacaoSelecionada = Importacoes.FirstOrDefault();
+        var produtores = await _relatorioService.GetProdutoresAsync();
+        NomesDisponiveis = new ObservableCollection<string>(produtores);
+
+        if (NomeSelecionado != null && NomesDisponiveis.Contains(NomeSelecionado))
+            await CarregarPeriodosAsync(NomeSelecionado);
+        else
+            NomeSelecionado = NomesDisponiveis.FirstOrDefault();
     }
 
-    partial void OnImportacaoSelecionadaChanged(ResumoImportacao? value)
+    partial void OnNomeSelecionadoChanged(string? value)
     {
-        if (value != null) _ = CarregarRenovacoesAsync(value.Importacao.Id);
+        if (!string.IsNullOrEmpty(value))
+            _ = CarregarPeriodosAsync(value);
+        else
+            Periodos = [];
     }
 
     partial void OnFiltroTextoChanged(string value) => AplicarFiltros();
     partial void OnFiltroStatusChanged(string value) => AplicarFiltros();
 
-    private async Task CarregarRenovacoesAsync(int importacaoId)
+    private async Task CarregarPeriodosAsync(string produtor)
     {
-        _todasRenovacoes = await _relatorioService.GetRenovacoesAsync(importacaoId);
-        AplicarFiltros();
+        try
+        {
+            var timeline = await _relatorioService.GetTimelineRenovacoesAsync(produtor);
+            Periodos = new ObservableCollection<PeriodoRenovacoesVm>(
+                timeline.Select(t => new PeriodoRenovacoesVm(t.Resumo, t.Renovacoes))
+            );
+            AplicarFiltros();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Timeline Renovações] ERRO: {ex}");
+            Periodos = [];
+        }
     }
 
     private void AplicarFiltros()
     {
-        var query = _todasRenovacoes.AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(FiltroTexto))
-            query = query.Where(r => r.Segurado.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase)
-                                  || r.Cia.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase)
-                                  || r.Ramo.Contains(FiltroTexto, StringComparison.OrdinalIgnoreCase));
-
-        if (FiltroStatus != "Todos")
-            query = query.Where(r => r.Status == FiltroStatus);
-
-        Renovacoes = new ObservableCollection<Renovacao>(query);
+        foreach (var periodo in Periodos)
+            periodo.AplicarFiltro(FiltroTexto, FiltroStatus);
     }
 }
