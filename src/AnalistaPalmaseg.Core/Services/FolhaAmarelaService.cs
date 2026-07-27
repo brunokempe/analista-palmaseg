@@ -50,7 +50,10 @@ public class FolhaAmarelaService
     public string Gerar(RelatorioRenovacao reg)
     {
         var nome = Sanitizar(reg.NomeCliente ?? "Folha");
-        var path = Path.Combine(Path.GetTempPath(), $"FolhaAmarela_{nome}_{DateTime.Now:yyyyMMdd_HHmmss}.odt");
+        var pasta = AnexoService.ObterPasta(reg.Id);
+        var path = Path.Combine(pasta, $"FolhaAmarela_{nome}.odt");
+
+        if (File.Exists(path)) return path;
 
         var template = LocalizarTemplate();
         if (template != null)

@@ -35,9 +35,8 @@ public partial class App : Application
             .ConfigureServices(services =>
             {
                 var dbPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "AnalistaPalmaseg", "dados.db");
-                Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "dados.db");
 
                 services.AddDbContext<AppDbContext>(opts =>
                     opts.UseSqlite($"Data Source={dbPath}"));
@@ -53,6 +52,7 @@ public partial class App : Application
                 services.AddTransient<RelatorioRenovacaoService>();
                 services.AddTransient<FolhaAmarelaService>();
                 services.AddTransient<AnexoService>();
+                services.AddTransient<MetaService>();
 
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<LoginWindow>();
@@ -73,6 +73,10 @@ public partial class App : Application
                 services.AddTransient<GerenciadorCotacoesViewModel>();
                 services.AddTransient<EmissaoDashboardViewModel>();
                 services.AddTransient<SeguroNovosViewModel>();
+                services.AddTransient<RelatorioEmissaoViewModel>();
+                services.AddTransient<DefinicoesMetasViewModel>();
+                services.AddTransient<DashboardMetasViewModel>();
+                services.AddTransient<ControleBoletosViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<MainWindow>();
             })
@@ -138,6 +142,10 @@ public partial class App : Application
         Add<GerenciadorCotacoesViewModel, GerenciadorCotacoesView>();
         Add<EmissaoDashboardViewModel, EmissaoDashboardView>();
         Add<SeguroNovosViewModel, SeguroNovosView>();
+        Add<RelatorioEmissaoViewModel, RelatorioEmissaoView>();
+        Add<DefinicoesMetasViewModel, DefinicoesMetasView>();
+        Add<DashboardMetasViewModel, DashboardMetasView>();
+        Add<ControleBoletosViewModel, ControleBoletosView>();
     }
 
     protected override async void OnExit(ExitEventArgs e)

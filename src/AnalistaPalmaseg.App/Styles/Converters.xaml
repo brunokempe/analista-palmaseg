@@ -9,4 +9,8 @@
     <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     <conv:ApoliceStatusColorConverter x:Key="ApoliceStatusColorConverter" />
     <conv:AtingimentoColorConverter x:Key="AtingimentoColorConverter" />
+    <conv:BoolToSimNaoConverter x:Key="BoolToSimNaoConverter" />
+    <conv:BoolToCheckKindConverter x:Key="BoolToCheckKindConverter" />
+    <conv:MesFormatConverter x:Key="MesFormatConverter" />
+    <conv:SeguradoraAbrevConverter x:Key="SeguradoraAbrevConverter" />
 </ResourceDictionary>

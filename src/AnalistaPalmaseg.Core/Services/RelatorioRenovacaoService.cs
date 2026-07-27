@@ -167,6 +167,7 @@ public class RelatorioRenovacaoService(AppDbContext context)
             {
                 // Preserva campos editados manualmente antes de sobrescrever com dados da planilha
                 var novoProdutor             = existing.NovoProdutor;
+                var motivoSituacao           = existing.MotivoSituacao;
                 var observacao               = existing.Observacao;
                 var situacaoAcompanhamento   = existing.SituacaoAcompanhamento;
                 var fechamentoSeguradora     = existing.FechamentoSeguradora;
@@ -177,10 +178,15 @@ public class RelatorioRenovacaoService(AppDbContext context)
                 var fechamentoAssinatura     = existing.FechamentoAssinatura;
                 var assinaturaFeita          = existing.AssinaturaFeita;
                 var seguroEmitido            = existing.SeguroEmitido;
-                var id                       = existing.Id;
+
+                // SetValues copia todos os campos, incluindo Id. Para evitar que o EF marque
+                // a chave primária como modificada (o que lança InvalidOperationException),
+                // forçamos o mesmo Id antes da chamada — assim o valor "copiado" não muda.
+                reg.Id = existing.Id;
                 context.Entry(existing).CurrentValues.SetValues(reg);
-                existing.Id                       = id;
+
                 existing.NovoProdutor             = novoProdutor;
+                existing.MotivoSituacao           = motivoSituacao;
                 existing.Observacao               = observacao;
                 existing.SituacaoAcompanhamento   = situacaoAcompanhamento;
                 existing.FechamentoSeguradora     = fechamentoSeguradora;
@@ -200,6 +206,7 @@ public class RelatorioRenovacaoService(AppDbContext context)
         }
 
         await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
         return inseridos;
 
         // ── helpers ──────────────────────────────────────────────
@@ -280,6 +287,7 @@ public class RelatorioRenovacaoService(AppDbContext context)
             context.Attach(reg);
 
         entry.Property(x => x.SituacaoAcompanhamento).IsModified = true;
+        entry.Property(x => x.MotivoSituacao).IsModified = true;
         await context.SaveChangesAsync();
         entry.State = EntityState.Detached;
     }
@@ -291,8 +299,16 @@ public class RelatorioRenovacaoService(AppDbContext context)
             context.Attach(reg);
         entry.Property(x => x.AssinaturaFeita).IsModified = true;
         entry.Property(x => x.SeguroEmitido).IsModified   = true;
+        entry.Property(x => x.EmitidoPor).IsModified      = true;
         await context.SaveChangesAsync();
         entry.State = EntityState.Detached;
+    }
+
+    public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
+    {
+        await context.Database.ExecuteSqlRawAsync(
+            "UPDATE \"RelatorioRenovacoes\" SET \"BoletosGerados\" = {0} WHERE \"Id\" = {1}",
+            boletosGerados, id);
     }
 
     public async Task SalvarFechamentoAsync(RelatorioRenovacao reg)

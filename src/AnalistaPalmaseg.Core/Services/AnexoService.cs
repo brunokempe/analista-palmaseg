@@ -7,8 +7,8 @@ namespace AnalistaPalmaseg.Core.Services;
 public class AnexoService(AppDbContext context)
 {
     private static string BaseDir => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "AnalistaPalmaseg", "Anexos");
+        AppDomain.CurrentDomain.BaseDirectory,
+        "Anexos");
 
     public static string ObterPasta(int relatorioId) =>
         Path.Combine(BaseDir, relatorioId.ToString());

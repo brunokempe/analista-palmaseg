@@ -281,8 +281,8 @@
                                     Binding="{Binding VigenciaFinal, StringFormat=dd/MM/yyyy}"    Width="90"  IsReadOnly="True"/>
                 <DataGridTextColumn Header="Dia da Semana"
                                     Binding="{Binding DiaDaSemana}"                               Width="110" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Prêmio Total"
-                                    Binding="{Binding PremioTotal, StringFormat=C2}"              Width="120" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Prêmio Líquido"
+                                    Binding="{Binding PremioLiquido, StringFormat=C2}"            Width="120" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Parcelas"      Binding="{Binding NumeroParcelas}"     Width="70"  IsReadOnly="True"/>
                 <DataGridTextColumn Header="Forma Pagto"   Binding="{Binding FormaPagamento}"     Width="130" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Vendedor"      Binding="{Binding VendedorPrincipal}"  Width="160" IsReadOnly="True"/>

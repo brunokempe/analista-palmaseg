@@ -206,11 +206,11 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     {
         if (_view == null) { Resumo = string.Empty; return; }
         var itens = _view.Cast<RelatorioRenovacao>().ToList();
-        var total = itens.Sum(r => r.PremioTotal);
+        var total = itens.Sum(r => r.PremioLiquido);
         var marcados = itens.Count(r => r.IsChecked);
         Resumo = marcados > 0
-            ? $"{itens.Count} registro(s) · {marcados} marcado(s) · Prêmio total: {total:C2}"
-            : $"{itens.Count} registro(s) · Prêmio total: {total:C2}";
+            ? $"{itens.Count} registro(s) · {marcados} marcado(s) · Prêmio líquido: {total:C2}"
+            : $"{itens.Count} registro(s) · Prêmio líquido: {total:C2}";
         OnPropertyChanged(nameof(TemMarcados));
     }
 

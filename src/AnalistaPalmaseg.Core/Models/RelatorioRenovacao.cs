@@ -129,6 +129,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
 
     // Campos editáveis manualmente (preservados no re-import)
     public string? NovoProdutor { get; set; }
+    public string? MotivoSituacao { get; set; }
 
     // Campos de fechamento (preenchidos no popup ao definir Ren. Palma)
     public string? FechamentoSeguradora { get; set; }
@@ -153,6 +154,9 @@ public class RelatorioRenovacao : INotifyPropertyChanged
         set { if (_seguroEmitido == value) return; _seguroEmitido = value; PropertyChanged?.Invoke(this, new(nameof(SeguroEmitido))); }
     }
 
+    public string? EmitidoPor { get; set; }
+    public int BoletosGerados { get; set; }
+
     private string _situacaoAcompanhamento = "À Renovar";
     public string SituacaoAcompanhamento
     {
@@ -173,6 +177,21 @@ public class RelatorioRenovacao : INotifyPropertyChanged
     // Metadados de importação
     public DateTime ImportadoEm { get; set; }
     public string? ArquivoOrigem { get; set; }
+
+    [NotMapped]
+    public decimal? ComissaoValor =>
+        FechamentoPremioLiquido.HasValue && FechamentoComissao.HasValue
+            ? Math.Round(FechamentoPremioLiquido.Value * FechamentoComissao.Value / 100m, 2)
+            : null;
+
+    [NotMapped]
+    public decimal PercentualComissaoColab { get; set; }
+
+    [NotMapped]
+    public decimal ComissaoColab =>
+        ComissaoValor.HasValue && PercentualComissaoColab > 0
+            ? Math.Round(ComissaoValor.Value * PercentualComissaoColab / 100m, 2)
+            : 0m;
 
     // Calculado — não gravado no banco
     private static readonly System.Globalization.CultureInfo PtBr = new("pt-BR");

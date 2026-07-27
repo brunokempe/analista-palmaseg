@@ -256,6 +256,18 @@ public class DatabaseInitializer(AppDbContext context)
             context.Database.ExecuteSqlRaw(
                 "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"SeguroEmitido\" INTEGER NOT NULL DEFAULT 0");
 
+        if (!colsRenovacoes.Contains("EmitidoPor"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"EmitidoPor\" TEXT");
+
+        if (!colsRenovacoes.Contains("MotivoSituacao"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"MotivoSituacao\" TEXT");
+
+        if (!colsRenovacoes.Contains("BoletosGerados"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"BoletosGerados\" INTEGER NOT NULL DEFAULT 0");
+
         // Tabela de anexos por registro de renovação
         context.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS "Anexos" (
@@ -290,6 +302,152 @@ public class DatabaseInitializer(AppDbContext context)
                 "CriadoEm"   TEXT NOT NULL
             )
             """);
+
+        var colsSeguroNovos = context.Database
+            .SqlQueryRaw<string>("SELECT name FROM pragma_table_info('SeguroNovos')")
+            .ToList();
+
+        if (!colsSeguroNovos.Contains("CriadoPor"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"CriadoPor\" TEXT");
+
+        if (!colsSeguroNovos.Contains("EmitidoPor"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"EmitidoPor\" TEXT");
+
+        if (!colsSeguroNovos.Contains("FormaPagamento"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"FormaPagamento\" TEXT NOT NULL DEFAULT ''");
+
+        if (!colsSeguroNovos.Contains("Parcelas"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"Parcelas\" INTEGER");
+
+        if (!colsSeguroNovos.Contains("AssinaturaFeita"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"AssinaturaFeita\" INTEGER NOT NULL DEFAULT 0");
+
+        if (!colsSeguroNovos.Contains("BoletosGerados"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"SeguroNovos\" ADD COLUMN \"BoletosGerados\" INTEGER NOT NULL DEFAULT 0");
+
+        // ── Seguradoras ───────────────────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "Seguradoras" (
+                "Id"         INTEGER NOT NULL CONSTRAINT "PK_Seguradoras" PRIMARY KEY AUTOINCREMENT,
+                "Nome"       TEXT    NOT NULL,
+                "IsParceira" INTEGER NOT NULL DEFAULT 0,
+                "Ativo"      INTEGER NOT NULL DEFAULT 1
+            )
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_Seguradoras_Nome" ON "Seguradoras" ("Nome")
+            """);
+
+        // ── Metas por seguradora ──────────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "MetasSeguradoras" (
+                "Id"           INTEGER NOT NULL CONSTRAINT "PK_MetasSeguradoras" PRIMARY KEY AUTOINCREMENT,
+                "SeguradoraId" INTEGER NOT NULL,
+                "Mes"          INTEGER NOT NULL,
+                "Ano"          INTEGER NOT NULL,
+                "MetaPremio"   TEXT    NOT NULL DEFAULT '0',
+                CONSTRAINT "FK_MetasSeguradoras_Seguradoras_SeguradoraId"
+                    FOREIGN KEY ("SeguradoraId") REFERENCES "Seguradoras" ("Id") ON DELETE CASCADE
+            )
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_MetasSeguradoras_Seg_Mes_Ano"
+            ON "MetasSeguradoras" ("SeguradoraId", "Mes", "Ano")
+            """);
+
+        // ── Premiação por seguradoras ──────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "MetasPremiacao" (
+                "Id"               INTEGER NOT NULL CONSTRAINT "PK_MetasPremiacao" PRIMARY KEY AUTOINCREMENT,
+                "QuantidadeMinima" INTEGER,
+                "EhTodas"          INTEGER NOT NULL DEFAULT 0,
+                "ValorBonus"       TEXT    NOT NULL DEFAULT '0',
+                "Ordem"            INTEGER NOT NULL DEFAULT 0
+            )
+            """);
+
+        // ── Metas de crescimento ──────────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "MetasCrescimento" (
+                "Id"             INTEGER NOT NULL CONSTRAINT "PK_MetasCrescimento" PRIMARY KEY AUTOINCREMENT,
+                "Tipo"           TEXT    NOT NULL,
+                "PercentualMeta" TEXT    NOT NULL DEFAULT '0',
+                "ValorBonus"     TEXT    NOT NULL DEFAULT '0',
+                "EhEquipe"       INTEGER NOT NULL DEFAULT 0
+            )
+            """);
+
+        // ── Valores de referência (ano anterior) ──────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "ValoresReferencia" (
+                "Id"           INTEGER NOT NULL CONSTRAINT "PK_ValoresReferencia" PRIMARY KEY AUTOINCREMENT,
+                "Mes"          INTEGER NOT NULL,
+                "Ano"          INTEGER NOT NULL,
+                "PremioTotal"  TEXT    NOT NULL DEFAULT '0',
+                "ComissaoTotal" TEXT   NOT NULL DEFAULT '0'
+            )
+            """);
+
+        // Migração: adiciona coluna Colaborador e recria o índice único com ela
+        var colsValRef = context.Database
+            .SqlQueryRaw<string>("SELECT name FROM pragma_table_info('ValoresReferencia')")
+            .ToList();
+
+        if (!colsValRef.Contains("Colaborador"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"ValoresReferencia\" ADD COLUMN \"Colaborador\" TEXT NOT NULL DEFAULT ''");
+
+        // Sempre garante: índice antigo removido e novo (com Colaborador) criado
+        context.Database.ExecuteSqlRaw("DROP INDEX IF EXISTS \"IX_ValoresReferencia_Mes_Ano\"");
+        context.Database.ExecuteSqlRaw("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_ValoresReferencia_Colaborador_Mes_Ano"
+            ON "ValoresReferencia" ("Colaborador", "Mes", "Ano")
+            """);
+
+        // Seed: seguradoras padrão (parceiras e demais)
+        if (!context.Seguradoras.Any())
+        {
+            var parceiras = new[] { "Porto", "Unimed", "Hdi", "Allianz", "Tokio", "Zurich", "Bradesco", "Azul" };
+            foreach (var nome in parceiras)
+                context.Seguradoras.Add(new Models.Seguradora { Nome = nome, IsParceira = true, Ativo = true });
+            context.Seguradoras.Add(new Models.Seguradora { Nome = "Demais", IsParceira = false, Ativo = true });
+            context.SaveChanges();
+        }
+
+        // Seed: premiação por seguradoras atingidas
+        if (!context.MetasPremiacao.Any())
+        {
+            context.MetasPremiacao.AddRange(
+                new Models.MetaPremiacao { QuantidadeMinima = 3,  EhTodas = false, ValorBonus = 100m, Ordem = 1 },
+                new Models.MetaPremiacao { QuantidadeMinima = 6,  EhTodas = false, ValorBonus = 100m, Ordem = 2 },
+                new Models.MetaPremiacao { QuantidadeMinima = null, EhTodas = true, ValorBonus = 100m, Ordem = 3 }
+            );
+            context.SaveChanges();
+        }
+
+        // Migração: corrige threshold inicial de 4 → 3 (banco existente)
+        context.Database.ExecuteSqlRaw(
+            "UPDATE \"MetasPremiacao\" SET \"QuantidadeMinima\" = 3 WHERE \"QuantidadeMinima\" = 4 AND \"EhTodas\" = 0");
+
+        // Seed: metas de crescimento
+        if (!context.MetasCrescimento.Any())
+        {
+            context.MetasCrescimento.AddRange(
+                new Models.MetaCrescimento { Tipo = "Premio",   PercentualMeta = 0.10m, ValorBonus = 100m,  EhEquipe = true  },
+                new Models.MetaCrescimento { Tipo = "Premio",   PercentualMeta = 0.15m, ValorBonus = 300m,  EhEquipe = true  },
+                new Models.MetaCrescimento { Tipo = "Comissao", PercentualMeta = 0.15m, ValorBonus = 100m,  EhEquipe = false },
+                new Models.MetaCrescimento { Tipo = "Comissao", PercentualMeta = 0.20m, ValorBonus = 200m,  EhEquipe = false }
+            );
+            context.SaveChanges();
+        }
 
         // Seed: cria admin padrão (admin / admin123) se não houver usuários
         if (!context.Usuarios.Any())

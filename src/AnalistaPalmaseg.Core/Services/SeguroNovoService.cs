@@ -6,10 +6,20 @@ namespace AnalistaPalmaseg.Core.Services;
 
 public class SeguroNovoService(AppDbContext context)
 {
-    public async Task<List<SeguroNovo>> GetTodosAsync() =>
+    public async Task<List<SeguroNovo>> GetTodosAsync(string? produtor = null) =>
         await context.SeguroNovos
             .AsNoTracking()
+            .Where(x => produtor == null || x.CriadoPor == produtor)
             .OrderByDescending(x => x.CriadoEm)
+            .ToListAsync();
+
+    public async Task<List<string>> GetProdutoresDistinctAsync() =>
+        await context.SeguroNovos
+            .AsNoTracking()
+            .Where(x => x.CriadoPor != null && x.CriadoPor != string.Empty)
+            .Select(x => x.CriadoPor!)
+            .Distinct()
+            .OrderBy(x => x)
             .ToListAsync();
 
     public async Task<SeguroNovo> SalvarAsync(SeguroNovo seguroNovo)
@@ -22,6 +32,15 @@ public class SeguroNovoService(AppDbContext context)
         await context.SaveChangesAsync();
         context.Entry(seguroNovo).State = EntityState.Detached;
         return seguroNovo;
+    }
+
+    public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
+    {
+        var entidade = await context.SeguroNovos.FindAsync(id);
+        if (entidade == null) return;
+        entidade.BoletosGerados = boletosGerados;
+        await context.SaveChangesAsync();
+        context.Entry(entidade).State = EntityState.Detached;
     }
 
     public async Task ExcluirAsync(int id)

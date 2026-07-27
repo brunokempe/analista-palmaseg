@@ -120,7 +120,7 @@
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardCheckOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="Acompanhamento" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
                             </Grid>
                         </Button>
 
@@ -153,7 +153,41 @@
                                 <materialDesign:PackIcon Grid.Column="0" Kind="FileCheckOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="Emissão" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Grid.Column="1" Text="Dashboard de Emissões" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Controle de Boletos -->
+                        <Button Command="{Binding NavControleBoletosCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ReceiptTextCheckOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Controle de Boletos" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Dashboard de Metas (visível a todos) -->
+                        <Button Command="{Binding NavDashboardMetasCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="TrophyOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Dashboard de Metas" VerticalAlignment="Center" FontSize="13" />
                             </Grid>
                         </Button>
 
@@ -208,6 +242,23 @@
                         </Button>
 
 
+                        <!-- Definições de Metas (admin) -->
+                        <Button Command="{Binding NavDefinicoesMetasCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ChartTimeline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Definições de Metas" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
                         <!-- Importar relatório de renovações -->
                         <Border Background="#1A000000" Margin="8,4,8,4" CornerRadius="6">
                             <Button Command="{Binding ImportarRelatorioRenovacaoCommand}"
@@ -233,6 +284,28 @@
                         </Border>
 
                     </StackPanel>
+
+                    <!-- ─ separador relatórios ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
+
+                    <!-- Emissões por produtor -->
+                    <Button Command="{Binding NavRelatorioEmissaoCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0"
+                            ToolTip="Emissões por produtor">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="56" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="ChartLine"
+                                                     Width="18" Height="18"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Emissões por produtor"
+                                       VerticalAlignment="Center" FontSize="13" />
+                        </Grid>
+                    </Button>
 
                     <!-- ─ separador admin ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"

@@ -16,12 +16,12 @@
         </Grid.RowDefinitions>
 
         <!-- Filtros -->
-        <materialDesign:Card Grid.Row="0" Margin="12,12,12,0" Padding="12,8">
+        <materialDesign:Card Grid.Row="0" Margin="12,12,12,0" Padding="12,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="190" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
@@ -29,28 +29,45 @@
                          Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          materialDesign:HintAssist.Hint="Buscar por cliente, apólice, proposta..."
-                         Margin="0,0,8,0" Height="40" VerticalContentAlignment="Center" FontSize="13" />
+                         Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13" />
 
                 <ComboBox Grid.Column="1"
                           ItemsSource="{Binding SituacoesFiltrar}"
                           SelectedItem="{Binding FiltroSituacao}"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                           materialDesign:HintAssist.Hint="Situação"
-                          Margin="0,0,8,0" Height="40" FontSize="13" />
+                          Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13" />
 
-                <!-- Filtro por Produtor (visível apenas para admin) -->
+                <!-- Filtro por Produtor -->
                 <ComboBox Grid.Column="2"
                           ItemsSource="{Binding ProdutoresDisponiveis}"
                           SelectedItem="{Binding FiltroProdutor}"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                           materialDesign:HintAssist.Hint="Produtor"
-                          Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}"
-                          Margin="0,0,8,0" Height="40" FontSize="13" />
+                          Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontSize="13">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter Property="Text" Value="Todos"/>
+                                                <Setter Property="FontStyle" Value="Italic"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
                 <Button Grid.Column="3"
                         Command="{Binding LimparFiltrosCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                        ToolTip="Limpar filtros" Height="40" Width="40" Padding="0">
+                        ToolTip="Limpar filtros" Width="40" Padding="0" VerticalAlignment="Center">
                     <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="18" Height="18" />
                 </Button>
             </Grid>
@@ -140,13 +157,24 @@
                         <TextBlock Text="Folha Amarela" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding AnexarArquivosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="30" Padding="10,0" FontSize="12" Margin="0,0,8,0"
+                        ToolTip="Anexar arquivos a este registro">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="PaperclipPlus" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Anexar" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding AbrirPastaAnexosCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Height="30" Padding="10,0" FontSize="12">
+                        Height="30" Padding="10,0" FontSize="12"
+                        ToolTip="Abrir pasta de anexos">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="FolderOpen" Width="13" Height="13"
                                                  VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBlock Text="Anexos" VerticalAlignment="Center" />
+                        <TextBlock Text="Pasta de anexos" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -162,7 +190,7 @@
                   CanUserDeleteRows="False"
                   SelectionMode="Single"
                   AlternationCount="2"
-                  RowHeight="34"
+                  RowHeight="40"
                   Margin="12,6,12,12"
                   Style="{StaticResource MaterialDesignDataGrid}"
                   ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
@@ -247,6 +275,19 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- Motivo da situação -->
+                <DataGridTextColumn Header="Motivo" Binding="{Binding MotivoSituacao}"
+                                    Width="160" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding MotivoSituacao}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
                 <!-- Produtor (visível apenas para admin) -->
                 <DataGridTemplateColumn Header="Produtor" Width="110"
                                         Visibility="{Binding DataContext.IsAdmin,
@@ -261,7 +302,7 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
-                                    Width="*" FontSize="12">
+                                    Width="*" MinWidth="80" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -270,28 +311,19 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn Header="CPF/CNPJ" Binding="{Binding DocumentoPrincipal}"
-                                    Width="130" FontSize="12">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="Margin" Value="4,0"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-
-                <DataGridTextColumn Header="Seguradora" Binding="{Binding Seguradora}"
-                                    Width="140" FontSize="12">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center"/>
-                            <Setter Property="Margin" Value="4,0"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <!-- Seguradora (abreviada, tooltip mostra nome completo) -->
+                <DataGridTemplateColumn Header="Seguradora" Width="82" SortMemberPath="Seguradora">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Seguradora, Converter={StaticResource SeguradoraAbrevConverter}}"
+                                       ToolTip="{Binding Seguradora}"
+                                       VerticalAlignment="Center" FontSize="12" Margin="4,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Ramo" Binding="{Binding Ramo}"
-                                    Width="90" FontSize="12">
+                                    Width="130" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -302,7 +334,7 @@
 
                 <DataGridTextColumn Header="Vencimento"
                                     Binding="{Binding VigenciaFinal, StringFormat='{}{0:dd/MM/yyyy}'}"
-                                    Width="100" FontSize="12">
+                                    Width="115" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -312,7 +344,7 @@
                 </DataGridTextColumn>
 
                 <DataGridTextColumn Header="Dia" Binding="{Binding DiaDaSemana}"
-                                    Width="80" FontSize="12">
+                                    Width="115" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -333,8 +365,21 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
+                <!-- Fator/Comissão % importado da planilha -->
+                <DataGridTextColumn Header="Fator %"
+                                    Binding="{Binding Comissao, StringFormat={}{0:F2}%}"
+                                    Width="72" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,8,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
                 <DataGridTextColumn Header="Status" Binding="{Binding Status}"
-                                    Width="100" FontSize="12">
+                                    Width="140" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -344,7 +389,7 @@
                 </DataGridTextColumn>
 
                 <!-- Assinatura feita (toggle administrativo) -->
-                <DataGridTemplateColumn Header="Assinatura" Width="100" CanUserSort="False">
+                <DataGridTemplateColumn Header="Assinatura" Width="125" CanUserSort="False">
                     <DataGridTemplateColumn.HeaderStyle>
                         <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -356,11 +401,12 @@
                                               RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     CommandParameter="{Binding}"
                                     Style="{StaticResource MaterialDesignFlatButton}"
-                                    Height="28" Padding="6,0"
-                                    HorizontalAlignment="Center"
+                                    Height="28" Padding="4,0"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
                                     ToolTip="Clique para alternar">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Width="16" Height="16" VerticalAlignment="Center"
+                                    <materialDesign:PackIcon Width="15" Height="15" VerticalAlignment="Center"
                                                              Margin="0,0,4,0">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
@@ -375,7 +421,7 @@
                                             </Style>
                                         </materialDesign:PackIcon.Style>
                                     </materialDesign:PackIcon>
-                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                    <TextBlock VerticalAlignment="Center" FontSize="12">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="Feita"/>
@@ -396,7 +442,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Seguro emitido (toggle administrativo) -->
-                <DataGridTemplateColumn Header="Emitido" Width="100" CanUserSort="False">
+                <DataGridTemplateColumn Header="Emitido" Width="110" CanUserSort="False">
                     <DataGridTemplateColumn.HeaderStyle>
                         <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
                             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -408,11 +454,12 @@
                                               RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     CommandParameter="{Binding}"
                                     Style="{StaticResource MaterialDesignFlatButton}"
-                                    Height="28" Padding="6,0"
-                                    HorizontalAlignment="Center"
+                                    Height="28" Padding="4,0"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center"
                                     ToolTip="Clique para alternar">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Width="16" Height="16" VerticalAlignment="Center"
+                                    <materialDesign:PackIcon Width="15" Height="15" VerticalAlignment="Center"
                                                              Margin="0,0,4,0">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
@@ -427,7 +474,7 @@
                                             </Style>
                                         </materialDesign:PackIcon.Style>
                                     </materialDesign:PackIcon>
-                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                    <TextBlock VerticalAlignment="Center" FontSize="12">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="Sim"/>

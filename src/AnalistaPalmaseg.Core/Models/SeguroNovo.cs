@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace AnalistaPalmaseg.Core.Models;
 
 public class SeguroNovo
@@ -12,6 +14,34 @@ public class SeguroNovo
     public decimal? Pl { get; set; }
     public decimal? Fator { get; set; }
     public decimal? Valor { get; set; }
+    public string FormaPagamento { get; set; } = string.Empty;
+    public int? Parcelas { get; set; }
+    public bool AssinaturaFeita { get; set; }
+    public int BoletosGerados { get; set; }
     public string Observacao { get; set; } = string.Empty;
     public DateTime CriadoEm { get; set; } = DateTime.Now;
+    public string? CriadoPor { get; set; }
+    public string? EmitidoPor { get; set; }
+
+    [NotMapped]
+    public decimal? ComissaoValor =>
+        Valor.HasValue && Fator.HasValue
+            ? Math.Round(Valor.Value * Fator.Value / 100m, 2)
+            : null;
+
+    // Endosso segue regra de renovação (3-6%) — percentual definido externamente pelo MetaService
+    [NotMapped]
+    public decimal PercentualComissaoColab { get; set; } = -1m;
+
+    [NotMapped]
+    public decimal PercentualComissaoColabEfetivo =>
+        PercentualComissaoColab >= 0
+            ? PercentualComissaoColab
+            : Status switch { "Prospecção" => 15m, "Endosso" => 0m, _ => 10m };
+
+    [NotMapped]
+    public decimal ComissaoColab =>
+        ComissaoValor.HasValue
+            ? Math.Round(ComissaoValor.Value * PercentualComissaoColabEfetivo / 100m, 2)
+            : 0m;
 }

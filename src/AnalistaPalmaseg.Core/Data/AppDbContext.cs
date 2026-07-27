@@ -16,6 +16,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RelatorioRenovacao> RelatorioRenovacoes { get; set; }
     public DbSet<Anexo> Anexos { get; set; }
     public DbSet<SeguroNovo> SeguroNovos { get; set; }
+    public DbSet<Seguradora> Seguradoras { get; set; }
+    public DbSet<MetaSeguradora> MetasSeguradoras { get; set; }
+    public DbSet<MetaPremiacao> MetasPremiacao { get; set; }
+    public DbSet<MetaCrescimento> MetasCrescimento { get; set; }
+    public DbSet<ValorReferencia> ValoresReferencia { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -81,6 +86,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Pl).HasColumnType("decimal(18,2)");
             e.Property(x => x.Fator).HasColumnType("decimal(18,2)");
             e.Property(x => x.Valor).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<MetaSeguradora>(e =>
+        {
+            e.HasIndex(x => new { x.SeguradoraId, x.Mes, x.Ano }).IsUnique();
+            e.Property(x => x.MetaPremio).HasColumnType("decimal(18,2)");
+            e.HasOne(x => x.Seguradora).WithMany().HasForeignKey(x => x.SeguradoraId);
+        });
+
+        modelBuilder.Entity<MetaPremiacao>(e =>
+        {
+            e.Property(x => x.ValorBonus).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<MetaCrescimento>(e =>
+        {
+            e.Property(x => x.PercentualMeta).HasColumnType("decimal(10,4)");
+            e.Property(x => x.ValorBonus).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<ValorReferencia>(e =>
+        {
+            e.HasIndex(x => new { x.Colaborador, x.Mes, x.Ano }).IsUnique();
+            e.Property(x => x.PremioTotal).HasColumnType("decimal(18,2)");
+            e.Property(x => x.ComissaoTotal).HasColumnType("decimal(18,2)");
         });
     }
 }

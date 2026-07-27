@@ -127,3 +127,70 @@ public class BoolToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
+
+public class BoolToSimNaoConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? "Sim" : "Não";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class BoolToCheckKindConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true
+            ? MaterialDesignThemes.Wpf.PackIconKind.CheckCircleOutline
+            : MaterialDesignThemes.Wpf.PackIconKind.CloseCircleOutline;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class SeguradoraAbrevConverter : IValueConverter
+{
+    private static readonly Dictionary<string, string> _mapa = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Porto Seguro"]     = "Porto",
+        ["Bradesco Seguros"] = "Bradesco",
+        ["Tokio Marine"]     = "Tokio",
+        ["HDI Seguros"]      = "HDI",
+        ["Liberty Seguros"]  = "Liberty",
+        ["Mapfre Seguros"]   = "Mapfre",
+        ["Zurich"]           = "Zurich",
+        ["SulAmérica"]       = "SulAm.",
+        ["Generali"]         = "Generali",
+        ["Allianz"]          = "Allianz",
+        ["AXA"]              = "AXA",
+        ["Chubb"]            = "Chubb",
+        ["Pottencial"]       = "Pottenc.",
+        ["Sompo"]            = "Sompo",
+        ["Excelsior"]        = "Excels.",
+        ["Outras"]           = "Outras",
+    };
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string s || string.IsNullOrWhiteSpace(s)) return value ?? string.Empty;
+        foreach (var kv in _mapa)
+            if (s.StartsWith(kv.Key, StringComparison.OrdinalIgnoreCase))
+                return kv.Value;
+        return s.Length > 10 ? s[..10] + "." : s;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
+public class MesFormatConverter : IValueConverter
+{
+    private static readonly string[] _nomes = ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int mes && mes >= 1 && mes <= 12)
+            return $"{mes} — {_nomes[mes]}";
+        return value?.ToString() ?? "";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}

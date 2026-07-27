@@ -4,6 +4,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:converters="clr-namespace:AnalistaPalmaseg.App.Converters"
              xmlns:vm="clr-namespace:AnalistaPalmaseg.App.ViewModels"
+             x:Name="Root"
              Background="{StaticResource PageBgBrush}"
              FontFamily="Lato, Segoe UI">
 
@@ -20,6 +21,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="56"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -52,17 +54,69 @@
             </DockPanel>
         </Border>
 
+        <!-- ── Barra de filtros ── -->
+        <materialDesign:Card Grid.Row="1" Margin="12,8,12,0" Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="190"
+                                      x:Name="ColProdutor"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Buscar por segurado, cia, segmento, status..."
+                         Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13"/>
+
+                <!-- Filtro por Produtor (admin only) -->
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding ProdutoresDisponiveis}"
+                          SelectedItem="{Binding FiltroProdutor}"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                          materialDesign:HintAssist.Hint="Produtor"
+                          Visibility="{Binding IsAdmin, ElementName=Root, Converter={StaticResource BoolToVisibilityConverter}}"
+                          Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontSize="13">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding}" Value="">
+                                                <Setter Property="Text" Value="Todos"/>
+                                                <Setter Property="FontStyle" Value="Italic"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button Grid.Column="2"
+                        Command="{Binding LimparFiltrosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        ToolTip="Limpar filtros" Width="40" Padding="0" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="18" Height="18"/>
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+
         <!-- ── Corpo: lista + formulário ── -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="420"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- ── Lista ── -->
             <Border Grid.Column="0" BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
-                    Background="White">
-                <DataGrid ItemsSource="{Binding Registros}"
+                    Background="White" Margin="0,8,0,0">
+                <DataGrid ItemsSource="{Binding RegistrosView}"
                           SelectedItem="{Binding RegistroSelecionado}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -76,25 +130,83 @@
                           ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Segurado" Binding="{Binding Segurado}" Width="*" MinWidth="100"/>
-                        <DataGridTextColumn Header="Cia" Binding="{Binding Cia}" Width="90"/>
-                        <DataGridTextColumn Header="Segmento" Binding="{Binding Segmento}" Width="90"/>
-                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80"/>
-                        <DataGridTextColumn Header="Vigência" Width="80">
+                        <DataGridTextColumn Header="Cia" Binding="{Binding Cia}" Width="120"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
+                        <DataGridTextColumn Header="Vigência" Width="100">
                             <DataGridTextColumn.Binding>
-                                <Binding Path="Vigencia" StringFormat="dd/MM/yy"/>
+                                <Binding Path="Vigencia" StringFormat="dd/MM/yyyy"/>
                             </DataGridTextColumn.Binding>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Valor" Width="80">
+                        <DataGridTextColumn Header="Prêmio (R$)" Width="110">
+                            <DataGridTextColumn.Binding>
+                                <Binding Path="Pl" StringFormat="C2"/>
+                            </DataGridTextColumn.Binding>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                    <Setter Property="Margin" Value="0,0,8,0"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="PL (R$)" Width="110">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="Valor" StringFormat="C2"/>
                             </DataGridTextColumn.Binding>
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                    <Setter Property="Margin" Value="0,0,8,0"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
+                        <!-- Coluna Produtor visível apenas para admin -->
+                        <DataGridTemplateColumn Header="Produtor" Width="110"
+                                                Visibility="{Binding DataContext.IsAdmin,
+                                                             ElementName=Root,
+                                                             Converter={StaticResource BoolToVisibilityConverter}}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CriadoPor}" VerticalAlignment="Center"
+                                               FontSize="12" Margin="4,0"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <!-- Assinatura -->
+                        <DataGridTemplateColumn Header="Assin." Width="60" CanUserSort="False">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <materialDesign:PackIcon HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Width="16" Height="16">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="CheckCircle"/>
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                        <Setter Property="Kind" Value="CircleOutline"/>
+                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Border>
 
             <!-- ── Formulário ── -->
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
                 <StackPanel Margin="24,20,24,24">
 
                     <!-- Linha 1: Vigência + Segurado -->
@@ -176,18 +288,16 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Linha 4: PL + Fator + Valor -->
+                    <!-- Linha 4: Prêmio (R$) + PL (R$) — prêmio primeiro -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="16"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="PL (R$)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="Prêmio (R$)" Style="{StaticResource FieldLabel}"/>
                             <TextBox Text="{Binding EditandoPl, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="0,00"
                                      Style="{StaticResource MaterialDesignTextBox}"
@@ -195,15 +305,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Fator (R$)" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding EditandoFator, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="0,00"
-                                     Style="{StaticResource MaterialDesignTextBox}"
-                                     FontSize="13"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="4">
-                            <TextBlock Text="Valor (R$)" Style="{StaticResource FieldLabel}"/>
+                            <TextBlock Text="PL (R$)" Style="{StaticResource FieldLabel}"/>
                             <TextBox Text="{Binding EditandoValor, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="0,00"
                                      Style="{StaticResource MaterialDesignTextBox}"
@@ -211,8 +313,59 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Linha 5: Observação -->
-                    <StackPanel Margin="0,0,0,24">
+                    <!-- Linha 5: Fator + Forma de Pagamento -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Fator (%)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding EditandoFator, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="0,00"
+                                     Style="{StaticResource MaterialDesignTextBox}"
+                                     FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Forma de Pagamento" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox IsEditable="True"
+                                      Text="{Binding EditandoFormaPagamento, UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{x:Static vm:SeguroNovosViewModel.FormasPagamento}"
+                                      materialDesign:HintAssist.Hint="Selecione"
+                                      Style="{StaticResource MaterialDesignComboBox}"
+                                      FontSize="13"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Linha 6: Parcelas + Assinatura -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Parcelas" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding EditandoParcelas, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Nº de parcelas"
+                                     Style="{StaticResource MaterialDesignTextBox}"
+                                     FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                            <TextBlock Text="Assinatura" Style="{StaticResource FieldLabel}"/>
+                            <ToggleButton IsChecked="{Binding EditandoAssinaturaFeita}"
+                                         Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                         VerticalAlignment="Center" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Linha 7: Observação -->
+                    <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="Observação" Style="{StaticResource FieldLabel}"/>
                         <TextBox Text="{Binding EditandoObservacao, UpdateSourceTrigger=PropertyChanged}"
                                  materialDesign:HintAssist.Hint="Anotações adicionais..."
@@ -220,8 +373,34 @@
                                  FontSize="13"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
-                                 MinHeight="80"
+                                 MinHeight="72"
                                  VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+
+                    <!-- Botões de anexo (apenas para registro salvo) -->
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding TemRegistroSelecionado, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Margin="0,0,0,16">
+                        <Button Command="{Binding AnexarArquivosCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="30" Padding="10,0" FontSize="12" Margin="0,0,8,0"
+                                ToolTip="Anexar arquivos a este registro">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="PaperclipPlus" Width="13" Height="13"
+                                                         VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Anexar" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding AbrirPastaAnexosCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="30" Padding="10,0" FontSize="12"
+                                ToolTip="Abrir pasta de anexos">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FolderOpen" Width="13" Height="13"
+                                                         VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Pasta de anexos" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- Botões de ação -->

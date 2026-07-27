@@ -79,10 +79,20 @@ public partial class MainViewModel : ObservableObject
     // Seguros Novos
     public SeguroNovosViewModel SeguroNovosVm { get; }
 
+    // Relatórios
+    public RelatorioEmissaoViewModel RelatorioEmissaoVm { get; }
+
     // Gerenciador (admin)
     public GerenciadorRenovacoesViewModel GerenciadorRenovacoesVm { get; }
     public GerenciadorCotacoesViewModel GerenciadorCotacoesVm { get; }
     public EmissaoDashboardViewModel EmissaoDashboardVm { get; }
+
+    // Controle de Boletos
+    public ControleBoletosViewModel ControleBoletosVm { get; }
+
+    // Metas (admin)
+    public DefinicoesMetasViewModel DefinicoesMetasVm { get; }
+    public DashboardMetasViewModel DashboardMetasVm { get; }
 
     public MainViewModel(
         ImportacaoService importacaoService,
@@ -104,6 +114,10 @@ public partial class MainViewModel : ObservableObject
         GerenciadorCotacoesViewModel gerenciadorCotacoesVm,
         EmissaoDashboardViewModel emissaoDashboardVm,
         SeguroNovosViewModel seguroNovosVm,
+        RelatorioEmissaoViewModel relatorioEmissaoVm,
+        DefinicoesMetasViewModel definicoesMetasVm,
+        DashboardMetasViewModel dashboardMetasVm,
+        ControleBoletosViewModel controleBoletosVm,
         RelatorioRenovacaoService relatorioRenovacaoService)
     {
         _importacaoService = importacaoService;
@@ -126,6 +140,10 @@ public partial class MainViewModel : ObservableObject
         GerenciadorCotacoesVm = gerenciadorCotacoesVm;
         EmissaoDashboardVm = emissaoDashboardVm;
         SeguroNovosVm = seguroNovosVm;
+        RelatorioEmissaoVm = relatorioEmissaoVm;
+        DefinicoesMetasVm = definicoesMetasVm;
+        DashboardMetasVm = dashboardMetasVm;
+        ControleBoletosVm = controleBoletosVm;
         _relatorioRenovacaoService = relatorioRenovacaoService;
 
         _currentView = inicioVm;
@@ -149,6 +167,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void NavResultados()       { CurrentView = ResultadosVm;        TituloAtivo = "Resultado — Metas"; }
     [RelayCommand] private void NavApolicesDashboard()    { CurrentView = ApolicesDashboardVm;    TituloAtivo = "Acompanhamento de Apólices"; }
     [RelayCommand] private void NavFuncionariosDashboard(){ CurrentView = FuncionariosDashboardVm; TituloAtivo = "Dashboard de Funcionários"; }
+
+    [RelayCommand]
+    private async Task NavRelatorioEmissaoAsync()
+    {
+        await RelatorioEmissaoVm.CarregarAsync();
+        CurrentView = RelatorioEmissaoVm;
+        TituloAtivo = "Emissões por Produtor";
+    }
 
     [RelayCommand]
     private async Task NavSeguroNovosAsync()
@@ -188,6 +214,30 @@ public partial class MainViewModel : ObservableObject
     {
         CurrentView = GerenciadorCotacoesVm;
         TituloAtivo = "Cotações";
+    }
+
+    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    private async Task NavDefinicoesMetasAsync()
+    {
+        await DefinicoesMetasVm.CarregarAsync();
+        CurrentView = DefinicoesMetasVm;
+        TituloAtivo = "Definições de Metas";
+    }
+
+    [RelayCommand]
+    private async Task NavDashboardMetasAsync()
+    {
+        await DashboardMetasVm.CarregarAsync();
+        CurrentView = DashboardMetasVm;
+        TituloAtivo = "Dashboard de Metas";
+    }
+
+    [RelayCommand]
+    private async Task NavControleBoletosAsync()
+    {
+        await ControleBoletosVm.CarregarAsync();
+        CurrentView = ControleBoletosVm;
+        TituloAtivo = "Controle de Boletos";
     }
 
     [RelayCommand]

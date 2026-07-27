@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 
@@ -29,7 +30,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
     [ObservableProperty] private string _filtroTexto = string.Empty;
     [ObservableProperty] private string _filtroSituacao = "Todos";
-    [ObservableProperty] private string _filtroProdutor = string.Empty;
+    [ObservableProperty] private string _filtroProdutor = "(Com produtor)";
     [ObservableProperty] private string _mesSelecionado = "Todos";
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _resumo = string.Empty;
@@ -66,22 +67,18 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             foreach (var item in _todos)
                 item.PropertyChanged -= OnItemPropertyChanged;
 
-            _todos = _sessao.IsAdmin
-                ? await _service.GetTodosAsync()
-                : await _service.GetParaProdutorAsync(_sessao.NomeUsuario);
+            _todos = await _service.GetTodosAsync();
 
             foreach (var item in _todos)
                 item.PropertyChanged += OnItemPropertyChanged;
 
             _situacaoAnterior = _todos.ToDictionary(r => r.Id, r => r.SituacaoAcompanhamento);
 
-            if (_sessao.IsAdmin)
-            {
-                var prods = await _service.GetNovoProdutorDistinctAsync();
-                ProdutoresDisponiveis.Clear();
-                ProdutoresDisponiveis.Add(string.Empty);
-                foreach (var p in prods) ProdutoresDisponiveis.Add(p);
-            }
+            var prods = await _service.GetNovoProdutorDistinctAsync();
+            ProdutoresDisponiveis.Clear();
+            ProdutoresDisponiveis.Add(string.Empty);
+            ProdutoresDisponiveis.Add("(Com produtor)");
+            foreach (var p in prods) ProdutoresDisponiveis.Add(p);
 
             var cul = new CultureInfo("pt-BR");
             _mesLookup.Clear();
@@ -149,6 +146,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                 await _service.SalvarFechamentoAsync(reg);
                 _situacaoAnterior[reg.Id] = reg.SituacaoAcompanhamento;
                 AplicarFiltro();
+                EnviarRefreshDashboard(reg);
             }
             catch (Exception ex)
             {
@@ -159,17 +157,48 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             return;
         }
 
+        // Statuses that require a justification
+        var exigeMotivo = reg.SituacaoAcompanhamento is "Agendado" or "Ren. Outro" or "Não renovado" or "Recusado";
+
+        if (exigeMotivo)
+        {
+            var motivoDialog = new AnalistaPalmaseg.App.Views.MotivoSituacaoDialog(reg.SituacaoAcompanhamento)
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            if (motivoDialog.ShowDialog() != true)
+            {
+                Reverter(reg);
+                return;
+            }
+
+            reg.MotivoSituacao = motivoDialog.Motivo;
+        }
+        else
+        {
+            reg.MotivoSituacao = null;
+        }
+
         try
         {
             await _service.SalvarSituacaoAsync(reg);
             _situacaoAnterior[reg.Id] = reg.SituacaoAcompanhamento;
             AplicarFiltro();
+            EnviarRefreshDashboard(reg);
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Erro ao salvar situação:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private static void EnviarRefreshDashboard(RelatorioRenovacao reg)
+    {
+        if (reg.VigenciaFinal.HasValue)
+            WeakReferenceMessenger.Default.Send(
+                new DashboardRefreshMessage(reg.VigenciaFinal.Value.Month, reg.VigenciaFinal.Value.Year));
     }
 
     private void Reverter(RelatorioRenovacao reg)
@@ -225,7 +254,11 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
 
         if (FiltroSituacao != "Todos" && r.SituacaoAcompanhamento != FiltroSituacao) return false;
 
-        if (!string.IsNullOrWhiteSpace(FiltroProdutor) && r.NovoProdutor != FiltroProdutor) return false;
+        if (FiltroProdutor == "(Com produtor)")
+        {
+            if (string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
+        }
+        else if (!string.IsNullOrWhiteSpace(FiltroProdutor) && r.NovoProdutor != FiltroProdutor) return false;
 
         if (!string.IsNullOrWhiteSpace(FiltroTexto))
         {
@@ -261,6 +294,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(TemRegistroSelecionado));
         GerarFolhaAmarelaCommand.NotifyCanExecuteChanged();
+        AnexarArquivosCommand.NotifyCanExecuteChanged();
         AbrirPastaAnexosCommand.NotifyCanExecuteChanged();
     }
 
@@ -269,7 +303,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     {
         FiltroTexto = string.Empty;
         FiltroSituacao = "Todos";
-        FiltroProdutor = string.Empty;
+        FiltroProdutor = "(Com produtor)";
         MesSelecionado = "Todos";
     }
 
@@ -315,6 +349,33 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             MessageBox.Show($"Erro ao gerar folha amarela:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
+    private async Task AnexarArquivosAsync()
+    {
+        if (RegistroSelecionado == null) return;
+
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Selecionar arquivos para anexar",
+            Filter = "Todos os arquivos|*.*",
+            Multiselect = true
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        int ok = 0, erros = 0;
+        foreach (var file in dialog.FileNames)
+        {
+            try { await _anexoService.AdicionarAsync(RegistroSelecionado.Id, file); ok++; }
+            catch { erros++; }
+        }
+
+        var msg = erros == 0
+            ? $"{ok} arquivo(s) anexado(s) com sucesso."
+            : $"{ok} arquivo(s) anexado(s). {erros} falhou(ram).";
+        MessageBox.Show(msg, "Anexos", MessageBoxButton.OK,
+            erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
     }
 
     [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
