@@ -193,6 +193,7 @@
 
             <!-- ══ Tab 2: Premiação ══ -->
             <TabItem Header="Premiação">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid Margin="0,12,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -317,8 +318,9 @@
                             Background="{StaticResource PrimaryBrush}"
                             Foreground="White"
                             HorizontalAlignment="Right"
-                            Width="200"/>
+                            Width="200" Margin="0,0,0,16"/>
                 </Grid>
+                </ScrollViewer>
             </TabItem>
 
         </TabControl>

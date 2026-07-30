@@ -21,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MetaPremiacao> MetasPremiacao { get; set; }
     public DbSet<MetaCrescimento> MetasCrescimento { get; set; }
     public DbSet<ValorReferencia> ValoresReferencia { get; set; }
+    public DbSet<Cliente> Clientes { get; set; }
+    public DbSet<Lead>    Leads    { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

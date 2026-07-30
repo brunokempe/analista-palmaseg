@@ -28,6 +28,8 @@ public partial class MainViewModel : ObservableObject
                               nameof(CarteiraItemsVisibility),
                               nameof(RelatoriosItemsVisibility),
                               nameof(ApolicesItemsVisibility),
+                              nameof(CadastrosItemsVisibility),
+                              nameof(LeedsItemsVisibility),
                               nameof(GerenciadorItemsVisibility))]
     private bool _isSidebarExpanded = true;
 
@@ -44,6 +46,14 @@ public partial class MainViewModel : ObservableObject
     private bool _isApolicesExpanded = false;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CadastrosItemsVisibility))]
+    private bool _isCadastrosExpanded = false;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LeedsItemsVisibility))]
+    private bool _isLeedsExpanded = false;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(GerenciadorItemsVisibility))]
     private bool _isGerenciadorExpanded = false;
 
@@ -51,6 +61,8 @@ public partial class MainViewModel : ObservableObject
     public Visibility CarteiraItemsVisibility    => !IsSidebarExpanded || IsCarteiraExpanded    ? Visibility.Visible : Visibility.Collapsed;
     public Visibility RelatoriosItemsVisibility  => !IsSidebarExpanded || IsRelatoriosExpanded  ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ApolicesItemsVisibility    => !IsSidebarExpanded || IsApolicesExpanded    ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility CadastrosItemsVisibility   => !IsSidebarExpanded || IsCadastrosExpanded   ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility LeedsItemsVisibility       => !IsSidebarExpanded || IsLeedsExpanded       ? Visibility.Visible : Visibility.Collapsed;
     public Visibility GerenciadorItemsVisibility => !IsAdmin ? Visibility.Collapsed :
                                                     (!IsSidebarExpanded || IsGerenciadorExpanded ? Visibility.Visible : Visibility.Collapsed);
 
@@ -90,6 +102,12 @@ public partial class MainViewModel : ObservableObject
     // Controle de Boletos
     public ControleBoletosViewModel ControleBoletosVm { get; }
 
+    // Clientes
+    public ClientesViewModel ClientesVm { get; }
+
+    // Leeds
+    public LeadsViewModel LeadsVm { get; }
+
     // Metas (admin)
     public DefinicoesMetasViewModel DefinicoesMetasVm { get; }
     public DashboardMetasViewModel DashboardMetasVm { get; }
@@ -118,6 +136,8 @@ public partial class MainViewModel : ObservableObject
         DefinicoesMetasViewModel definicoesMetasVm,
         DashboardMetasViewModel dashboardMetasVm,
         ControleBoletosViewModel controleBoletosVm,
+        ClientesViewModel clientesVm,
+        LeadsViewModel leadsVm,
         RelatorioRenovacaoService relatorioRenovacaoService)
     {
         _importacaoService = importacaoService;
@@ -144,6 +164,8 @@ public partial class MainViewModel : ObservableObject
         DefinicoesMetasVm = definicoesMetasVm;
         DashboardMetasVm = dashboardMetasVm;
         ControleBoletosVm = controleBoletosVm;
+        ClientesVm = clientesVm;
+        LeadsVm    = leadsVm;
         _relatorioRenovacaoService = relatorioRenovacaoService;
 
         _currentView = inicioVm;
@@ -154,6 +176,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void ToggleCarteira()     => IsCarteiraExpanded     = !IsCarteiraExpanded;
     [RelayCommand] private void ToggleRelatorios()   => IsRelatoriosExpanded   = !IsRelatoriosExpanded;
     [RelayCommand] private void ToggleApolices()     => IsApolicesExpanded     = !IsApolicesExpanded;
+    [RelayCommand] private void ToggleCadastros()    => IsCadastrosExpanded    = !IsCadastrosExpanded;
+    [RelayCommand] private void ToggleLeeds()        => IsLeedsExpanded        = !IsLeedsExpanded;
     [RelayCommand] private void ToggleGerenciador()  => IsGerenciadorExpanded  = !IsGerenciadorExpanded;
 
     // ── Navegação ──────────────────────────────────────────────
@@ -230,6 +254,22 @@ public partial class MainViewModel : ObservableObject
         await DashboardMetasVm.CarregarAsync();
         CurrentView = DashboardMetasVm;
         TituloAtivo = "Dashboard de Metas";
+    }
+
+    [RelayCommand]
+    private async Task NavClientesAsync()
+    {
+        await ClientesVm.CarregarAsync();
+        CurrentView = ClientesVm;
+        TituloAtivo = "Cadastro de Clientes";
+    }
+
+    [RelayCommand]
+    private async Task NavLeadsAsync()
+    {
+        await LeadsVm.CarregarAsync();
+        CurrentView = LeadsVm;
+        TituloAtivo = "Leeds — Cotações";
     }
 
     [RelayCommand]

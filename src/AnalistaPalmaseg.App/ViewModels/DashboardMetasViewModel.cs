@@ -30,7 +30,8 @@ public partial class DashboardMetasViewModel : ObservableObject
     private readonly SessaoService _sessao;
     private bool _suppressAutoReload;
 
-    public bool IsAdmin => _sessao.IsAdmin;
+    public bool IsAdmin    => _sessao.IsAdmin;
+    public bool IsNotAdmin => !_sessao.IsAdmin;
 
     [ObservableProperty] private bool _isLoading;
 

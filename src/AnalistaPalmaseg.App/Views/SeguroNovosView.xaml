@@ -137,18 +137,6 @@
                                 <Binding Path="Vigencia" StringFormat="dd/MM/yyyy"/>
                             </DataGridTextColumn.Binding>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="Prêmio (R$)" Width="110">
-                            <DataGridTextColumn.Binding>
-                                <Binding Path="Pl" StringFormat="C2"/>
-                            </DataGridTextColumn.Binding>
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="HorizontalAlignment" Value="Right"/>
-                                    <Setter Property="Margin" Value="0,0,8,0"/>
-                                    <Setter Property="VerticalAlignment" Value="Center"/>
-                                </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
                         <DataGridTextColumn Header="PL (R$)" Width="110">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="Valor" StringFormat="C2"/>
@@ -288,7 +276,7 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Linha 4: Prêmio (R$) + PL (R$) — prêmio primeiro -->
+                    <!-- Linha 4: PL (R$) + Fator (%) -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -297,23 +285,25 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Prêmio (R$)" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding EditandoPl, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBlock Text="PL (R$)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding EditandoValor, StringFormat={}{0:N2}, UpdateSourceTrigger=LostFocus}"
+                                     GotFocus="DecimalField_GotFocus"
                                      materialDesign:HintAssist.Hint="0,00"
                                      Style="{StaticResource MaterialDesignTextBox}"
                                      FontSize="13"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="PL (R$)" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding EditandoValor, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBlock Text="Fator (%)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding EditandoFator, StringFormat={}{0:N2}, UpdateSourceTrigger=LostFocus}"
+                                     GotFocus="DecimalField_GotFocus"
                                      materialDesign:HintAssist.Hint="0,00"
                                      Style="{StaticResource MaterialDesignTextBox}"
                                      FontSize="13"/>
                         </StackPanel>
                     </Grid>
 
-                    <!-- Linha 5: Fator + Forma de Pagamento -->
+                    <!-- Linha 5: Forma de Pagamento + Parcelas -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -322,14 +312,6 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Fator (%)" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding EditandoFator, StringFormat={}{0:F2}, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="0,00"
-                                     Style="{StaticResource MaterialDesignTextBox}"
-                                     FontSize="13"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
                             <TextBlock Text="Forma de Pagamento" Style="{StaticResource FieldLabel}"/>
                             <ComboBox IsEditable="True"
                                       Text="{Binding EditandoFormaPagamento, UpdateSourceTrigger=PropertyChanged}"
@@ -338,31 +320,24 @@
                                       Style="{StaticResource MaterialDesignComboBox}"
                                       FontSize="13"/>
                         </StackPanel>
-                    </Grid>
 
-                    <!-- Linha 6: Parcelas + Assinatura -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
+                        <StackPanel Grid.Column="2">
                             <TextBlock Text="Parcelas" Style="{StaticResource FieldLabel}"/>
                             <TextBox Text="{Binding EditandoParcelas, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="Nº de parcelas"
                                      Style="{StaticResource MaterialDesignTextBox}"
                                      FontSize="13"/>
                         </StackPanel>
-
-                        <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                            <TextBlock Text="Assinatura" Style="{StaticResource FieldLabel}"/>
-                            <ToggleButton IsChecked="{Binding EditandoAssinaturaFeita}"
-                                         Style="{StaticResource MaterialDesignSwitchToggleButton}"
-                                         VerticalAlignment="Center" Margin="0,6,0,0"/>
-                        </StackPanel>
                     </Grid>
+
+                    <!-- Linha 6: Assinatura -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16" VerticalAlignment="Center">
+                        <TextBlock Text="Assinatura feita" Style="{StaticResource FieldLabel}"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <ToggleButton IsChecked="{Binding EditandoAssinaturaFeita}"
+                                      Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                      VerticalAlignment="Center"/>
+                    </StackPanel>
 
                     <!-- Linha 7: Observação -->
                     <StackPanel Margin="0,0,0,16">

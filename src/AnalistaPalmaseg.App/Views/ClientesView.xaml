@@ -1,0 +1,472 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.ClientesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:AnalistaPalmaseg.App.Converters"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+        <Style x:Key="MemoBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Cabeçalho ── -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="AccountGroupOutline" Width="22" Height="22"
+                                             Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Cadastro de Clientes" FontSize="16" FontWeight="SemiBold"
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ProgressBar IsIndeterminate="True" Width="80" Height="3"
+                                 Foreground="White"
+                                 Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 Margin="0,0,16,0"/>
+                    <Button Command="{Binding NovoCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            BorderBrush="White" Foreground="White" Height="34" Padding="12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="Novo Cliente" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Conteúdo principal ── -->
+        <Grid Grid.Row="1" Margin="12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" MinWidth="200"/>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Lista de clientes ── -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBox Grid.Row="0"
+                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         materialDesign:HintAssist.Hint="Buscar por nome, CPF ou cidade..."
+                         Margin="0,0,0,8" FontSize="13"/>
+
+                <materialDesign:Card Grid.Row="1" Padding="0">
+                    <ListBox ItemsSource="{Binding ClientesView}"
+                             SelectedItem="{Binding ClienteSelecionado}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="8,5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="{Binding Nome}"
+                                               FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Cpf}"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Grid.Row="2" FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} — {1}">
+                                                <Binding Path="Cidade"/>
+                                                <Binding Path="Estado"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </materialDesign:Card>
+            </Grid>
+
+            <!-- ── Separador ── -->
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch" Background="Transparent"/>
+
+            <!-- ── Painel de detalhes ── -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4,0,0,16">
+
+                    <!-- ═══ IDENTIFICAÇÃO ═══ -->
+                    <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Identificação" Style="{StaticResource SectionTitle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- CPF -->
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+                                    <TextBlock Text="CPF / CNPJ" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoCpf, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Nome -->
+                                <StackPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="5">
+                                    <TextBlock Text="Nome" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoNome, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Nascimento -->
+                                <StackPanel Grid.Row="2" Grid.Column="0">
+                                    <TextBlock Text="Nascimento" Style="{StaticResource FieldLabel}"/>
+                                    <DatePicker SelectedDate="{Binding EditandoNascimento}"
+                                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                                FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Sexo -->
+                                <StackPanel Grid.Row="2" Grid.Column="2">
+                                    <TextBlock Text="Sexo" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoSexo, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Estado Civil -->
+                                <StackPanel Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="1">
+                                    <TextBlock Text="Estado Civil" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoEstadoCivil, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Profissão -->
+                                <StackPanel Grid.Row="2" Grid.Column="6">
+                                    <TextBlock Text="Profissão" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoProfissao, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Cliente Desde -->
+                                <StackPanel Grid.Row="4" Grid.Column="0">
+                                    <TextBlock Text="Cliente Desde" Style="{StaticResource FieldLabel}"/>
+                                    <DatePicker SelectedDate="{Binding EditandoClienteDesde}"
+                                                Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                                FontSize="13"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- ═══ CONTATO ═══ -->
+                    <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Contato" Style="{StaticResource SectionTitle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Telefone 1 -->
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+                                    <TextBlock Text="DDD" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoPrefixo1, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="2">
+                                    <TextBlock Text="Telefone 1" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoTelefone1, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Telefone 2 -->
+                                <StackPanel Grid.Row="0" Grid.Column="4">
+                                    <TextBlock Text="DDD" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoPrefixo2, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="6">
+                                    <TextBlock Text="Telefone 2" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoTelefone2, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Telefone 3 -->
+                                <StackPanel Grid.Row="0" Grid.Column="8">
+                                    <TextBlock Text="DDD" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoPrefixo3, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="10">
+                                    <TextBlock Text="Telefone 3" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoTelefone3, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- E-mails -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5">
+                                    <TextBlock Text="E-mail 1" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoEmail1, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="6" Grid.ColumnSpan="5">
+                                    <TextBlock Text="E-mail 2" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoEmail2, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- ═══ ENDEREÇO ═══ -->
+                    <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Endereço" Style="{StaticResource SectionTitle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="70"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- CEP -->
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+                                    <TextBlock Text="CEP" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoCep, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Logradouro -->
+                                <StackPanel Grid.Row="0" Grid.Column="2">
+                                    <TextBlock Text="Logradouro" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoEndereco, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Número -->
+                                <StackPanel Grid.Row="0" Grid.Column="4">
+                                    <TextBlock Text="Número" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoNumeroEndereco, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Complemento -->
+                                <StackPanel Grid.Row="0" Grid.Column="6">
+                                    <TextBlock Text="Complemento" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoComplemento, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Bairro -->
+                                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="1">
+                                    <TextBlock Text="Bairro" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoBairro, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- Cidade -->
+                                <StackPanel Grid.Row="2" Grid.Column="2">
+                                    <TextBlock Text="Cidade" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoCidade, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+
+                                <!-- UF -->
+                                <StackPanel Grid.Row="2" Grid.Column="4">
+                                    <TextBlock Text="UF" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding EditandoEstado, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}" FontSize="13"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- ═══ OBSERVAÇÕES (memo) ═══ -->
+                    <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Observações" Style="{StaticResource SectionTitle}"/>
+                            <TextBox Text="{Binding EditandoObservacoes, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MemoBox}"
+                                     Height="90"
+                                     materialDesign:HintAssist.Hint="Anotações sobre o cliente..."/>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- ═══ HISTÓRICO (memo) ═══ -->
+                    <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Histórico" Style="{StaticResource SectionTitle}"/>
+                            <TextBox Text="{Binding EditandoHistorico, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MemoBox}"
+                                     Height="110"
+                                     materialDesign:HintAssist.Hint="Histórico de atendimentos, negociações, ocorrências..."/>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- ═══ BOTÕES ═══ -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                        <Button Command="{Binding CancelarCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="16,0" Margin="0,0,8,0"
+                                Content="Cancelar"/>
+                        <Button Command="{Binding ExcluirCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Height="36" Padding="16,0" Margin="0,0,8,0"
+                                Foreground="Red" BorderBrush="Red"
+                                Visibility="{Binding TemClienteSelecionado, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="TrashCanOutline" Width="16" Height="16"
+                                                         VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="Excluir" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SalvarCommand}"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Height="36" Padding="16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16"
+                                                         VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="Salvar" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- ═══ SEGUROS RELACIONADOS ═══ -->
+                    <materialDesign:Card Padding="16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="ShieldOutline" Width="18" Height="18"
+                                                         Foreground="{StaticResource PrimaryBrush}"
+                                                         VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Seguros Relacionados"
+                                           FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Margin="6,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="12">
+                                    <TextBlock.Text>
+                                        <Binding Path="Seguros.Count" StringFormat="({0})"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <DataGrid ItemsSource="{Binding Seguros}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      SelectionMode="Single"
+                                      HeadersVisibility="Column"
+                                      MaxHeight="300"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource BorderLightBrush}"
+                                      FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Proposta"       Binding="{Binding Proposta}"      Width="100"/>
+                                    <DataGridTextColumn Header="Apólice"        Binding="{Binding Apolice}"       Width="100"/>
+                                    <DataGridTextColumn Header="Seguradora"     Binding="{Binding Seguradora}"    Width="120"/>
+                                    <DataGridTextColumn Header="Ramo"           Binding="{Binding Ramo}"          Width="110"/>
+                                    <DataGridTextColumn Header="Produto"        Binding="{Binding Produto}"       Width="130"/>
+                                    <DataGridTextColumn Header="Vig. Inicial"
+                                                        Binding="{Binding VigenciaInicial, StringFormat=dd/MM/yyyy}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Vig. Final"
+                                                        Binding="{Binding VigenciaFinal, StringFormat=dd/MM/yyyy}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Prêmio Líq."
+                                                        Binding="{Binding PremioLiquido, StringFormat=C2}"
+                                                        Width="90"/>
+                                    <DataGridTextColumn Header="Forma Pgto."   Binding="{Binding FormaPagamento}" Width="110"/>
+                                    <DataGridTextColumn Header="Parcelas"       Binding="{Binding NumeroParcelas}" Width="70"/>
+                                    <DataGridTextColumn Header="Status"         Binding="{Binding Status}"        Width="90"/>
+                                    <DataGridTextColumn Header="Vendedor"       Binding="{Binding VendedorPrincipal}" Width="120"/>
+                                    <DataGridTextColumn Header="Placa"          Binding="{Binding Placa}"         Width="80"/>
+                                    <DataGridTextColumn Header="Modelo"         Binding="{Binding Modelo}"        Width="120"/>
+                                    <DataGridTextColumn Header="Situação"       Binding="{Binding SituacaoAcompanhamento}" Width="110"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Visibility="{Binding TemClienteSelecionado, Converter={StaticResource BoolToVisibilityConverter},
+                                                            ConverterParameter=Invert}"
+                                       Text="Selecione um cliente para ver seus seguros."
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="13" HorizontalAlignment="Center"
+                                       Margin="0,12"/>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

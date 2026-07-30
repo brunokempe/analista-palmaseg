@@ -60,10 +60,11 @@ public partial class SeguroNovosViewModel : ObservableObject
 
     public static string[] Seguradoras { get; } =
     [
-        "Allianz", "AXA", "Bradesco Seguros", "Chubb", "Excelsior",
-        "Generali", "HDI Seguros", "Liberty Seguros", "Mapfre Seguros",
-        "Pottencial", "Porto Seguro", "Sompo", "SulAmérica", "Tokio Marine",
-        "Zurich", "Outras"
+        "Aliro", "Allianz", "Allseg", "AssistCard", "Axa", "Azul",
+        "Bradesco", "Capemisa", "Chubb", "Darwin", "Ezze", "Hdi",
+        "Itaú", "Mapfre", "Metlife", "Mitsui", "Pier", "Porto",
+        "Sancor", "Sompo", "Suhai", "SulAm", "Sura", "Tokio",
+        "Unimed", "Yelum", "Zurich", "OUTRAS"
     ];
 
     public static string[] FormasPagamento { get; } =

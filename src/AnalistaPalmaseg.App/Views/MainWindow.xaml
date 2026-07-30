@@ -193,6 +193,98 @@
 
                     </StackPanel>
 
+                    <!-- ─ separador cadastros ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"/>
+
+                    <!-- ══ CADASTROS ══ -->
+                    <Button Command="{Binding ToggleCadastrosCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="36" Padding="0"
+                            Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="20,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="CADASTROS"
+                                       FontSize="9.5" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource SidebarTextBrush}" />
+                            <materialDesign:PackIcon Grid.Column="1" Kind="ChevronDown"
+                                                     Width="14" Height="14" VerticalAlignment="Center"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                <materialDesign:PackIcon.RenderTransform>
+                                    <RotateTransform Angle="{Binding IsCadastrosExpanded, Converter={StaticResource BoolToChevronAngleConverter}}" />
+                                </materialDesign:PackIcon.RenderTransform>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </Button>
+
+                    <StackPanel Visibility="{Binding CadastrosItemsVisibility}">
+                        <Button Command="{Binding NavClientesCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroupOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Clientes" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- ─ separador leeds ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"/>
+
+                    <!-- ══ LEEDS ══ -->
+                    <Button Command="{Binding ToggleLeedsCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="36" Padding="0"
+                            Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="20,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="LEEDS"
+                                       FontSize="9.5" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource SidebarTextBrush}" />
+                            <materialDesign:PackIcon Grid.Column="1" Kind="ChevronDown"
+                                                     Width="14" Height="14" VerticalAlignment="Center"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                <materialDesign:PackIcon.RenderTransform>
+                                    <RotateTransform Angle="{Binding IsLeedsExpanded, Converter={StaticResource BoolToChevronAngleConverter}}" />
+                                </materialDesign:PackIcon.RenderTransform>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </Button>
+
+                    <StackPanel Visibility="{Binding LeedsItemsVisibility}">
+                        <Button Command="{Binding NavLeadsCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AccountConvertOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Cotações" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+
                     <!-- ─ separador gerenciador (admin) ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" />

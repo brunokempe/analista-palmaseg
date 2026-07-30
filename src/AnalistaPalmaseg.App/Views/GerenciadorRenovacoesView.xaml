@@ -217,6 +217,64 @@
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                    <Setter Property="ToolTipService.InitialShowDelay" Value="400"/>
+                    <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
+                    <Setter Property="ToolTip">
+                        <Setter.Value>
+                            <ToolTip MaxWidth="480" Padding="0" FontFamily="Lato, Segoe UI">
+                                <StackPanel>
+                                    <!-- Cabeçalho: nome + CPF -->
+                                    <Border Background="#2B2D36" Padding="12,8" CornerRadius="4,4,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding NomeCliente, TargetNullValue='Cliente não identificado'}"
+                                                       FontWeight="SemiBold" FontSize="13" Foreground="White"/>
+                                            <TextBlock Text="{Binding DocumentoPrincipal, StringFormat='CPF/CNPJ: {0}', TargetNullValue=''}"
+                                                       FontSize="11" Foreground="#9DA3AE" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Observações -->
+                                    <Border Padding="12,10" Background="White"
+                                            Visibility="{Binding TemClienteObservacoes,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <StackPanel>
+                                            <TextBlock Text="OBSERVAÇÕES" FontSize="10" FontWeight="Bold"
+                                                       Foreground="#EC3237" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding ClienteObservacoes}"
+                                                       FontSize="12" Foreground="#201D1D"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Separador entre seções -->
+                                    <Border Height="1" Background="#E0E0E0"
+                                            Visibility="{Binding TemClienteHistorico,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                                    <!-- Histórico -->
+                                    <Border Padding="12,10" Background="White" CornerRadius="0,0,4,4"
+                                            Visibility="{Binding TemClienteHistorico,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <StackPanel>
+                                            <TextBlock Text="HISTÓRICO" FontSize="10" FontWeight="Bold"
+                                                       Foreground="#4E5399" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding ClienteHistorico}"
+                                                       FontSize="12" Foreground="#201D1D"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Placeholder quando não há nada cadastrado -->
+                                    <Border Padding="12,10" Background="White" CornerRadius="0,0,4,4"
+                                            Visibility="{Binding NaoTemInfoCliente,
+                                                         Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <TextBlock Text="Nenhuma observação ou histórico cadastrado para este cliente."
+                                                   FontSize="12" Foreground="#9DA3AE" FontStyle="Italic"/>
+                                    </Border>
+                                </StackPanel>
+                            </ToolTip>
+                        </Setter.Value>
+                    </Setter>
                     <Style.Triggers>
                         <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                             <Setter Property="Background" Value="#F9FAFB"/>

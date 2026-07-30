@@ -187,6 +187,13 @@ public class RelatorioRenovacao : INotifyPropertyChanged
     [NotMapped]
     public decimal PercentualComissaoColab { get; set; }
 
+    // Dados do cadastro de clientes — populados em memória após o carregamento
+    [NotMapped] public string? ClienteObservacoes { get; set; }
+    [NotMapped] public string? ClienteHistorico { get; set; }
+    [NotMapped] public bool TemClienteObservacoes => !string.IsNullOrWhiteSpace(ClienteObservacoes);
+    [NotMapped] public bool TemClienteHistorico   => !string.IsNullOrWhiteSpace(ClienteHistorico);
+    [NotMapped] public bool NaoTemInfoCliente      => !TemClienteObservacoes && !TemClienteHistorico;
+
     [NotMapped]
     public decimal ComissaoColab =>
         ComissaoValor.HasValue && PercentualComissaoColab > 0

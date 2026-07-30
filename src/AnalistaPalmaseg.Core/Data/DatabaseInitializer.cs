@@ -412,6 +412,78 @@ public class DatabaseInitializer(AppDbContext context)
             ON "ValoresReferencia" ("Colaborador", "Mes", "Ano")
             """);
 
+        // ── Clientes ──────────────────────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "Clientes" (
+                "Id"             INTEGER NOT NULL CONSTRAINT "PK_Clientes" PRIMARY KEY AUTOINCREMENT,
+                "Cpf"            TEXT    NOT NULL DEFAULT '',
+                "Nome"           TEXT    NOT NULL DEFAULT '',
+                "Nascimento"     TEXT,
+                "Sexo"           TEXT,
+                "EstadoCivil"    TEXT,
+                "Profissao"      TEXT,
+                "ClienteDesde"   TEXT,
+                "Prefixo1"       TEXT,
+                "Telefone1"      TEXT,
+                "Prefixo2"       TEXT,
+                "Telefone2"      TEXT,
+                "Prefixo3"       TEXT,
+                "Telefone3"      TEXT,
+                "Email1"         TEXT,
+                "Email2"         TEXT,
+                "Cep"            TEXT,
+                "Endereco"       TEXT,
+                "NumeroEndereco" TEXT,
+                "Complemento"    TEXT,
+                "Bairro"         TEXT,
+                "Cidade"         TEXT,
+                "Estado"         TEXT,
+                "Observacoes"    TEXT,
+                "Historico"      TEXT,
+                "CriadoEm"       TEXT    NOT NULL,
+                "AtualizadoEm"   TEXT
+            )
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_Clientes_Cpf"
+            ON "Clientes" ("Cpf")
+            WHERE "Cpf" != ''
+            """);
+
+        // Migração: adiciona colunas ao schema expandido de Clientes
+        var colsClientes = context.Database
+            .SqlQueryRaw<string>("SELECT name FROM pragma_table_info('Clientes')")
+            .ToList();
+
+        foreach (var col in new[] { "Nascimento", "Sexo", "EstadoCivil", "Profissao", "ClienteDesde",
+                                    "Prefixo1", "Prefixo2", "Prefixo3",
+                                    "Telefone1", "Telefone2", "Telefone3",
+                                    "Email1", "Email2",
+                                    "Cep", "Endereco", "NumeroEndereco", "Complemento",
+                                    "Bairro", "Cidade", "Estado" })
+            if (!colsClientes.Contains(col))
+                context.Database.ExecuteSqlRaw($"ALTER TABLE \"Clientes\" ADD COLUMN \"{col}\" TEXT");
+
+        // Remove colunas obsoletas do schema antigo (Telefone, Email) se existirem
+        // SQLite não suporta DROP COLUMN antes do 3.35 — os campos são ignorados pelo EF
+
+        // ── Leads ─────────────────────────────────────────────────
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "Leads" (
+                "Id"           INTEGER NOT NULL CONSTRAINT "PK_Leads" PRIMARY KEY AUTOINCREMENT,
+                "Segurado"     TEXT    NOT NULL DEFAULT '',
+                "Produtor"     TEXT    NOT NULL DEFAULT '',
+                "CriadoEm"     TEXT    NOT NULL,
+                "Indicacao"    TEXT,
+                "Observacao"   TEXT,
+                "SeguroGerado" INTEGER NOT NULL DEFAULT 0,
+                "Fechou"       INTEGER NOT NULL DEFAULT 0,
+                "FechouEm"     TEXT,
+                "SeguroNovoId" INTEGER
+            )
+            """);
+
         // Seed: seguradoras padrão (parceiras e demais)
         if (!context.Seguradoras.Any())
         {

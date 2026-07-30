@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class RelatorioRenovacaoService(AppDbContext context)
+public class RelatorioRenovacaoService(AppDbContext context, ClienteService clienteService)
 {
     public async Task<int> ImportarAsync(string caminhoArquivo)
     {
@@ -207,6 +207,9 @@ public class RelatorioRenovacaoService(AppDbContext context)
 
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
+
+        await clienteService.SincronizarClientesAsync(registrosPorProposta);
+
         return inseridos;
 
         // ── helpers ──────────────────────────────────────────────

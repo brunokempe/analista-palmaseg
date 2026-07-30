@@ -18,6 +18,7 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     private readonly FolhaAmarelaService _folhaService;
     private readonly AnexoService _anexoService;
     private readonly UsuarioService _usuarioService;
+    private readonly ClienteService _clienteService;
     private List<RelatorioRenovacao> _todos = [];
     private ListCollectionView? _view;
     private CancellationTokenSource? _debounceCts;
@@ -50,12 +51,14 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         RelatorioRenovacaoService service,
         FolhaAmarelaService folhaService,
         AnexoService anexoService,
-        UsuarioService usuarioService)
+        UsuarioService usuarioService,
+        ClienteService clienteService)
     {
         _service = service;
         _folhaService = folhaService;
         _anexoService = anexoService;
         _usuarioService = usuarioService;
+        _clienteService = clienteService;
     }
 
     public async Task CarregarAsync()
@@ -64,6 +67,21 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         try
         {
             _todos = await _service.GetTodosAsync();
+
+            var clientes = await _clienteService.GetTodosAsync();
+            var clientePorCpf = clientes
+                .Where(c => !string.IsNullOrWhiteSpace(c.Cpf))
+                .ToDictionary(c => c.Cpf, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var r in _todos)
+            {
+                if (r.DocumentoPrincipal != null &&
+                    clientePorCpf.TryGetValue(r.DocumentoPrincipal, out var cliente))
+                {
+                    r.ClienteObservacoes = cliente.Observacoes;
+                    r.ClienteHistorico   = cliente.Historico;
+                }
+            }
 
             var status = await _service.GetStatusDistinctAsync();
             StatusDisponiveis.Clear();
