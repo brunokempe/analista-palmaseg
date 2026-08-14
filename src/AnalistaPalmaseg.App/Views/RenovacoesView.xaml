@@ -87,6 +87,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Período -->
@@ -154,6 +155,17 @@
                                                        FontSize="15" FontWeight="SemiBold"
                                                        Margin="0,2,0,0" />
                                         </StackPanel>
+
+                                        <!-- Comissão Corretora -->
+                                        <StackPanel Grid.Column="7" Margin="24,0,0,0"
+                                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <TextBlock Text="COMISSÃO"
+                                                       FontSize="9" FontWeight="Bold"
+                                                       Foreground="#BBFFFFFF" />
+                                            <TextBlock Text="{Binding Resumo.ComissaoRenovacoes, Converter={StaticResource CurrencyFormatConverter}}"
+                                                       FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="#FF69F0AE" Margin="0,2,0,0" />
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
 
@@ -206,6 +218,17 @@
                                             <DataGridTextColumn.ElementStyle>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="HorizontalAlignment" Value="Right" />
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Comissão"
+                                            Binding="{Binding NovaComissao, Converter={StaticResource CurrencyFormatConverter}}"
+                                            Width="110">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Setter Property="FontWeight" Value="SemiBold" />
                                                 </Style>
                                             </DataGridTextColumn.ElementStyle>
                                         </DataGridTextColumn>

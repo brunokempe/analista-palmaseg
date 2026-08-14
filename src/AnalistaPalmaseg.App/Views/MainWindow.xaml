@@ -285,9 +285,211 @@
                         </Button>
                     </StackPanel>
 
-                    <!-- ─ separador gerenciador (admin) ─ -->
-                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
-                               Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <!-- ─ separador comparativo ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"/>
+
+                    <!-- ══ COMPARATIVO ══ -->
+                    <Button Command="{Binding ToggleComparativoCommand}"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Foreground="{StaticResource SidebarTextBrush}"
+                            Height="36" Padding="0"
+                            Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Margin="20,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="COMPARATIVO"
+                                       FontSize="9.5" FontWeight="Bold" VerticalAlignment="Center"
+                                       Foreground="{StaticResource SidebarTextBrush}" />
+                            <materialDesign:PackIcon Grid.Column="1" Kind="ChevronDown"
+                                                     Width="14" Height="14" VerticalAlignment="Center"
+                                                     RenderTransformOrigin="0.5,0.5">
+                                <materialDesign:PackIcon.RenderTransform>
+                                    <RotateTransform Angle="{Binding IsComparativoExpanded, Converter={StaticResource BoolToChevronAngleConverter}}" />
+                                </materialDesign:PackIcon.RenderTransform>
+                            </materialDesign:PackIcon>
+                        </Grid>
+                    </Button>
+
+                    <StackPanel Visibility="{Binding ComparativoItemsVisibility}">
+
+                        <!-- Importar ODS -->
+                        <Button Command="{Binding ImportarArquivoCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0"
+                                ToolTip="Importar planilhas ODS do produtor">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FileUploadOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Importar relatório" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Dashboard -->
+                        <Button Command="{Binding NavDashboardCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ViewDashboardOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Dashboard" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Renovações carteira -->
+                        <Button Command="{Binding NavRenovacoesCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardTextOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Novos negócios -->
+                        <Button Command="{Binding NavNovosNegociosCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="PlusBoxOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Novos negócios" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Pendentes -->
+                        <Button Command="{Binding NavPendentesCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ClockOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Pendentes em aberto" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Evolução da retenção -->
+                        <Button Command="{Binding NavRetencaoCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="TrendingUp"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Evolução retenção" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Comparação de produtores -->
+                        <Button Command="{Binding NavComparacaoCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ChartBarStacked"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Comparação produtores" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Resultado / Metas -->
+                        <Button Command="{Binding NavResultadosCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="CheckboxMarkedCircleOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Resultado — Metas" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Acompanhamento de Apólices -->
+                        <Button Command="{Binding NavApolicesDashboardCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FileDocumentOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Acomp. Apólices" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                        <!-- Dashboard de Funcionários -->
+                        <Button Command="{Binding NavFuncionariosDashboardCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AccountMultipleOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Dashboard Funcionários" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!-- ─ separador gerenciador ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
 
                     <!-- ══ GERENCIADOR ══ -->
                     <Button Command="{Binding ToggleGerenciadorCommand}"
@@ -295,7 +497,7 @@
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                             Foreground="{StaticResource SidebarTextBrush}"
                             Height="36" Padding="0"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Grid Margin="20,0,12,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -315,6 +517,23 @@
                     </Button>
 
                     <StackPanel Visibility="{Binding GerenciadorItemsVisibility}">
+
+                        <!-- Distribuição por Produtor -->
+                        <Button Command="{Binding NavDistribuicaoProdutorCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroupOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Dist. por Produtor" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
 
                         <!-- Renovações -->
                         <Button Command="{Binding NavGerenciadorRenovacoesCommand}"
@@ -399,17 +618,15 @@
                         </Grid>
                     </Button>
 
-                    <!-- ─ separador admin ─ -->
-                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
-                               Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <!-- ─ separador administração ─ -->
+                    <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
 
                     <!-- ══ ADMINISTRAÇÃO ══ -->
                     <Button Command="{Binding NavGerenciarUsuariosCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                             Foreground="{StaticResource SidebarTextBrush}"
-                            Height="44" Padding="0"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                            Height="44" Padding="0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="56" />

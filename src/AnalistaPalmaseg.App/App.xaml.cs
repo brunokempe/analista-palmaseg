@@ -55,6 +55,7 @@ public partial class App : Application
                 services.AddTransient<MetaService>();
                 services.AddTransient<ClienteService>();
                 services.AddTransient<LeadService>();
+                services.AddTransient<DistribuicaoReferenciaService>();
 
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<LoginWindow>();
@@ -81,6 +82,7 @@ public partial class App : Application
                 services.AddTransient<ControleBoletosViewModel>();
                 services.AddTransient<ClientesViewModel>();
                 services.AddTransient<LeadsViewModel>();
+                services.AddTransient<DistribuicaoProdutorViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<MainWindow>();
             })
@@ -152,6 +154,7 @@ public partial class App : Application
         Add<ControleBoletosViewModel, ControleBoletosView>();
         Add<ClientesViewModel, ClientesView>();
         Add<LeadsViewModel, LeadsView>();
+        Add<DistribuicaoProdutorViewModel, DistribuicaoProdutorView>();
     }
 
     protected override async void OnExit(ExitEventArgs e)

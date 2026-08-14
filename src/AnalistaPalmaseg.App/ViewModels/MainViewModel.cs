@@ -30,7 +30,8 @@ public partial class MainViewModel : ObservableObject
                               nameof(ApolicesItemsVisibility),
                               nameof(CadastrosItemsVisibility),
                               nameof(LeedsItemsVisibility),
-                              nameof(GerenciadorItemsVisibility))]
+                              nameof(GerenciadorItemsVisibility),
+                              nameof(ComparativoItemsVisibility))]
     private bool _isSidebarExpanded = true;
 
     [ObservableProperty]
@@ -57,14 +58,18 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(GerenciadorItemsVisibility))]
     private bool _isGerenciadorExpanded = false;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ComparativoItemsVisibility))]
+    private bool _isComparativoExpanded = false;
+
     public double SidebarWidth => IsSidebarExpanded ? 220 : 56;
     public Visibility CarteiraItemsVisibility    => !IsSidebarExpanded || IsCarteiraExpanded    ? Visibility.Visible : Visibility.Collapsed;
     public Visibility RelatoriosItemsVisibility  => !IsSidebarExpanded || IsRelatoriosExpanded  ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ApolicesItemsVisibility    => !IsSidebarExpanded || IsApolicesExpanded    ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CadastrosItemsVisibility   => !IsSidebarExpanded || IsCadastrosExpanded   ? Visibility.Visible : Visibility.Collapsed;
     public Visibility LeedsItemsVisibility       => !IsSidebarExpanded || IsLeedsExpanded       ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility GerenciadorItemsVisibility => !IsAdmin ? Visibility.Collapsed :
-                                                    (!IsSidebarExpanded || IsGerenciadorExpanded ? Visibility.Visible : Visibility.Collapsed);
+    public Visibility GerenciadorItemsVisibility => !IsSidebarExpanded || IsGerenciadorExpanded ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ComparativoItemsVisibility => !IsSidebarExpanded || IsComparativoExpanded ? Visibility.Visible : Visibility.Collapsed;
 
     // Análise de Carteira
     public InicioViewModel InicioVm { get; }
@@ -95,9 +100,10 @@ public partial class MainViewModel : ObservableObject
     public RelatorioEmissaoViewModel RelatorioEmissaoVm { get; }
 
     // Gerenciador (admin)
-    public GerenciadorRenovacoesViewModel GerenciadorRenovacoesVm { get; }
-    public GerenciadorCotacoesViewModel GerenciadorCotacoesVm { get; }
-    public EmissaoDashboardViewModel EmissaoDashboardVm { get; }
+    public GerenciadorRenovacoesViewModel    GerenciadorRenovacoesVm    { get; }
+    public GerenciadorCotacoesViewModel      GerenciadorCotacoesVm      { get; }
+    public EmissaoDashboardViewModel         EmissaoDashboardVm         { get; }
+    public DistribuicaoProdutorViewModel     DistribuicaoProdutorVm     { get; }
 
     // Controle de Boletos
     public ControleBoletosViewModel ControleBoletosVm { get; }
@@ -138,6 +144,7 @@ public partial class MainViewModel : ObservableObject
         ControleBoletosViewModel controleBoletosVm,
         ClientesViewModel clientesVm,
         LeadsViewModel leadsVm,
+        DistribuicaoProdutorViewModel distribuicaoProdutorVm,
         RelatorioRenovacaoService relatorioRenovacaoService)
     {
         _importacaoService = importacaoService;
@@ -164,8 +171,9 @@ public partial class MainViewModel : ObservableObject
         DefinicoesMetasVm = definicoesMetasVm;
         DashboardMetasVm = dashboardMetasVm;
         ControleBoletosVm = controleBoletosVm;
-        ClientesVm = clientesVm;
-        LeadsVm    = leadsVm;
+        ClientesVm             = clientesVm;
+        LeadsVm                = leadsVm;
+        DistribuicaoProdutorVm = distribuicaoProdutorVm;
         _relatorioRenovacaoService = relatorioRenovacaoService;
 
         _currentView = inicioVm;
@@ -179,6 +187,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void ToggleCadastros()    => IsCadastrosExpanded    = !IsCadastrosExpanded;
     [RelayCommand] private void ToggleLeeds()        => IsLeedsExpanded        = !IsLeedsExpanded;
     [RelayCommand] private void ToggleGerenciador()  => IsGerenciadorExpanded  = !IsGerenciadorExpanded;
+    [RelayCommand] private void ToggleComparativo()  => IsComparativoExpanded  = !IsComparativoExpanded;
 
     // ── Navegação ──────────────────────────────────────────────
     [RelayCommand] private void NavInicio()           { CurrentView = InicioVm;           TituloAtivo = "Início"; }
@@ -217,7 +226,7 @@ public partial class MainViewModel : ObservableObject
     }
     [RelayCommand] private void Sair() => Application.Current.Shutdown();
 
-    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    [RelayCommand]
     private async Task NavGerenciarUsuariosAsync()
     {
         await GerenciarUsuariosVm.CarregarAsync();
@@ -225,7 +234,15 @@ public partial class MainViewModel : ObservableObject
         TituloAtivo = "Gerenciar Usuários";
     }
 
-    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    [RelayCommand]
+    private async Task NavDistribuicaoProdutorAsync()
+    {
+        await DistribuicaoProdutorVm.CarregarAsync();
+        CurrentView = DistribuicaoProdutorVm;
+        TituloAtivo = "Distribuição por Produtor";
+    }
+
+    [RelayCommand]
     private async Task NavGerenciadorRenovacoesAsync()
     {
         await GerenciadorRenovacoesVm.CarregarAsync();
@@ -233,14 +250,14 @@ public partial class MainViewModel : ObservableObject
         TituloAtivo = "Renovações";
     }
 
-    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    [RelayCommand]
     private void NavGerenciadorCotacoes()
     {
         CurrentView = GerenciadorCotacoesVm;
         TituloAtivo = "Cotações";
     }
 
-    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    [RelayCommand]
     private async Task NavDefinicoesMetasAsync()
     {
         await DefinicoesMetasVm.CarregarAsync();
@@ -289,7 +306,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ── Importação — Relatório de Renovações ─────────────────
-    [RelayCommand(CanExecute = nameof(IsAdmin))]
+    [RelayCommand]
     private async Task ImportarRelatorioRenovacaoAsync()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog

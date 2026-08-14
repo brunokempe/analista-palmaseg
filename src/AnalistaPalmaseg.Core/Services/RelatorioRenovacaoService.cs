@@ -178,6 +178,7 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
                 var fechamentoAssinatura     = existing.FechamentoAssinatura;
                 var assinaturaFeita          = existing.AssinaturaFeita;
                 var seguroEmitido            = existing.SeguroEmitido;
+                var percentualComissaoMinimo = existing.PercentualComissaoMinimo;
 
                 // SetValues copia todos os campos, incluindo Id. Para evitar que o EF marque
                 // a chave primária como modificada (o que lança InvalidOperationException),
@@ -197,6 +198,7 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
                 existing.FechamentoAssinatura     = fechamentoAssinatura;
                 existing.AssinaturaFeita          = assinaturaFeita;
                 existing.SeguroEmitido            = seguroEmitido;
+                existing.PercentualComissaoMinimo = percentualComissaoMinimo;
             }
             else
             {
@@ -277,6 +279,7 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
 
         entry.Property(x => x.NovoProdutor).IsModified = true;
         entry.Property(x => x.Observacao).IsModified = true;
+        entry.Property(x => x.PercentualComissaoMinimo).IsModified = true;
         await context.SaveChangesAsync();
 
         // Desanexa para evitar acúmulo no change tracker (contexto é efetivamente singleton)

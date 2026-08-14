@@ -15,8 +15,13 @@ public record ResumoImportacao(
     int NovosQtd,
     decimal NovosPl,
     decimal Participacao,
-    decimal Retencao
-);
+    decimal Retencao,
+    decimal ComissaoRenovacoes
+)
+{
+    public decimal TotalPl => PlRenovado + NovosPl;
+    public decimal TotalComissao => ComissaoRenovacoes + Participacao;
+};
 
 public record ParticipacaoSeguradora(string Cia, decimal PlRenovado, decimal Comissao, decimal Percentual);
 
@@ -228,6 +233,7 @@ public class RelatorioService(AppDbContext context)
 
         var plBase = renovacoes.Sum(r => r.PlBase);
         var plRenovado = renovacoes.Where(r => r.NovoPl.HasValue).Sum(r => r.NovoPl ?? 0);
+        var comissaoRenovacoes = renovacoes.Where(r => r.NovoPl.HasValue).Sum(r => r.NovaComissao ?? 0);
 
         var novosApenas = novos.Where(n => n.IsNovo).ToList();
         var novosQtd = novosApenas.Count;
@@ -248,7 +254,8 @@ public class RelatorioService(AppDbContext context)
             novosQtd,
             novosPl,
             participacao,
-            retencao
+            retencao,
+            comissaoRenovacoes
         );
     }
 }
