@@ -58,8 +58,56 @@
             <StackPanel>
 
                 <!-- ── Período mais recente: KPI Cards ── -->
-                <UniformGrid Columns="4" Margin="0,0,0,16">
-                    <materialDesign:Card Margin="0,0,12,0" Padding="16">
+                <UniformGrid Columns="4" Margin="0,0,0,8">
+                    <!-- Linha 1: PL -->
+                    <materialDesign:Card Margin="0,0,8,8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="PL Base" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding ResumoAtual.PlBase, Converter={StaticResource CurrencyFormatConverter}}"
+                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
+                                       Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                                <Run Text="{Binding ResumoAtual.TotalVencidas}" />
+                                <Run Text=" apólices vencidas" />
+                            </TextBlock>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Margin="0,0,8,8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="PL Renovações" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding ResumoAtual.PlRenovado, Converter={StaticResource CurrencyFormatConverter}}"
+                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
+                                       Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Text="PL das apólices renovadas" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Margin="0,0,8,8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="PL Novos Negócios" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding ResumoAtual.NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
+                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
+                                       Foreground="{StaticResource AccentBlueBrush}" />
+                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                                <Run Text="{Binding ResumoAtual.NovosQtd}" />
+                                <Run Text=" novos registros" />
+                            </TextBlock>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Margin="0,0,0,8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="PL Total" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding TotalPl, Converter={StaticResource CurrencyFormatConverter}}"
+                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
+                                       Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Text="Renovações + Novos negócios" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Linha 2: Comissão -->
+                    <materialDesign:Card Margin="0,0,8,16" Padding="16">
                         <StackPanel>
                             <TextBlock Text="Retenção" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
                             <TextBlock Text="{Binding ResumoAtual.Retencao, Converter={StaticResource PercentFormatConverter}}"
@@ -74,42 +122,33 @@
                         </StackPanel>
                     </materialDesign:Card>
 
-                    <materialDesign:Card Margin="0,0,12,0" Padding="16">
+                    <materialDesign:Card Margin="0,0,8,16" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="PL base (vencimentos)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
-                            <TextBlock Text="{Binding ResumoAtual.PlBase, Converter={StaticResource CurrencyFormatConverter}}"
+                            <TextBlock Text="Comissão Renovações" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding ResumoAtual.ComissaoRenovacoes, Converter={StaticResource CurrencyFormatConverter}}"
                                        FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
-                                       Foreground="{StaticResource PrimaryBrush}" />
-                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
-                                <Run Text="{Binding ResumoAtual.TotalVencidas}" />
-                                <Run Text=" apólices vencidas" />
-                            </TextBlock>
+                                       Foreground="{StaticResource SuccessBrush}" />
+                            <TextBlock Text="Comissão gerada pela corretora" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
                         </StackPanel>
                     </materialDesign:Card>
 
-                    <materialDesign:Card Margin="0,0,12,0" Padding="16">
+                    <materialDesign:Card Margin="0,0,8,16" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="Novos negócios (PL)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
-                            <TextBlock Text="{Binding ResumoAtual.NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
-                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
-                                       Foreground="{StaticResource AccentBlueBrush}" />
-                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
-                                <Run Text="{Binding ResumoAtual.NovosQtd}" />
-                                <Run Text=" novos registros" />
-                            </TextBlock>
-                        </StackPanel>
-                    </materialDesign:Card>
-
-                    <materialDesign:Card Padding="16">
-                        <StackPanel>
-                            <TextBlock Text="Participação (comissão)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="Comissão Novos Negócios" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
                             <TextBlock Text="{Binding ResumoAtual.Participacao, Converter={StaticResource CurrencyFormatConverter}}"
                                        FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
                                        Foreground="{StaticResource SuccessBrush}" />
-                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
-                                <Run Text="{Binding ResumoAtual.NaoRenovado}" />
-                                <Run Text=" não renovados" />
-                            </TextBlock>
+                            <TextBlock Text="Comissão sobre novos negócios" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Margin="0,0,0,16" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Comissão Total" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" />
+                            <TextBlock Text="{Binding TotalComissao, Converter={StaticResource CurrencyFormatConverter}}"
+                                       FontSize="20" FontWeight="Bold" Margin="0,4,0,0"
+                                       Foreground="{StaticResource SuccessBrush}" />
+                            <TextBlock Text="Renovações + Novos negócios" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
                         </StackPanel>
                     </materialDesign:Card>
                 </UniformGrid>
@@ -195,6 +234,9 @@
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
@@ -203,28 +245,46 @@
                                                            FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,2,0,0" />
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <StackPanel Grid.Column="2" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
                                                 <TextBlock Text="RETENÇÃO" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
                                                 <TextBlock Text="{Binding Retencao, Converter={StaticResource PercentFormatConverter}}"
                                                            Foreground="{Binding Retencao, Converter={StaticResource RetencaoColorConverter}}"
                                                            FontSize="14" FontWeight="SemiBold" Margin="0,2,0,0" />
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="3" Margin="24,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                <TextBlock Text="PL BASE" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
-                                                <TextBlock Text="{Binding PlBase, Converter={StaticResource CurrencyFormatConverter}}"
+                                            <StackPanel Grid.Column="3" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="PL RENOVADO" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
+                                                <TextBlock Text="{Binding PlRenovado, Converter={StaticResource CurrencyFormatConverter}}"
                                                            FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,2,0,0" />
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="4" Margin="24,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <StackPanel Grid.Column="4" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="COM. RENOVAÇÕES" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
+                                                <TextBlock Text="{Binding ComissaoRenovacoes, Converter={StaticResource CurrencyFormatConverter}}"
+                                                           FontSize="14" FontWeight="SemiBold" Foreground="#FF69F0AE" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="5" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
                                                 <TextBlock Text="NOVOS PL" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
                                                 <TextBlock Text="{Binding NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
                                                            FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,2,0,0" />
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="5" Margin="24,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                <TextBlock Text="PARTICIPAÇÃO" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
+                                            <StackPanel Grid.Column="6" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="COM. NOVOS" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
                                                 <TextBlock Text="{Binding Participacao, Converter={StaticResource CurrencyFormatConverter}}"
+                                                           FontSize="14" FontWeight="SemiBold" Foreground="#FF69F0AE" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="7" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="PL TOTAL" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
+                                                <TextBlock Text="{Binding TotalPl, Converter={StaticResource CurrencyFormatConverter}}"
+                                                           FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="8" Margin="20,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="COM. TOTAL" FontSize="9" FontWeight="Bold" Foreground="#BBFFFFFF" />
+                                                <TextBlock Text="{Binding TotalComissao, Converter={StaticResource CurrencyFormatConverter}}"
                                                            FontSize="14" FontWeight="SemiBold" Foreground="#FF69F0AE" Margin="0,2,0,0" />
                                             </StackPanel>
                                         </Grid>

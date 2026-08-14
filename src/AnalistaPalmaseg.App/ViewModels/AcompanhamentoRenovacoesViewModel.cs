@@ -137,7 +137,19 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
 
             if (dialog.ShowDialog() != true)
             {
-                Reverter(reg);
+                Reverter(reg, limparFechamento: true);
+                return;
+            }
+
+            if (reg.PercentualComissaoMinimo.HasValue &&
+                (!reg.FechamentoComissao.HasValue || reg.FechamentoComissao.Value < reg.PercentualComissaoMinimo.Value))
+            {
+                MessageBox.Show(
+                    $"A comissão informada ({reg.FechamentoComissao?.ToString("N2") ?? "não informada"}%) é menor que o " +
+                    $"% mínimo de comissão definido para este registro ({reg.PercentualComissaoMinimo.Value:N2}%).\n\n" +
+                    "A renovação não pode ser confirmada.",
+                    "Comissão abaixo do mínimo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Reverter(reg, limparFechamento: true);
                 return;
             }
 
@@ -152,7 +164,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             {
                 MessageBox.Show($"Erro ao salvar fechamento:\n{ex.Message}", "Erro",
                     MessageBoxButton.OK, MessageBoxImage.Error);
-                Reverter(reg);
+                Reverter(reg, limparFechamento: true);
             }
             return;
         }
@@ -201,11 +213,29 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                 new DashboardRefreshMessage(reg.VigenciaFinal.Value.Month, reg.VigenciaFinal.Value.Year));
     }
 
-    private void Reverter(RelatorioRenovacao reg)
+    private void Reverter(RelatorioRenovacao reg, bool limparFechamento = false)
     {
-        reg.PropertyChanged -= OnItemPropertyChanged;
-        reg.SituacaoAcompanhamento = _situacaoAnterior.GetValueOrDefault(reg.Id, "À Renovar");
-        reg.PropertyChanged += OnItemPropertyChanged;
+        var valorAnterior = _situacaoAnterior.GetValueOrDefault(reg.Id, "À Renovar");
+
+        // Adiado para depois que o ComboBox terminar de processar a seleção atual —
+        // revertendo de forma síncrona (ainda dentro do UpdateSource disparado pelo próprio
+        // binding TwoWay) o WPF ignora o novo valor por proteção contra reentrância.
+        Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            new Action(() =>
+            {
+                reg.PropertyChanged -= OnItemPropertyChanged;
+                reg.SituacaoAcompanhamento = valorAnterior;
+                if (limparFechamento)
+                {
+                    reg.FechamentoSeguradora = null;
+                    reg.FechamentoPremioLiquido = null;
+                    reg.FechamentoFormaPagamento = null;
+                    reg.FechamentoComissao = null;
+                    reg.FechamentoParcelamento = null;
+                    reg.FechamentoAssinatura = null;
+                }
+                reg.PropertyChanged += OnItemPropertyChanged;
+            }));
     }
 
     // ── Filtros ────────────────────────────────────────────────────────────────

@@ -16,7 +16,13 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
     [ObservableProperty] private string? _nomeSelecionado;
     [ObservableProperty] private ObservableCollection<ResumoImportacao> _periodos = [];
-    [ObservableProperty] private ResumoImportacao? _resumoAtual;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalPl))]
+    [NotifyPropertyChangedFor(nameof(TotalComissao))]
+    private ResumoImportacao? _resumoAtual;
+
+    public decimal TotalPl => (ResumoAtual?.PlRenovado ?? 0) + (ResumoAtual?.NovosPl ?? 0);
+    public decimal TotalComissao => (ResumoAtual?.ComissaoRenovacoes ?? 0) + (ResumoAtual?.Participacao ?? 0);
     [ObservableProperty] private ObservableCollection<ParticipacaoSeguradora> _participacao = [];
     [ObservableProperty] private ISeries[] _seriesStatus = [];
     [ObservableProperty] private ISeries[] _seriesParticipacao = [];

@@ -12,6 +12,7 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class ClientesViewModel : ObservableObject
 {
     private readonly ClienteService _service;
+    private readonly SessaoService _sessao;
     private ObservableCollection<Cliente> _colecao = [];
     private ListCollectionView? _view;
 
@@ -57,11 +58,14 @@ public partial class ClientesViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<RelatorioRenovacao> _seguros = [];
 
     public bool TemClienteSelecionado => EditandoId != 0 || ClienteSelecionado != null;
-    public bool IsNovo => EditandoId == 0;
+    public bool IsNovo                => EditandoId == 0;
+    public bool IsAdmin               => _sessao.IsAdmin;
+    public bool IsNotAdmin            => !_sessao.IsAdmin;
 
-    public ClientesViewModel(ClienteService service)
+    public ClientesViewModel(ClienteService service, SessaoService sessao)
     {
         _service = service;
+        _sessao  = sessao;
     }
 
     partial void OnClienteSelecionadoChanged(Cliente? value)

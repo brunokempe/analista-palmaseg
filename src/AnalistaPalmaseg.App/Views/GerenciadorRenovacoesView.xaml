@@ -151,9 +151,11 @@
                           SelectedItem="{Binding NovoProdutorEmMassa}"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                           materialDesign:HintAssist.Hint="Selecionar produtor"
-                          Height="36" FontSize="12" Margin="0,0,8,0" />
+                          VerticalAlignment="Center"
+                          FontSize="12" Margin="0,0,8,0" />
                 <Button Command="{Binding AtribuirEmMassaCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
+                        VerticalAlignment="Center"
                         Height="36" Padding="14,0" FontSize="12"
                         Content="Atribuir" />
             </StackPanel>
@@ -307,6 +309,47 @@
             </DataGrid.GroupStyle>
 
             <DataGrid.Columns>
+
+                <!-- Coluna de notas do cliente — ícone visual; conteúdo aparece no tooltip da linha -->
+                <DataGridTemplateColumn Width="36" CanUserResize="False" CanUserReorder="False" CanUserSort="False" Header="📋">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <!-- vermelho = tem observação -->
+                                <materialDesign:PackIcon Kind="NoteTextOutline" Width="16" Height="16" Foreground="#EC3237">
+                                    <materialDesign:PackIcon.Style>
+                                        <Style TargetType="materialDesign:PackIcon">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TemClienteObservacoes}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </materialDesign:PackIcon.Style>
+                                </materialDesign:PackIcon>
+                                <!-- azul = tem histórico mas não tem observação -->
+                                <materialDesign:PackIcon Kind="History" Width="16" Height="16" Foreground="#4E5399">
+                                    <materialDesign:PackIcon.Style>
+                                        <Style TargetType="materialDesign:PackIcon">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding TemClienteHistorico}"   Value="True"/>
+                                                        <Condition Binding="{Binding TemClienteObservacoes}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </materialDesign:PackIcon.Style>
+                                </materialDesign:PackIcon>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
                 <DataGridTemplateColumn Width="52" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
                     <DataGridTemplateColumn.HeaderTemplate>
                         <DataTemplate>
@@ -331,6 +374,24 @@
                 <DataGridTextColumn Header="Status"        Binding="{Binding Status}"             Width="110" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Cliente"       Binding="{Binding NomeCliente}"        Width="200" IsReadOnly="True"/>
                 <DataGridTextColumn Header="CPF/CNPJ"      Binding="{Binding DocumentoPrincipal}" Width="130" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Histórico do Cliente"
+                                    Binding="{Binding ClienteHistorico}"     Width="220" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding ClienteHistorico}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Observações do Cliente"
+                                    Binding="{Binding ClienteObservacoes}"   Width="220" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding ClienteObservacoes}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 <DataGridTextColumn Header="Seguradora"    Binding="{Binding Seguradora}"         Width="160" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Ramo"          Binding="{Binding Ramo}"               Width="120" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Vig. Início"
@@ -384,6 +445,17 @@
                         <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                             <Setter Property="Background" Value="#FFF9C4"/>
                             <Setter Property="ToolTip" Value="Clique duas vezes para editar (aparece na folha amarela)"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="% Mín. Comissão"
+                                    Binding="{Binding PercentualComissaoMinimo, UpdateSourceTrigger=LostFocus, StringFormat=N2, TargetNullValue=''}"
+                                    Width="120">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                            <Setter Property="Background" Value="#FFF9C4"/>
+                            <Setter Property="ToolTip" Value="Clique duas vezes para editar. Impede a renovação (Ren. Palma) se a comissão informada for menor que este percentual."/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>

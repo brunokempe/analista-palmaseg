@@ -1,0 +1,339 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.DistribuicaoProdutorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:vm="clr-namespace:AnalistaPalmaseg.App.ViewModels"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <UserControl.Resources>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+        <Style x:Key="StatValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        </Style>
+        <Style x:Key="StatLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Cabeçalho ── -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,0">
+            <DockPanel VerticalAlignment="Center">
+
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="AccountGroupOutline" Width="22" Height="22"
+                                             Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Distribuição por Produtor" FontSize="16" FontWeight="SemiBold"
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+
+                    <ProgressBar IsIndeterminate="True" Width="80" Height="3" Foreground="White"
+                                 Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 Margin="0,0,16,0"/>
+
+                    <!-- Filtro Mês -->
+                    <TextBlock Text="Mês:" Foreground="White" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{x:Static vm:DistribuicaoProdutorViewModel.NomesMeses}"
+                              SelectedIndex="{Binding FiltroMes}"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Width="110" Height="34" FontSize="12"
+                              Margin="0,0,12,0">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+                                <Setter Property="Foreground" Value="#212121"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+
+                    <!-- Filtro Ano -->
+                    <TextBlock Text="Ano:" Foreground="White" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding AnosDisponiveis}"
+                              SelectedItem="{Binding FiltroAno}"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Width="80" Height="34" FontSize="12"
+                              Margin="0,0,12,0">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+                                <Setter Property="Foreground" Value="#212121"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+
+                    <!-- Filtro Produtor -->
+                    <TextBlock Text="Produtor:" Foreground="White" FontSize="12"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding ProdutoresParaFiltro}"
+                              SelectedItem="{Binding FiltroProdutorSelecionado}"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Width="160" Height="34" FontSize="12">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
+                                <Setter Property="Foreground" Value="#212121"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Conteúdo principal ── -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12,10,12,16">
+
+                <!-- ══ Linha 1: Totais + Ano Anterior ══ -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
+                        <ColumnDefinition Width="360"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Card Totais da Corretora -->
+                    <materialDesign:Card Grid.Column="0" Padding="16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <materialDesign:PackIcon Kind="ChartBar" Width="16" Height="16"
+                                                         Foreground="{StaticResource PrimaryBrush}"
+                                                         VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="Totais da Corretora" Style="{StaticResource CardTitle}" Margin="0"/>
+                            </StackPanel>
+
+                            <!-- 3 stat tiles -->
+                            <Grid Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding TotalPremioLiquido, StringFormat=N2}"
+                                               Style="{StaticResource StatValue}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Prêmio Líquido (R$)" Style="{StaticResource StatLabel}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource BorderLightBrush}" Margin="0,4"/>
+
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding TotalComissao, StringFormat=N2}"
+                                               Style="{StaticResource StatValue}" HorizontalAlignment="Center"
+                                               Foreground="#10B981"/>
+                                    <TextBlock Text="Comissão R$" Style="{StaticResource StatLabel}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+
+                                <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource BorderLightBrush}" Margin="0,4"/>
+
+                                <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding TotalApolices}"
+                                               Style="{StaticResource StatValue}" HorizontalAlignment="Center"
+                                               Foreground="{StaticResource PrimaryBrush}"/>
+                                    <TextBlock Text="Apólices / Propostas" Style="{StaticResource StatLabel}"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Separador -->
+                            <Rectangle Height="1" Fill="{StaticResource BorderLightBrush}" Margin="0,0,0,10"/>
+
+                            <!-- Por Ramo -->
+                            <TextBlock Text="CONT. POR RAMO" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <DataGrid ItemsSource="{Binding PorRamo}"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      CanUserAddRows="False" CanUserDeleteRows="False"
+                                      HeadersVisibility="Column" MaxHeight="160"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="{StaticResource BorderLightBrush}"
+                                      FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Ramo"          Binding="{Binding Ramo}"          Width="*"/>
+                                    <DataGridTextColumn Header="Qtd"           Binding="{Binding Qtd}"           Width="50"  ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                    <DataGridTextColumn Header="Prêmio Líq."
+                                                        Binding="{Binding PremioLiquido, StringFormat=N2}"       Width="110" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                    <DataGridTextColumn Header="Comissão R$"
+                                                        Binding="{Binding Comissao, StringFormat=N2}"            Width="110" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Card Ano Anterior (editável) -->
+                    <materialDesign:Card Grid.Column="2" Padding="16">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <materialDesign:PackIcon Kind="CalendarArrowLeft" Width="16" Height="16"
+                                                         Foreground="#F59E0B"
+                                                         VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding LabelAnoAnterior}" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#F59E0B" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Insira os valores de referência do ano anterior para comparação."
+                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                            <TextBlock Text="Prêmio Líquido (R$)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding RefPremioLiquido, StringFormat={}{0:N2}, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     FontSize="13" Margin="0,0,0,10"
+                                     GotFocus="DecimalField_GotFocus"/>
+
+                            <TextBlock Text="Comissão R$" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding RefComissao, StringFormat={}{0:N2}, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     FontSize="13" Margin="0,0,0,10"
+                                     GotFocus="DecimalField_GotFocus"/>
+
+                            <TextBlock Text="Qtd Apólices" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding RefQtdApolices, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     FontSize="13" Margin="0,0,0,16"/>
+
+                            <Button Command="{Binding SalvarReferenciaCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#F59E0B" BorderBrush="#F59E0B"
+                                    HorizontalAlignment="Right"
+                                    Height="36" Padding="16,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Salvar Referência" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+
+                <!-- ══ Card Por Produtor ══ -->
+                <materialDesign:Card Margin="0,0,0,10" Padding="16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <materialDesign:PackIcon Kind="AccountTieOutline" Width="16" Height="16"
+                                                     Foreground="{StaticResource PrimaryBrush}"
+                                                     VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Distribuição por Produtor" Style="{StaticResource CardTitle}" Margin="0"/>
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12">
+                                <TextBlock.Text>
+                                    <Binding Path="PorProdutor.Count" StringFormat="({0} produtor(es))"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding PorProdutor}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" CanUserDeleteRows="False"
+                                  HeadersVisibility="Column" MaxHeight="320"
+                                  GridLinesVisibility="Horizontal" AlternationCount="2"
+                                  HorizontalGridLinesBrush="{StaticResource BorderLightBrush}"
+                                  Style="{StaticResource MaterialDesignDataGrid}"
+                                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                                  RowHeight="34" FontSize="12">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <Style.Triggers>
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                            <Setter Property="Background" Value="#F9FAFB"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Produtor"       Binding="{Binding Produtor}"                               Width="180"/>
+                                <DataGridTextColumn Header="Qtd"            Binding="{Binding Qtd}"                                    Width="60"  ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                <DataGridTextColumn Header="Prêmio Líq. (R$)"
+                                                    Binding="{Binding PremioLiquido, StringFormat=N2}"                                Width="140" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                <DataGridTextColumn Header="Comissão R$"
+                                                    Binding="{Binding Comissao, StringFormat=N2}"                                     Width="120" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                <DataGridTextColumn Header="Ramos (Cont. Núm.)" Binding="{Binding RamosSumarizados}"                  Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- ══ Card Por Dia ══ -->
+                <materialDesign:Card Padding="16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <materialDesign:PackIcon Kind="CalendarMonthOutline" Width="16" Height="16"
+                                                     Foreground="{StaticResource PrimaryBrush}"
+                                                     VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Vencimentos por Dia" Style="{StaticResource CardTitle}" Margin="0"/>
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12">
+                                <TextBlock.Text>
+                                    <Binding Path="PorDia.Count" StringFormat="({0} dia(s))"/>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding PorDia}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  CanUserAddRows="False" CanUserDeleteRows="False"
+                                  HeadersVisibility="Column" MaxHeight="400"
+                                  GridLinesVisibility="Horizontal" AlternationCount="2"
+                                  HorizontalGridLinesBrush="{StaticResource BorderLightBrush}"
+                                  Style="{StaticResource MaterialDesignDataGrid}"
+                                  ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
+                                  RowHeight="34" FontSize="12">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <Style.Triggers>
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                            <Setter Property="Background" Value="#F9FAFB"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Data"
+                                                    Binding="{Binding Data, StringFormat=dd/MM/yyyy}"                  Width="100"/>
+                                <DataGridTextColumn Header="Dia da Semana"  Binding="{Binding DiaSemana}"               Width="130"/>
+                                <DataGridTextColumn Header="Qtd"            Binding="{Binding Qtd}"                     Width="60"  ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                <DataGridTextColumn Header="Prêmio Líq. (R$)"
+                                                    Binding="{Binding PremioLiquido, StringFormat=N2}"                  Width="140" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                                <DataGridTextColumn Header="Comissão R$"
+                                                    Binding="{Binding Comissao, StringFormat=N2}"                       Width="120" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -130,6 +130,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
     // Campos editáveis manualmente (preservados no re-import)
     public string? NovoProdutor { get; set; }
     public string? MotivoSituacao { get; set; }
+    public decimal? PercentualComissaoMinimo { get; set; }
 
     // Campos de fechamento (preenchidos no popup ao definir Ren. Palma)
     public string? FechamentoSeguradora { get; set; }

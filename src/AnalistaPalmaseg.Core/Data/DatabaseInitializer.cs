@@ -268,6 +268,10 @@ public class DatabaseInitializer(AppDbContext context)
             context.Database.ExecuteSqlRaw(
                 "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"BoletosGerados\" INTEGER NOT NULL DEFAULT 0");
 
+        if (!colsRenovacoes.Contains("PercentualComissaoMinimo"))
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"RelatorioRenovacoes\" ADD COLUMN \"PercentualComissaoMinimo\" REAL");
+
         // Tabela de anexos por registro de renovação
         context.Database.ExecuteSqlRaw("""
             CREATE TABLE IF NOT EXISTS "Anexos" (
@@ -481,6 +485,16 @@ public class DatabaseInitializer(AppDbContext context)
                 "Fechou"       INTEGER NOT NULL DEFAULT 0,
                 "FechouEm"     TEXT,
                 "SeguroNovoId" INTEGER
+            )
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "DistribuicaoReferencias" (
+                "Id"               INTEGER NOT NULL CONSTRAINT "PK_DistribuicaoReferencias" PRIMARY KEY AUTOINCREMENT,
+                "Ano"              INTEGER NOT NULL,
+                "PremioLiquidoRef" TEXT    NOT NULL DEFAULT '0',
+                "ComissaoRef"      TEXT    NOT NULL DEFAULT '0',
+                "QtdApolicesRef"   INTEGER NOT NULL DEFAULT 0
             )
             """);
 

@@ -353,10 +353,22 @@
                     <!-- ═══ OBSERVAÇÕES (memo) ═══ -->
                     <materialDesign:Card Margin="0,0,0,10" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="Observações" Style="{StaticResource SectionTitle}"/>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock Text="Observações" Style="{StaticResource SectionTitle}" Margin="0" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="LockOutline" Width="14" Height="14"
+                                                             Foreground="{StaticResource TextSecondaryBrush}"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Somente administradores" FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DockPanel>
                             <TextBox Text="{Binding EditandoObservacoes, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MemoBox}"
                                      Height="90"
+                                     IsReadOnly="{Binding IsNotAdmin}"
                                      materialDesign:HintAssist.Hint="Anotações sobre o cliente..."/>
                         </StackPanel>
                     </materialDesign:Card>
@@ -364,10 +376,22 @@
                     <!-- ═══ HISTÓRICO (memo) ═══ -->
                     <materialDesign:Card Margin="0,0,0,10" Padding="16">
                         <StackPanel>
-                            <TextBlock Text="Histórico" Style="{StaticResource SectionTitle}"/>
+                            <DockPanel Margin="0,0,0,10">
+                                <TextBlock Text="Histórico" Style="{StaticResource SectionTitle}" Margin="0" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Visibility="{Binding IsNotAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="LockOutline" Width="14" Height="14"
+                                                             Foreground="{StaticResource TextSecondaryBrush}"
+                                                             VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Somente administradores" FontSize="11"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DockPanel>
                             <TextBox Text="{Binding EditandoHistorico, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MemoBox}"
                                      Height="110"
+                                     IsReadOnly="{Binding IsNotAdmin}"
                                      materialDesign:HintAssist.Hint="Histórico de atendimentos, negociações, ocorrências..."/>
                         </StackPanel>
                     </materialDesign:Card>
