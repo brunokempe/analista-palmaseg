@@ -78,7 +78,7 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
         Enumerable.Range(DateTime.Now.Year - 3, 6).ToList();
 
     public string LabelAnoAnterior =>
-        $"Referência — {(FiltroAno > 0 ? FiltroAno - 1 : DateTime.Now.Year - 1)}";
+        $"Referência do ano anterior — {(FiltroAno > 0 ? FiltroAno - 1 : DateTime.Now.Year - 1)}";
 
     public DistribuicaoProdutorViewModel(
         RelatorioRenovacaoService     renovacaoService,

@@ -62,7 +62,8 @@
                     <ComboBox ItemsSource="{x:Static vm:DistribuicaoProdutorViewModel.NomesMeses}"
                               SelectedIndex="{Binding FiltroMes}"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Background="White"
                               Width="110" Height="34" FontSize="12"
                               Margin="0,0,12,0">
                         <ComboBox.ItemContainerStyle>
@@ -78,7 +79,8 @@
                     <ComboBox ItemsSource="{Binding AnosDisponiveis}"
                               SelectedItem="{Binding FiltroAno}"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Background="White"
                               Width="80" Height="34" FontSize="12"
                               Margin="0,0,12,0">
                         <ComboBox.ItemContainerStyle>
@@ -94,7 +96,8 @@
                     <ComboBox ItemsSource="{Binding ProdutoresParaFiltro}"
                               SelectedItem="{Binding FiltroProdutorSelecionado}"
                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="White" BorderBrush="#80FFFFFF"
+                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Background="White"
                               Width="160" Height="34" FontSize="12">
                         <ComboBox.ItemContainerStyle>
                             <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
