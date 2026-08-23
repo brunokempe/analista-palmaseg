@@ -2,5 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/AnalistaPalmaseg.App/AnalistaPalmaseg.App.csproj" />
     <Project Path="src/AnalistaPalmaseg.Core/AnalistaPalmaseg.Core.csproj" />
+    <Project Path="src/AnalistaPalmaseg.MigrationTool/AnalistaPalmaseg.MigrationTool.csproj" />
   </Folder>
 </Solution>

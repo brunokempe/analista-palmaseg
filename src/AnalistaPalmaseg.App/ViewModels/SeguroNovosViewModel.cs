@@ -73,6 +73,11 @@ public partial class SeguroNovosViewModel : ObservableObject
         "Débito automático", "Financiamento", "Parcelado no cartão"
     ];
 
+    public static int[] Parcelamentos { get; } =
+    [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 30, 36
+    ];
+
     private static string ObterPastaAnexos(int id) =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

@@ -37,18 +37,18 @@
                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                       materialDesign:HintAssist.Hint="Seguradora *"
                       Height="46" FontSize="13" Margin="0,0,0,12">
-                <ComboBoxItem Content="Porto Seguro" />
-                <ComboBoxItem Content="Azul Seguros" />
-                <ComboBoxItem Content="Tokio Marine" />
-                <ComboBoxItem Content="Zurich" />
-                <ComboBoxItem Content="Mapfre" />
                 <ComboBoxItem Content="Allianz" />
+                <ComboBoxItem Content="Azul Seguros" />
+                <ComboBoxItem Content="Bradesco Seguros" />
                 <ComboBoxItem Content="Chubb" />
-                <ComboBoxItem Content="Sompo" />
                 <ComboBoxItem Content="Itaú Seguros" />
                 <ComboBoxItem Content="Liberty" />
-                <ComboBoxItem Content="Bradesco Seguros" />
+                <ComboBoxItem Content="Mapfre" />
+                <ComboBoxItem Content="Porto Seguro" />
+                <ComboBoxItem Content="Sompo" />
                 <ComboBoxItem Content="SulAmérica" />
+                <ComboBoxItem Content="Tokio Marine" />
+                <ComboBoxItem Content="Zurich" />
             </ComboBox>
 
             <!-- Prêmio Líquido + Comissão (linha 2) -->
@@ -98,7 +98,7 @@
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                           materialDesign:HintAssist.Hint="Parcelamento"
                           Height="46" FontSize="13">
-                    <ComboBoxItem Content="À vista" />
+                    <ComboBoxItem Content="1x" />
                     <ComboBoxItem Content="2x" />
                     <ComboBoxItem Content="3x" />
                     <ComboBoxItem Content="4x" />
@@ -106,8 +106,13 @@
                     <ComboBoxItem Content="6x" />
                     <ComboBoxItem Content="7x" />
                     <ComboBoxItem Content="8x" />
+                    <ComboBoxItem Content="9x" />
                     <ComboBoxItem Content="10x" />
+                    <ComboBoxItem Content="11x" />
                     <ComboBoxItem Content="12x" />
+                    <ComboBoxItem Content="24x" />
+                    <ComboBoxItem Content="30x" />
+                    <ComboBoxItem Content="36x" />
                 </ComboBox>
             </Grid>
 

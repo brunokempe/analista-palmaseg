@@ -1,9 +1,12 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AnalistaPalmaseg.Core.Models;
 
-public class SeguroNovo
+public class SeguroNovo : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public int Id { get; set; }
     public DateTime? Vigencia { get; set; }
     public string Segurado { get; set; } = string.Empty;
@@ -16,7 +19,21 @@ public class SeguroNovo
     public decimal? Valor { get; set; }
     public string FormaPagamento { get; set; } = string.Empty;
     public int? Parcelas { get; set; }
-    public bool AssinaturaFeita { get; set; }
+
+    private bool _assinaturaFeita;
+    public bool AssinaturaFeita
+    {
+        get => _assinaturaFeita;
+        set { if (_assinaturaFeita == value) return; _assinaturaFeita = value; PropertyChanged?.Invoke(this, new(nameof(AssinaturaFeita))); }
+    }
+
+    private bool _seguroEmitido;
+    public bool SeguroEmitido
+    {
+        get => _seguroEmitido;
+        set { if (_seguroEmitido == value) return; _seguroEmitido = value; PropertyChanged?.Invoke(this, new(nameof(SeguroEmitido))); }
+    }
+
     public int BoletosGerados { get; set; }
     public string Observacao { get; set; } = string.Empty;
     public DateTime CriadoEm { get; set; } = DateTime.Now;

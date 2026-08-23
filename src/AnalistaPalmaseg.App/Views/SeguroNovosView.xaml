@@ -323,10 +323,11 @@
 
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Parcelas" Style="{StaticResource FieldLabel}"/>
-                            <TextBox Text="{Binding EditandoParcelas, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Nº de parcelas"
-                                     Style="{StaticResource MaterialDesignTextBox}"
-                                     FontSize="13"/>
+                            <ComboBox SelectedValue="{Binding EditandoParcelas}"
+                                      ItemsSource="{x:Static vm:SeguroNovosViewModel.Parcelamentos}"
+                                      materialDesign:HintAssist.Hint="Nº de parcelas"
+                                      Style="{StaticResource MaterialDesignComboBox}"
+                                      FontSize="13"/>
                         </StackPanel>
                     </Grid>
 

@@ -29,10 +29,6 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     [ObservableProperty] private ICollectionView? _registrosView;
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
     [ObservableProperty] private string _filtroTexto = string.Empty;
-    [ObservableProperty] private string _filtroStatus = string.Empty;
-    [ObservableProperty] private string _filtroSeguradora = string.Empty;
-    [ObservableProperty] private string _filtroVendedor = string.Empty;
-    [ObservableProperty] private string _filtroProdutor = string.Empty;
     [ObservableProperty] private string _mesSelecionado = "Todos";
     [ObservableProperty] private string _novoProdutorEmMassa = string.Empty;
     [ObservableProperty] private bool _isLoading;
@@ -42,10 +38,18 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
 
     public ObservableCollection<string> StatusDisponiveis { get; } = [];
     public ObservableCollection<string> SeguradorasDisponiveis { get; } = [];
+    public ObservableCollection<string> RamosDisponiveis { get; } = [];
     public ObservableCollection<string> VendedoresDisponiveis { get; } = [];
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
     public ObservableCollection<string> MesesDisponiveis { get; } = [];
     public ObservableCollection<string> UsuariosDisponiveis { get; } = [];
+
+    // Filtros de múltipla seleção — vazio significa "sem filtro" (mostra todos)
+    public ObservableCollection<string> StatusSelecionados { get; } = [];
+    public ObservableCollection<string> SeguradorasSelecionadas { get; } = [];
+    public ObservableCollection<string> RamosSelecionados { get; } = [];
+    public ObservableCollection<string> VendedoresSelecionados { get; } = [];
+    public ObservableCollection<string> ProdutoresSelecionados { get; } = [];
 
     public GerenciadorRenovacoesViewModel(
         RelatorioRenovacaoService service,
@@ -59,6 +63,10 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         _anexoService = anexoService;
         _usuarioService = usuarioService;
         _clienteService = clienteService;
+
+        foreach (var colecao in new[]
+                 { StatusSelecionados, SeguradorasSelecionadas, RamosSelecionados, VendedoresSelecionados, ProdutoresSelecionados })
+            colecao.CollectionChanged += (_, _) => AplicarFiltro();
     }
 
     public async Task CarregarAsync()
@@ -80,27 +88,29 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
                 {
                     r.ClienteObservacoes = cliente.Observacoes;
                     r.ClienteHistorico   = cliente.Historico;
+                    if (!string.IsNullOrWhiteSpace(cliente.Nome))
+                        r.NomeCliente = cliente.Nome;
                 }
             }
 
             var status = await _service.GetStatusDistinctAsync();
             StatusDisponiveis.Clear();
-            StatusDisponiveis.Add(string.Empty);
             foreach (var s in status) StatusDisponiveis.Add(s);
 
             var segs = await _service.GetSeguradorasDistinctAsync();
             SeguradorasDisponiveis.Clear();
-            SeguradorasDisponiveis.Add(string.Empty);
             foreach (var s in segs) SeguradorasDisponiveis.Add(s);
+
+            var ramos = await _service.GetRamosDistinctAsync();
+            RamosDisponiveis.Clear();
+            foreach (var r in ramos) RamosDisponiveis.Add(r);
 
             var vends = await _service.GetVendedoresDistinctAsync();
             VendedoresDisponiveis.Clear();
-            VendedoresDisponiveis.Add(string.Empty);
             foreach (var s in vends) VendedoresDisponiveis.Add(s);
 
             var prods = await _service.GetNovoProdutorDistinctAsync();
             ProdutoresDisponiveis.Clear();
-            ProdutoresDisponiveis.Add(string.Empty);
             foreach (var p in prods) ProdutoresDisponiveis.Add(p);
 
             var usuarios = await _usuarioService.ListarAsync();
@@ -108,6 +118,9 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             UsuariosDisponiveis.Add(string.Empty);
             foreach (var u in usuarios.Where(u => u.Ativo))
                 UsuariosDisponiveis.Add(u.Login);
+            // Opção pseudo-produtor: marca que o seguro não será renovado.
+            // Some da tela Apólices > Renovações (AcompanhamentoRenovacoesViewModel filtra por ela).
+            UsuariosDisponiveis.Add("Cancelado");
 
             // Abas por mês de vencimento
             var cul = new CultureInfo("pt-BR");
@@ -163,11 +176,6 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         }, TaskScheduler.Default);
     }
 
-    partial void OnFiltroStatusChanged(string value) => AplicarFiltro();
-    partial void OnFiltroSeguradoraChanged(string value) => AplicarFiltro();
-    partial void OnFiltroVendedorChanged(string value) => AplicarFiltro();
-    partial void OnFiltroProdutorChanged(string value) => AplicarFiltro();
-
     partial void OnMesSelecionadoChanged(string value)
     {
         if (value == "Todos" || !_mesLookup.TryGetValue(value, out var mes))
@@ -195,10 +203,11 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
                 return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(FiltroStatus) && r.Status != FiltroStatus) return false;
-        if (!string.IsNullOrWhiteSpace(FiltroSeguradora) && r.Seguradora != FiltroSeguradora) return false;
-        if (!string.IsNullOrWhiteSpace(FiltroVendedor) && r.VendedorPrincipal != FiltroVendedor) return false;
-        if (!string.IsNullOrWhiteSpace(FiltroProdutor) && r.NovoProdutor != FiltroProdutor) return false;
+        if (StatusSelecionados.Count > 0 && !StatusSelecionados.Contains(r.Status ?? string.Empty)) return false;
+        if (SeguradorasSelecionadas.Count > 0 && !SeguradorasSelecionadas.Contains(r.Seguradora ?? string.Empty)) return false;
+        if (RamosSelecionados.Count > 0 && !RamosSelecionados.Contains(r.Ramo ?? string.Empty)) return false;
+        if (VendedoresSelecionados.Count > 0 && !VendedoresSelecionados.Contains(r.VendedorPrincipal ?? string.Empty)) return false;
+        if (ProdutoresSelecionados.Count > 0 && !ProdutoresSelecionados.Contains(r.NovoProdutor ?? string.Empty)) return false;
 
         if (!string.IsNullOrWhiteSpace(FiltroTexto))
         {
@@ -236,10 +245,11 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     private void LimparFiltros()
     {
         FiltroTexto = string.Empty;
-        FiltroStatus = string.Empty;
-        FiltroSeguradora = string.Empty;
-        FiltroVendedor = string.Empty;
-        FiltroProdutor = string.Empty;
+        StatusSelecionados.Clear();
+        SeguradorasSelecionadas.Clear();
+        RamosSelecionados.Clear();
+        VendedoresSelecionados.Clear();
+        ProdutoresSelecionados.Clear();
         MesSelecionado = "Todos";
     }
 

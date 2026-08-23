@@ -130,6 +130,7 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
             {
                 if (!r.VigenciaFinal.HasValue) return false;
                 if (string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
+                if (r.NovoProdutor == "Cancelado") return false;
                 if (FiltroAno > 0 && r.VigenciaFinal.Value.Year  != FiltroAno) return false;
                 if (FiltroMes > 0 && r.VigenciaFinal.Value.Month != FiltroMes) return false;
                 return true;

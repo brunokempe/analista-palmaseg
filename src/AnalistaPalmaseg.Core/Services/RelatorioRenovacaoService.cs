@@ -417,6 +417,12 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
             .Select(r => r.Seguradora!)
             .Distinct().OrderBy(s => s).ToListAsync();
 
+    public async Task<List<string>> GetRamosDistinctAsync() =>
+        await context.RelatorioRenovacoes
+            .Where(r => r.Ramo != null && r.Ramo != "")
+            .Select(r => r.Ramo!)
+            .Distinct().OrderBy(s => s).ToListAsync();
+
     public async Task<List<string>> GetVendedoresDistinctAsync() =>
         await context.RelatorioRenovacoes
             .Where(r => r.VendedorPrincipal != null)

@@ -1,5 +1,6 @@
 using AnalistaPalmaseg.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AnalistaPalmaseg.Core.Data;
 
@@ -24,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Cliente>                Clientes                { get; set; }
     public DbSet<Lead>                   Leads                   { get; set; }
     public DbSet<DistribuicaoReferencia> DistribuicaoReferencias { get; set; }
+    public DbSet<PastaSalvarProposta>    PastasSalvarPropostas   { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,9 +76,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<RelatorioRenovacao>(e =>
         {
-            e.HasIndex(x => x.Proposta).IsUnique();
+            e.HasIndex(x => x.Proposta).IsUnique().HasFilter("\"Proposta\" IS NOT NULL");
             e.Ignore(x => x.DiaDaSemana);
             e.Ignore(x => x.IsChecked);
+
+            foreach (var propertyName in new[]
+            {
+                nameof(RelatorioRenovacao.Comissao), nameof(RelatorioRenovacao.ComissaoGerada),
+                nameof(RelatorioRenovacao.LiquidoFatura), nameof(RelatorioRenovacao.PremioLiquido),
+                nameof(RelatorioRenovacao.PremioTotal), nameof(RelatorioRenovacao.TotalFatura),
+                nameof(RelatorioRenovacao.ComissaoAdicional), nameof(RelatorioRenovacao.PremioAdicional),
+                nameof(RelatorioRenovacao.PremioCusto), nameof(RelatorioRenovacao.Iof),
+                nameof(RelatorioRenovacao.ValorParcelas), nameof(RelatorioRenovacao.FranquiaApolice),
+                nameof(RelatorioRenovacao.ValorDeterminado), nameof(RelatorioRenovacao.PercentualComissaoMinimo),
+                nameof(RelatorioRenovacao.FechamentoPremioLiquido), nameof(RelatorioRenovacao.FechamentoComissao),
+                nameof(RelatorioRenovacao.DanosMateriasPremio), nameof(RelatorioRenovacao.DanosMaterialLmi),
+                nameof(RelatorioRenovacao.DanosMaterialFranquia), nameof(RelatorioRenovacao.DanosMoraisPremio),
+                nameof(RelatorioRenovacao.DanosMoraisLmi), nameof(RelatorioRenovacao.DanosMoraisFranquia),
+                nameof(RelatorioRenovacao.DanosCorporaisPremio), nameof(RelatorioRenovacao.DanosCorporaisLmi),
+                nameof(RelatorioRenovacao.DanosCorporaisFranquia), nameof(RelatorioRenovacao.AcidentesPassageiroPremio),
+                nameof(RelatorioRenovacao.AcidentesPassageiroLmi), nameof(RelatorioRenovacao.AcidentesPassageiroFranquia),
+            })
+                e.Property(propertyName).HasColumnType("numeric(18,2)");
         });
 
         modelBuilder.Entity<Anexo>(e =>
@@ -115,5 +136,44 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.PremioTotal).HasColumnType("decimal(18,2)");
             e.Property(x => x.ComissaoTotal).HasColumnType("decimal(18,2)");
         });
+
+        modelBuilder.Entity<Cliente>(e =>
+        {
+            e.HasIndex(x => x.Cpf).IsUnique().HasFilter("\"Cpf\" != ''");
+        });
+
+        modelBuilder.Entity<DistribuicaoReferencia>(e =>
+        {
+            e.Property(x => x.PremioLiquidoRef).HasColumnType("decimal(18,2)");
+            e.Property(x => x.ComissaoRef).HasColumnType("decimal(18,2)");
+        });
+
+        // O app só lida com datas locais (sem fuso horário) — mapeia todas as colunas
+        // DateTime para "timestamp without time zone" e normaliza o Kind para Unspecified,
+        // já que o Npgsql rejeita DateTime.Now (Kind=Local) em colunas com fuso horário.
+        var dateTimeConverter = new ValueConverter<DateTime, DateTime>(
+            v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified));
+
+        var nullableDateTimeConverter = new ValueConverter<DateTime?, DateTime?>(
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Unspecified) : v,
+            v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Unspecified) : v);
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(dateTimeConverter);
+                    property.SetColumnType("timestamp without time zone");
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(nullableDateTimeConverter);
+                    property.SetColumnType("timestamp without time zone");
+                }
+            }
+        }
     }
 }

@@ -53,7 +53,7 @@ public class FolhaAmarelaService
         var pasta = AnexoService.ObterPasta(reg.Id);
         var path = Path.Combine(pasta, $"FolhaAmarela_{nome}.odt");
 
-        if (File.Exists(path)) return path;
+        if (File.Exists(path) && ArquivoValido(path)) return path;
 
         var template = LocalizarTemplate();
         if (template != null)
@@ -62,6 +62,20 @@ public class FolhaAmarelaService
             GerarDoZero(path, reg);
 
         return path;
+    }
+
+    private static bool ArquivoValido(string path)
+    {
+        try
+        {
+            if (new FileInfo(path).Length == 0) return false;
+            using var zip = ZipFile.OpenRead(path);
+            return zip.GetEntry("content.xml") != null;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string? LocalizarTemplate()
@@ -277,6 +291,7 @@ public class FolhaAmarelaService
         }
 
         sb.AppendLine("""    <text:p text:style-name="P26"><text:span>LCTO. </text:span><text:span>P</text:span><text:span>0E1 R2N3 A4M5 B6U7 C8O9</text:span></text:p>""");
+        sb.AppendLine("""    <text:p text:style-name="P27"/>""");
         sb.AppendLine("    </office:text>");
         sb.AppendLine("  </office:body>");
         sb.AppendLine("</office:document-content>");
@@ -431,6 +446,10 @@ public class FolhaAmarelaService
         <style:style style:name="P26" style:family="paragraph" style:parent-style-name="Standard">
           <style:paragraph-properties fo:margin-top="0cm" fo:margin-bottom="0cm" fo:line-height="100%" fo:text-align="right"/>
           <style:text-properties style:font-name="Lato" fo:font-size="6pt" fo:font-style="italic" fo:font-weight="normal" style:font-size-asian="6pt" style:font-style-asian="italic" style:font-size-complex="6pt" style:font-style-complex="italic"/>
+        </style:style>
+        <style:style style:name="P27" style:family="paragraph" style:parent-style-name="Standard">
+          <style:paragraph-properties fo:margin-top="0cm" fo:margin-bottom="0cm" fo:line-height="100%" fo:text-align="left"/>
+          <style:text-properties style:font-name="Lato" fo:font-size="14pt" fo:font-style="normal" fo:font-weight="normal" style:font-size-asian="14pt" style:font-style-asian="normal" style:font-size-complex="14pt" style:font-style-complex="normal"/>
         </style:style>
         <style:style style:name="T1" style:family="text"/>
         <style:style style:name="T2" style:family="text"><style:text-properties fo:font-weight="bold" style:font-weight-asian="bold" style:font-weight-complex="bold"/></style:style>

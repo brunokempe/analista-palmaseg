@@ -1,10 +1,10 @@
-using System.IO;
 using System.Windows;
 using AnalistaPalmaseg.App.ViewModels;
 using AnalistaPalmaseg.App.Views;
 using AnalistaPalmaseg.Core.Data;
 using AnalistaPalmaseg.Core.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -32,14 +32,14 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services =>
+            .ConfigureServices((context, services) =>
             {
-                var dbPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "dados.db");
+                var connectionString = context.Configuration.GetConnectionString("Default")
+                    ?? throw new InvalidOperationException(
+                        "Connection string \"Default\" não encontrada em appsettings.json.");
 
                 services.AddDbContext<AppDbContext>(opts =>
-                    opts.UseSqlite($"Data Source={dbPath}"));
+                    opts.UseNpgsql(connectionString));
 
                 services.AddSingleton<SessaoService>();
 
@@ -56,6 +56,7 @@ public partial class App : Application
                 services.AddTransient<ClienteService>();
                 services.AddTransient<LeadService>();
                 services.AddTransient<DistribuicaoReferenciaService>();
+                services.AddTransient<PastaSalvarPropostaService>();
 
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<LoginWindow>();
@@ -83,6 +84,7 @@ public partial class App : Application
                 services.AddTransient<ClientesViewModel>();
                 services.AddTransient<LeadsViewModel>();
                 services.AddTransient<DistribuicaoProdutorViewModel>();
+                services.AddTransient<SalvarPropostasViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<MainWindow>();
             })
@@ -155,6 +157,7 @@ public partial class App : Application
         Add<ClientesViewModel, ClientesView>();
         Add<LeadsViewModel, LeadsView>();
         Add<DistribuicaoProdutorViewModel, DistribuicaoProdutorView>();
+        Add<SalvarPropostasViewModel, SalvarPropostasView>();
     }
 
     protected override async void OnExit(ExitEventArgs e)

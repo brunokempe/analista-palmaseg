@@ -45,17 +45,19 @@
                 </Grid>
             </Border>
 
-            <!-- ── Seletor de período + filtro por colaborador ── -->
-            <Border DockPanel.Dock="Top" Background="White" Padding="16,8"
+            <!-- ── Seletor de período + filtros ── -->
+            <Border DockPanel.Dock="Top" Background="White" Padding="16,10"
                     BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <WrapPanel Orientation="Horizontal">
+
+                    <!-- Período -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,8">
                         <TextBlock Text="Período:" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"
                                    Foreground="{StaticResource TextSecondaryBrush}"/>
                         <ComboBox ItemsSource="{Binding Meses}"
                                   SelectedItem="{Binding AtualMes}"
                                   Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  materialDesign:HintAssist.Hint="Mês" Width="140" FontSize="13" Margin="0,0,8,0">
+                                  materialDesign:HintAssist.Hint="Mês" Width="130" FontSize="13" Margin="0,0,8,0">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Converter={StaticResource MesFormatConverter}}"/>
@@ -65,7 +67,7 @@
                         <ComboBox ItemsSource="{Binding Anos}"
                                   SelectedItem="{Binding AtualAno}"
                                   Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  materialDesign:HintAssist.Hint="Ano" Width="90" FontSize="13" Margin="0,0,12,0"/>
+                                  materialDesign:HintAssist.Hint="Ano" Width="85" FontSize="13" Margin="0,0,10,0"/>
                         <Button Content="CARREGAR"
                                 Command="{Binding CarregarPorPeriodoCommand}"
                                 Style="{StaticResource MaterialDesignRaisedButton}"
@@ -74,15 +76,41 @@
                                 Height="34" FontSize="12"/>
                     </StackPanel>
 
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                                VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <!-- Dia -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,8">
+                        <TextBlock Text="Dia:" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
+                        <DatePicker SelectedDate="{Binding FiltroData}"
+                                    materialDesign:HintAssist.Hint="Todos os dias"
+                                    Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                                    Width="130" FontSize="13"/>
+                        <Button Command="{Binding LimparFiltroDataCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                ToolTip="Limpar filtro de dia"
+                                Width="32" Height="32" Padding="0" Margin="4,0,0,0">
+                            <materialDesign:PackIcon Kind="CloseCircleOutline" Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Emissão -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,8">
+                        <TextBlock Text="Emissão:" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{x:Static vm:EmissaoDashboardViewModel.EmissaoOpcoes}"
+                                  SelectedItem="{Binding FiltroEmissao}"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  Width="120" FontSize="13"/>
+                    </StackPanel>
+
+                    <!-- Colaborador -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
                         <TextBlock Text="Colaborador:" FontSize="13" VerticalAlignment="Center"
                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,8,0"/>
                         <ComboBox ItemsSource="{Binding ProdutoresDisponiveis}"
                                   SelectedItem="{Binding FiltroProdutor}"
                                   Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                   materialDesign:HintAssist.Hint="Todos"
-                                  Width="180" FontSize="13">
+                                  Width="160" FontSize="13">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock FontSize="13">
@@ -102,7 +130,8 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
                     </StackPanel>
-                </DockPanel>
+
+                </WrapPanel>
             </Border>
 
             <!-- ── Conteúdo principal (rolável) ── -->
@@ -132,38 +161,6 @@
                             Effect="{StaticResource MaterialDesignShadowDepth1}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="CurrencyBrl" Width="20" Height="20"
-                                                         Foreground="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
-                                <TextBlock Text="Prêmio Líquido Total" FontSize="12"
-                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding PremioTotal, StringFormat=C2}" FontSize="22" FontWeight="Bold"
-                                       Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"/>
-                            <TextBlock Text="soma dos fechamentos" FontSize="11"
-                                       Foreground="{StaticResource TextMutedBrush}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Margin="8,0" Background="White" CornerRadius="8" Padding="20,16"
-                            Effect="{StaticResource MaterialDesignShadowDepth1}">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="CurrencyBrl" Width="20" Height="20"
-                                                         Foreground="#8B5CF6" Margin="0,0,8,0"/>
-                                <TextBlock Text="Comissão Total" FontSize="12"
-                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding ComissaoTotal, StringFormat=C2}" FontSize="22" FontWeight="Bold"
-                                       Foreground="#8B5CF6" Margin="0,4,0,0"/>
-                            <TextBlock Text="soma das comissões" FontSize="11"
-                                       Foreground="{StaticResource TextMutedBrush}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Margin="8,0" Background="White" CornerRadius="8" Padding="20,16"
-                            Effect="{StaticResource MaterialDesignShadowDepth1}">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="FileEditOutline" Width="20" Height="20"
                                                          Foreground="{StaticResource WarningBrush}" Margin="0,0,8,0"/>
                                 <TextBlock Text="Assinaturas Pendentes" FontSize="12"
@@ -176,7 +173,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Margin="8,0,0,0" Background="White" CornerRadius="8" Padding="20,16"
+                    <Border Margin="8,0" Background="White" CornerRadius="8" Padding="20,16"
                             Effect="{StaticResource MaterialDesignShadowDepth1}">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
@@ -188,6 +185,22 @@
                             <TextBlock Text="{Binding EmissoesPendentes}" FontSize="32" FontWeight="Bold"
                                        Foreground="{StaticResource DangerBrush}" Margin="0,4,0,0"/>
                             <TextBlock Text="aguardando emissão" FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Margin="8,0,0,0" Background="White" CornerRadius="8" Padding="20,16"
+                            Effect="{StaticResource MaterialDesignShadowDepth1}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ShieldCheck" Width="20" Height="20"
+                                                         Foreground="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Seguros Emitidos" FontSize="12"
+                                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding SegurosEmitidos}" FontSize="32" FontWeight="Bold"
+                                       Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="emissão realizada" FontSize="11"
                                        Foreground="{StaticResource TextMutedBrush}"/>
                         </StackPanel>
                     </Border>
@@ -307,20 +320,37 @@
                         </Border>
 
                         <DataGrid ItemsSource="{Binding Registros}"
+                                  SelectedItem="{Binding RenPalmaSelecionado}"
                                   IsReadOnly="True" AutoGenerateColumns="False"
                                   CanUserSortColumns="True" CanUserResizeColumns="True"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   HorizontalGridLinesBrush="#F0F0F0"
                                   Style="{StaticResource MaterialDesignDataGrid}"
-                                  RowStyle="{StaticResource MaterialDesignDataGridRow}"
                                   ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
                                   FontSize="13" RowHeight="36"
                                   MaxHeight="340"
                                   VirtualizingPanel.IsVirtualizing="True">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Anexar arquivo(s)..."
+                                              Command="{Binding PlacementTarget.DataContext.AnexarArquivosRenPalmaCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                    <MenuItem Header="Ver anexos"
+                                              Command="{Binding PlacementTarget.DataContext.AbrirPastaAnexosRenPalmaCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="DataGridRow_PreviewMouseRightButtonDown"/>
+                                </Style>
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
 
-                                <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
+                                <DataGridTextColumn Header="Segurado" Binding="{Binding NomeCliente}"
                                                     Width="*" MinWidth="140" SortMemberPath="NomeCliente">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
@@ -586,17 +616,34 @@
 
                         <!-- Grid -->
                         <DataGrid ItemsSource="{Binding SeguroNovos}"
+                                  SelectedItem="{Binding SeguroNovoSelecionado}"
                                   AutoGenerateColumns="False" IsReadOnly="True"
                                   CanUserSortColumns="True" CanUserResizeColumns="True"
                                   HeadersVisibility="Column"
                                   GridLinesVisibility="Horizontal"
                                   HorizontalGridLinesBrush="#F0F0F0"
                                   Style="{StaticResource MaterialDesignDataGrid}"
-                                  RowStyle="{StaticResource MaterialDesignDataGridRow}"
                                   ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
                                   FontSize="13" RowHeight="36"
                                   MaxHeight="340"
                                   VirtualizingPanel.IsVirtualizing="True">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Anexar arquivo(s)..."
+                                              Command="{Binding PlacementTarget.DataContext.AnexarArquivosSeguroNovoCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                    <MenuItem Header="Ver anexos"
+                                              Command="{Binding PlacementTarget.DataContext.AbrirPastaAnexosSeguroNovoCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="DataGridRow_PreviewMouseRightButtonDown"/>
+                                </Style>
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Segurado" Binding="{Binding Segurado}" Width="*" MinWidth="120">
                                     <DataGridTextColumn.ElementStyle>
@@ -607,32 +654,6 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="Cia" Binding="{Binding Cia}" Width="145">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="Margin" Value="4,0"/>
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Segmento" Binding="{Binding Segmento}" Width="125">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="Margin" Value="4,0"/>
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="110">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="HorizontalAlignment" Value="Center"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
                                 <DataGridTextColumn Header="Vigência"
                                                     Binding="{Binding Vigencia, StringFormat=dd/MM/yyyy}"
                                                     Width="105">
@@ -640,6 +661,15 @@
                                         <Style TargetType="TextBlock">
                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                             <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Seguradora" Binding="{Binding Cia}" Width="145">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -675,6 +705,124 @@
                                             <Setter Property="HorizontalAlignment" Value="Right"/>
                                             <Setter Property="Margin" Value="0,0,8,0"/>
                                             <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Header="Assinatura" Width="115" CanUserSort="False">
+                                    <DataGridTemplateColumn.HeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader"
+                                               BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTemplateColumn.HeaderStyle>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.ToggleAssinaturaSeguroNovoCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Height="28" Padding="4,0"
+                                                    HorizontalAlignment="Center"
+                                                    ToolTip="Clique para alternar">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="0,0,3,0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="CheckCircle"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                                        <Setter Property="Kind" Value="CloseCircle"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="Feita"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding AssinaturaFeita}" Value="False">
+                                                                        <Setter Property="Text" Value="Pendente"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTemplateColumn Header="Emitido" Width="100" CanUserSort="False">
+                                    <DataGridTemplateColumn.HeaderStyle>
+                                        <Style TargetType="DataGridColumnHeader"
+                                               BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTemplateColumn.HeaderStyle>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.ToggleSeguroNovoEmitidoCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Height="28" Padding="4,0"
+                                                    HorizontalAlignment="Center"
+                                                    ToolTip="Clique para alternar">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                                             VerticalAlignment="Center"
+                                                                             Margin="0,0,3,0">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="ShieldCheck"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                                        <Setter Property="Kind" Value="ShieldOff"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
+                                                    <TextBlock VerticalAlignment="Center" FontSize="11">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="Sim"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SeguroEmitido}" Value="False">
+                                                                        <Setter Property="Text" Value="Não"/>
+                                                                        <Setter Property="Foreground" Value="#BDBDBD"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Emitido por" Binding="{Binding EmitidoPor}"
+                                                    Width="115" SortMemberPath="EmitidoPor">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="FontStyle" Value="Italic"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
