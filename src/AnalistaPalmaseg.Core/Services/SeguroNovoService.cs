@@ -34,6 +34,18 @@ public class SeguroNovoService(AppDbContext context)
         return seguroNovo;
     }
 
+    public async Task SalvarStatusAdministrativoAsync(SeguroNovo seguroNovo)
+    {
+        var entry = context.Entry(seguroNovo);
+        if (entry.State == EntityState.Detached)
+            context.Attach(seguroNovo);
+        entry.Property(x => x.AssinaturaFeita).IsModified = true;
+        entry.Property(x => x.SeguroEmitido).IsModified   = true;
+        entry.Property(x => x.EmitidoPor).IsModified      = true;
+        await context.SaveChangesAsync();
+        entry.State = EntityState.Detached;
+    }
+
     public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
     {
         var entidade = await context.SeguroNovos.FindAsync(id);

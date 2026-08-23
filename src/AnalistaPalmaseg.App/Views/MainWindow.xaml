@@ -191,6 +191,23 @@
                             </Grid>
                         </Button>
 
+                        <!-- Salvar Propostas -->
+                        <Button Command="{Binding NavSalvarPropostasCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="ContentSaveOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Salvar Propostas" VerticalAlignment="Center" FontSize="13" />
+                            </Grid>
+                        </Button>
+
                     </StackPanel>
 
                     <!-- ─ separador cadastros ─ -->

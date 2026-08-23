@@ -18,6 +18,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     private readonly SessaoService _sessao;
     private readonly FolhaAmarelaService _folhaService;
     private readonly AnexoService _anexoService;
+    private readonly ClienteService _clienteService;
     private List<RelatorioRenovacao> _todos = [];
     private ListCollectionView? _view;
     private CancellationTokenSource? _debounceCts;
@@ -29,8 +30,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     [ObservableProperty] private ICollectionView? _registrosView;
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
     [ObservableProperty] private string _filtroTexto = string.Empty;
-    [ObservableProperty] private string _filtroSituacao = "Todos";
-    [ObservableProperty] private string _filtroProdutor = "(Com produtor)";
+    [ObservableProperty] private bool _somenteComProdutor = true;
     [ObservableProperty] private string _mesSelecionado = "Todos";
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _resumo = string.Empty;
@@ -42,21 +42,32 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         ["À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido"];
 
     public string[] SituacoesFiltrar { get; } =
-        ["Todos", "À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido"];
+        ["À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido"];
 
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
+    public ObservableCollection<string> RamosDisponiveis { get; } = [];
     public ObservableCollection<string> MesesDisponiveis { get; } = [];
+
+    // Filtros de múltipla seleção — vazio significa "sem filtro" (mostra todos)
+    public ObservableCollection<string> SituacoesSelecionadas { get; } = [];
+    public ObservableCollection<string> ProdutoresSelecionados { get; } = [];
+    public ObservableCollection<string> RamosSelecionados { get; } = [];
 
     public AcompanhamentoRenovacoesViewModel(
         RelatorioRenovacaoService service,
         SessaoService sessao,
         FolhaAmarelaService folhaService,
-        AnexoService anexoService)
+        AnexoService anexoService,
+        ClienteService clienteService)
     {
         _service = service;
         _sessao = sessao;
         _folhaService = folhaService;
         _anexoService = anexoService;
+        _clienteService = clienteService;
+
+        foreach (var colecao in new[] { SituacoesSelecionadas, ProdutoresSelecionados, RamosSelecionados })
+            colecao.CollectionChanged += (_, _) => AplicarFiltro();
     }
 
     public async Task CarregarAsync()
@@ -72,13 +83,28 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             foreach (var item in _todos)
                 item.PropertyChanged += OnItemPropertyChanged;
 
+            var clientes = await _clienteService.GetTodosAsync();
+            var clientePorCpf = clientes
+                .Where(c => !string.IsNullOrWhiteSpace(c.Cpf))
+                .ToDictionary(c => c.Cpf, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var r in _todos)
+            {
+                if (r.DocumentoPrincipal != null &&
+                    clientePorCpf.TryGetValue(r.DocumentoPrincipal, out var cliente) &&
+                    !string.IsNullOrWhiteSpace(cliente.Nome))
+                    r.NomeCliente = cliente.Nome;
+            }
+
             _situacaoAnterior = _todos.ToDictionary(r => r.Id, r => r.SituacaoAcompanhamento);
 
             var prods = await _service.GetNovoProdutorDistinctAsync();
             ProdutoresDisponiveis.Clear();
-            ProdutoresDisponiveis.Add(string.Empty);
-            ProdutoresDisponiveis.Add("(Com produtor)");
             foreach (var p in prods) ProdutoresDisponiveis.Add(p);
+
+            var ramos = await _service.GetRamosDistinctAsync();
+            RamosDisponiveis.Clear();
+            foreach (var r in ramos) RamosDisponiveis.Add(r);
 
             var cul = new CultureInfo("pt-BR");
             _mesLookup.Clear();
@@ -252,8 +278,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         }, TaskScheduler.Default);
     }
 
-    partial void OnFiltroSituacaoChanged(string value) => AplicarFiltro();
-    partial void OnFiltroProdutorChanged(string value) => AplicarFiltro();
+    partial void OnSomenteComProdutorChanged(bool value) => AplicarFiltro();
 
     partial void OnMesSelecionadoChanged(string value)
     {
@@ -274,6 +299,8 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     {
         if (obj is not RelatorioRenovacao r) return false;
 
+        if (r.NovoProdutor == "Cancelado") return false;
+
         if (_mesFiltroAno > 0)
         {
             if (!r.VigenciaFinal.HasValue ||
@@ -282,13 +309,11 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                 return false;
         }
 
-        if (FiltroSituacao != "Todos" && r.SituacaoAcompanhamento != FiltroSituacao) return false;
+        if (SituacoesSelecionadas.Count > 0 && !SituacoesSelecionadas.Contains(r.SituacaoAcompanhamento)) return false;
+        if (RamosSelecionados.Count > 0 && !RamosSelecionados.Contains(r.Ramo ?? string.Empty)) return false;
 
-        if (FiltroProdutor == "(Com produtor)")
-        {
-            if (string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
-        }
-        else if (!string.IsNullOrWhiteSpace(FiltroProdutor) && r.NovoProdutor != FiltroProdutor) return false;
+        if (SomenteComProdutor && string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
+        if (ProdutoresSelecionados.Count > 0 && !ProdutoresSelecionados.Contains(r.NovoProdutor ?? string.Empty)) return false;
 
         if (!string.IsNullOrWhiteSpace(FiltroTexto))
         {
@@ -332,8 +357,10 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     private void LimparFiltros()
     {
         FiltroTexto = string.Empty;
-        FiltroSituacao = "Todos";
-        FiltroProdutor = "(Com produtor)";
+        SituacoesSelecionadas.Clear();
+        ProdutoresSelecionados.Clear();
+        RamosSelecionados.Clear();
+        SomenteComProdutor = true;
         MesSelecionado = "Todos";
     }
 

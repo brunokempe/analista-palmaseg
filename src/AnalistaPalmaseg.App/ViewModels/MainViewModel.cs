@@ -118,6 +118,9 @@ public partial class MainViewModel : ObservableObject
     public DefinicoesMetasViewModel DefinicoesMetasVm { get; }
     public DashboardMetasViewModel DashboardMetasVm { get; }
 
+    // Salvar Propostas
+    public SalvarPropostasViewModel SalvarPropostasVm { get; }
+
     public MainViewModel(
         ImportacaoService importacaoService,
         AppDbContext context,
@@ -145,6 +148,7 @@ public partial class MainViewModel : ObservableObject
         ClientesViewModel clientesVm,
         LeadsViewModel leadsVm,
         DistribuicaoProdutorViewModel distribuicaoProdutorVm,
+        SalvarPropostasViewModel salvarPropostasVm,
         RelatorioRenovacaoService relatorioRenovacaoService)
     {
         _importacaoService = importacaoService;
@@ -174,6 +178,7 @@ public partial class MainViewModel : ObservableObject
         ClientesVm             = clientesVm;
         LeadsVm                = leadsVm;
         DistribuicaoProdutorVm = distribuicaoProdutorVm;
+        SalvarPropostasVm = salvarPropostasVm;
         _relatorioRenovacaoService = relatorioRenovacaoService;
 
         _currentView = inicioVm;
@@ -225,6 +230,14 @@ public partial class MainViewModel : ObservableObject
         TituloAtivo = "Acompanhamento de Renovações";
     }
     [RelayCommand] private void Sair() => Application.Current.Shutdown();
+
+    [RelayCommand]
+    private async Task NavSalvarPropostasAsync()
+    {
+        await SalvarPropostasVm.CarregarAsync();
+        CurrentView = SalvarPropostasVm;
+        TituloAtivo = "Salvar Propostas";
+    }
 
     [RelayCommand]
     private async Task NavGerenciarUsuariosAsync()

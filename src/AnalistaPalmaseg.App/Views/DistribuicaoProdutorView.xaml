@@ -61,50 +61,35 @@
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{x:Static vm:DistribuicaoProdutorViewModel.NomesMeses}"
                               SelectedIndex="{Binding FiltroMes}"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Style="{x:Null}"
+                              Foreground="#212121" BorderBrush="#9E9E9E"
                               Background="White"
                               Width="110" Height="34" FontSize="12"
-                              Margin="0,0,12,0">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
-                                <Setter Property="Foreground" Value="#212121"/>
-                            </Style>
-                        </ComboBox.ItemContainerStyle>
-                    </ComboBox>
+                              VerticalContentAlignment="Center" Padding="8,0"
+                              Margin="0,0,12,0"/>
 
                     <!-- Filtro Ano -->
                     <TextBlock Text="Ano:" Foreground="White" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{Binding AnosDisponiveis}"
                               SelectedItem="{Binding FiltroAno}"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Style="{x:Null}"
+                              Foreground="#212121" BorderBrush="#9E9E9E"
                               Background="White"
                               Width="80" Height="34" FontSize="12"
-                              Margin="0,0,12,0">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
-                                <Setter Property="Foreground" Value="#212121"/>
-                            </Style>
-                        </ComboBox.ItemContainerStyle>
-                    </ComboBox>
+                              VerticalContentAlignment="Center" Padding="8,0"
+                              Margin="0,0,12,0"/>
 
                     <!-- Filtro Produtor -->
                     <TextBlock Text="Produtor:" Foreground="White" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{Binding ProdutoresParaFiltro}"
                               SelectedItem="{Binding FiltroProdutorSelecionado}"
-                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                              Foreground="#212121" BorderBrush="#80FFFFFF"
+                              Style="{x:Null}"
+                              Foreground="#212121" BorderBrush="#9E9E9E"
                               Background="White"
-                              Width="160" Height="34" FontSize="12">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource MaterialDesignComboBoxItemStyle}">
-                                <Setter Property="Foreground" Value="#212121"/>
-                            </Style>
-                        </ComboBox.ItemContainerStyle>
-                    </ComboBox>
+                              Width="160" Height="34" FontSize="12"
+                              VerticalContentAlignment="Center" Padding="8,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>

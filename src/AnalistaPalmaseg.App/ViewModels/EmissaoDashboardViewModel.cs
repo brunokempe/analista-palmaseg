@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 
@@ -24,6 +26,7 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     private readonly SeguroNovoService _seguroNovoService;
     private readonly SessaoService _sessao;
     private readonly MetaService _metaService;
+    private readonly AnexoService _anexoService;
     private List<RelatorioRenovacao> _todos = [];
     private List<SeguroNovo> _todosSeguroNovos = [];
 
@@ -34,12 +37,17 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     public static int[] Anos  { get; } = Enumerable.Range(DateTime.Now.Year - 3, 7).ToArray();
 
     [ObservableProperty] private int _totalRenPalma;
-    [ObservableProperty] private decimal _premioTotal;
-    [ObservableProperty] private decimal _comissaoTotal;
     [ObservableProperty] private int _assinaturasPendentes;
     [ObservableProperty] private int _emissoesPendentes;
+    [ObservableProperty] private int _segurosEmitidos;
     [ObservableProperty] private string _filtroProdutor = string.Empty;
+    [ObservableProperty] private string _filtroEmissao = "Todos";
+    [ObservableProperty] private DateTime? _filtroData;
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private RelatorioRenovacao? _renPalmaSelecionado;
+    [ObservableProperty] private SeguroNovo? _seguroNovoSelecionado;
+
+    public static string[] EmissaoOpcoes { get; } = ["Todos", "Pendente", "Realizada"];
 
     // ── Filtros de Seguros Novos ──────────────────────────────────────────────
     [ObservableProperty] private string _filtroSegNovSegurado = string.Empty;
@@ -48,8 +56,44 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     public static string[] StatusSegNovoOpcoes { get; } =
         ["Todos", "Endosso", "Mensal", "Mercado", "Novo", "Prospecção", "Renovação"];
 
-    partial void OnFiltroSegNovSeguradoChanged(string _) => AplicarFiltroSeguroNovos();
-    partial void OnFiltroSegNovStatusChanged(string _)   => AplicarFiltroSeguroNovos();
+    partial void OnFiltroSegNovSeguradoChanged(string _)
+    {
+        AplicarFiltroSeguroNovos();
+        AtualizarCards();
+    }
+
+    partial void OnFiltroSegNovStatusChanged(string _)
+    {
+        AplicarFiltroSeguroNovos();
+        AtualizarCards();
+    }
+
+    partial void OnFiltroEmissaoChanged(string _)
+    {
+        AplicarFiltro();
+        AplicarFiltroSeguroNovos();
+        AtualizarCards();
+    }
+
+    partial void OnFiltroDataChanged(DateTime? value)
+    {
+        if (value.HasValue)
+        {
+            FiltroEmissao = "Pendente";
+
+            if (AtualMes != value.Value.Month || AtualAno != value.Value.Year)
+            {
+                AtualMes = value.Value.Month;
+                AtualAno = value.Value.Year;
+                _ = CarregarAsync();
+                return;
+            }
+        }
+
+        AplicarFiltro();
+        AplicarFiltroSeguroNovos();
+        AtualizarCards();
+    }
 
     public ObservableCollection<RelatorioRenovacao> Registros { get; } = [];
     public ObservableCollection<ProdutorEmissaoResumo> ResumoProdutor { get; } = [];
@@ -60,12 +104,14 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         RelatorioRenovacaoService service,
         SeguroNovoService seguroNovoService,
         SessaoService sessao,
-        MetaService metaService)
+        MetaService metaService,
+        AnexoService anexoService)
     {
         _service = service;
         _seguroNovoService = seguroNovoService;
         _sessao = sessao;
         _metaService = metaService;
+        _anexoService = anexoService;
     }
 
     public async Task CarregarAsync()
@@ -107,14 +153,12 @@ public partial class EmissaoDashboardViewModel : ObservableObject
 
     private void AtualizarCards()
     {
-        var periodo = TodosPeriodo().ToList();
-        TotalRenPalma        = periodo.Count + _todosSeguroNovos.Count;
-        PremioTotal          = periodo.Sum(r => r.FechamentoPremioLiquido ?? 0)
-                             + _todosSeguroNovos.Sum(s => s.Valor ?? 0);
-        ComissaoTotal        = periodo.Sum(r => r.ComissaoValor ?? 0)
-                             + _todosSeguroNovos.Sum(s => s.ComissaoValor ?? 0);
-        AssinaturasPendentes = periodo.Count(r => !r.AssinaturaFeita);
-        EmissoesPendentes    = periodo.Count(r => !r.SeguroEmitido);
+        var registros    = RegistrosFiltrados().ToList();
+        var seguroNovos  = SeguroNovosFiltrados().ToList();
+        TotalRenPalma        = registros.Count + seguroNovos.Count;
+        AssinaturasPendentes = registros.Count(r => !r.AssinaturaFeita) + seguroNovos.Count(s => !s.AssinaturaFeita);
+        EmissoesPendentes    = registros.Count(r => !r.SeguroEmitido)   + seguroNovos.Count(s => !s.SeguroEmitido);
+        SegurosEmitidos      = registros.Count(r => r.SeguroEmitido)    + seguroNovos.Count(s => s.SeguroEmitido);
     }
 
     private void AtualizarResumoProdutor()
@@ -147,27 +191,34 @@ public partial class EmissaoDashboardViewModel : ObservableObject
             ProdutoresDisponiveis.Add(p);
     }
 
-    partial void OnFiltroProdutorChanged(string value) => AplicarFiltro();
-
-    private void AplicarFiltro()
+    partial void OnFiltroProdutorChanged(string value)
     {
-        Registros.Clear();
-        var fonte = _todos.Where(r =>
-            r.VigenciaFinal.HasValue &&
-            r.VigenciaFinal.Value.Month == AtualMes &&
-            r.VigenciaFinal.Value.Year  == AtualAno);
+        AplicarFiltro();
+        AplicarFiltroSeguroNovos();
+        AtualizarCards();
+    }
+
+    private IEnumerable<RelatorioRenovacao> RegistrosFiltrados()
+    {
+        var fonte = TodosPeriodo();
 
         if (!string.IsNullOrWhiteSpace(FiltroProdutor))
             fonte = fonte.Where(r =>
                 (string.IsNullOrWhiteSpace(r.NovoProdutor) ? "(Sem produtor)" : r.NovoProdutor) == FiltroProdutor);
 
-        foreach (var r in fonte)
-            Registros.Add(r);
+        if (FiltroData.HasValue)
+            fonte = fonte.Where(r =>
+                r.VigenciaFinal!.Value.Date == FiltroData.Value.Date && !r.SeguroEmitido);
+        else if (FiltroEmissao == "Pendente")
+            fonte = fonte.Where(r => !r.SeguroEmitido);
+        else if (FiltroEmissao == "Realizada")
+            fonte = fonte.Where(r => r.SeguroEmitido);
+
+        return fonte;
     }
 
-    private void AplicarFiltroSeguroNovos()
+    private IEnumerable<SeguroNovo> SeguroNovosFiltrados()
     {
-        SeguroNovos.Clear();
         var query = _todosSeguroNovos.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(FiltroProdutor))
@@ -186,7 +237,28 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(FiltroSegNovStatus) && FiltroSegNovStatus != "Todos")
             query = query.Where(s => s.Status == FiltroSegNovStatus);
 
-        foreach (var s in query)
+        if (FiltroData.HasValue)
+            query = query.Where(s =>
+                s.Vigencia.HasValue && s.Vigencia.Value.Date == FiltroData.Value.Date && !s.SeguroEmitido);
+        else if (FiltroEmissao == "Pendente")
+            query = query.Where(s => !s.SeguroEmitido);
+        else if (FiltroEmissao == "Realizada")
+            query = query.Where(s => s.SeguroEmitido);
+
+        return query;
+    }
+
+    private void AplicarFiltro()
+    {
+        Registros.Clear();
+        foreach (var r in RegistrosFiltrados())
+            Registros.Add(r);
+    }
+
+    private void AplicarFiltroSeguroNovos()
+    {
+        SeguroNovos.Clear();
+        foreach (var s in SeguroNovosFiltrados())
             SeguroNovos.Add(s);
     }
 
@@ -231,7 +303,143 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ToggleAssinaturaSeguroNovo(SeguroNovo? reg)
+    {
+        if (reg == null) return;
+        reg.AssinaturaFeita = !reg.AssinaturaFeita;
+        try
+        {
+            await _seguroNovoService.SalvarStatusAdministrativoAsync(reg);
+        }
+        catch (Exception ex)
+        {
+            reg.AssinaturaFeita = !reg.AssinaturaFeita;
+            MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleSeguroNovoEmitido(SeguroNovo? reg)
+    {
+        if (reg == null) return;
+        reg.SeguroEmitido = !reg.SeguroEmitido;
+        reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
+        try
+        {
+            await _seguroNovoService.SalvarStatusAdministrativoAsync(reg);
+        }
+        catch (Exception ex)
+        {
+            reg.SeguroEmitido = !reg.SeguroEmitido;
+            reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
+            MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void LimparFiltroData() => FiltroData = null;
+
+    [RelayCommand]
     private async Task Recarregar() => await CarregarAsync();
+
+    // ── Anexos: Contratos Ren. Palma ──────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task AnexarArquivosRenPalma()
+    {
+        var reg = RenPalmaSelecionado;
+        if (reg == null) return;
+
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar arquivo(s) para anexar",
+            Multiselect = true,
+            Filter = "Todos os arquivos|*.*|Imagens|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp|PDF|*.pdf|Word|*.docx;*.doc|Excel|*.xlsx;*.xls"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        IsLoading = true;
+        int ok = 0, erros = 0;
+        foreach (var file in dialog.FileNames)
+        {
+            try { await _anexoService.AdicionarAsync(reg.Id, file); ok++; }
+            catch { erros++; }
+        }
+        IsLoading = false;
+
+        var msg = erros == 0
+            ? $"{ok} arquivo(s) anexado(s) com sucesso."
+            : $"{ok} arquivo(s) anexado(s), {erros} com erro.";
+        MessageBox.Show(msg, "Anexar arquivos", MessageBoxButton.OK,
+            erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+    }
+
+    [RelayCommand]
+    private void AbrirPastaAnexosRenPalma()
+    {
+        var reg = RenPalmaSelecionado;
+        if (reg == null) return;
+        var pasta = AnexoService.ObterPasta(reg.Id);
+        Directory.CreateDirectory(pasta);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(pasta)
+            { UseShellExecute = true });
+    }
+
+    // ── Anexos: Seguros Novos ──────────────────────────────────────────────────
+
+    private static string ObterPastaAnexosSeguroNovo(int id) =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AnalistaPalmaseg", "AnexosSeguroNovos", id.ToString());
+
+    [RelayCommand]
+    private async Task AnexarArquivosSeguroNovo()
+    {
+        var reg = SeguroNovoSelecionado;
+        if (reg == null) return;
+
+        var dialog = new OpenFileDialog
+        {
+            Title = "Selecionar arquivo(s) para anexar",
+            Multiselect = true,
+            Filter = "Todos os arquivos|*.*|Imagens|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp|PDF|*.pdf|Word|*.docx;*.doc|Excel|*.xlsx;*.xls"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        var pasta = ObterPastaAnexosSeguroNovo(reg.Id);
+        Directory.CreateDirectory(pasta);
+
+        int ok = 0, erros = 0;
+        foreach (var file in dialog.FileNames)
+        {
+            try
+            {
+                var dest = Path.Combine(pasta, Path.GetFileName(file));
+                File.Copy(file, dest, overwrite: true);
+                ok++;
+            }
+            catch { erros++; }
+        }
+
+        var msg = erros == 0
+            ? $"{ok} arquivo(s) anexado(s) com sucesso."
+            : $"{ok} arquivo(s) anexado(s). {erros} falhou(ram).";
+        MessageBox.Show(msg, "Anexos", MessageBoxButton.OK,
+            erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+    }
+
+    [RelayCommand]
+    private void AbrirPastaAnexosSeguroNovo()
+    {
+        var reg = SeguroNovoSelecionado;
+        if (reg == null) return;
+        var pasta = ObterPastaAnexosSeguroNovo(reg.Id);
+        Directory.CreateDirectory(pasta);
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(pasta)
+            { UseShellExecute = true });
+    }
 
     // ── Comissão do colaborador por contrato Ren. Palma ───────────────────────
     // Regra:
