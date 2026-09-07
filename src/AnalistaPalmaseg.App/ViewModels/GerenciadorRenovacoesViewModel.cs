@@ -19,12 +19,14 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     private readonly AnexoService _anexoService;
     private readonly UsuarioService _usuarioService;
     private readonly ClienteService _clienteService;
+    private readonly SessaoService _sessao;
     private List<RelatorioRenovacao> _todos = [];
     private ListCollectionView? _view;
     private CancellationTokenSource? _debounceCts;
     private int _mesFiltroAno;
     private int _mesFiltroMes;
     private readonly Dictionary<string, (int Year, int Month)> _mesLookup = [];
+    private bool _filtroProdutorInicializado;
 
     [ObservableProperty] private ICollectionView? _registrosView;
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
@@ -56,13 +58,15 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         FolhaAmarelaService folhaService,
         AnexoService anexoService,
         UsuarioService usuarioService,
-        ClienteService clienteService)
+        ClienteService clienteService,
+        SessaoService sessao)
     {
         _service = service;
         _folhaService = folhaService;
         _anexoService = anexoService;
         _usuarioService = usuarioService;
         _clienteService = clienteService;
+        _sessao = sessao;
 
         foreach (var colecao in new[]
                  { StatusSelecionados, SeguradorasSelecionadas, RamosSelecionados, VendedoresSelecionados, ProdutoresSelecionados })
@@ -112,6 +116,13 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             var prods = await _service.GetNovoProdutorDistinctAsync();
             ProdutoresDisponiveis.Clear();
             foreach (var p in prods) ProdutoresDisponiveis.Add(p);
+
+            if (!_filtroProdutorInicializado)
+            {
+                _filtroProdutorInicializado = true;
+                if (ProdutoresDisponiveis.Contains(_sessao.NomeUsuario))
+                    ProdutoresSelecionados.Add(_sessao.NomeUsuario);
+            }
 
             var usuarios = await _usuarioService.ListarAsync();
             UsuariosDisponiveis.Clear();

@@ -34,6 +34,15 @@
                     <DataGridTextColumn Header="Novos PL"
                         Binding="{Binding NovosPl, Converter={StaticResource CurrencyFormatConverter}}"
                         Width="130" />
+                    <DataGridTextColumn Header="PL total vendido"
+                        Binding="{Binding TotalPl, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="PL Meta"
+                        Binding="{Binding PlMeta, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
+                    <DataGridTextColumn Header="PL Vendido - meta"
+                        Binding="{Binding PlVendidoMenosMeta, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="130" />
                     <DataGridTextColumn Header="Participação"
                         Binding="{Binding Participacao, Converter={StaticResource CurrencyFormatConverter}}"
                         Width="130" />

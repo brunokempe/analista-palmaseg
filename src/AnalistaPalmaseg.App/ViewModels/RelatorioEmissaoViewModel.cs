@@ -18,6 +18,7 @@ public partial class RelatorioEmissaoViewModel : ObservableObject
 {
     private readonly RelatorioRenovacaoService _renovacaoService;
     private readonly SeguroNovoService _seguroNovoService;
+    private readonly SessaoService _sessao;
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private int _anoSelecionado;
@@ -30,11 +31,14 @@ public partial class RelatorioEmissaoViewModel : ObservableObject
 
     public RelatorioEmissaoViewModel(
         RelatorioRenovacaoService renovacaoService,
-        SeguroNovoService seguroNovoService)
+        SeguroNovoService seguroNovoService,
+        SessaoService sessao)
     {
         _renovacaoService = renovacaoService;
         _seguroNovoService = seguroNovoService;
+        _sessao = sessao;
         _anoSelecionado = DateTime.Today.Year;
+        _filtroProdutor = _sessao.NomeUsuario;
     }
 
     public async Task CarregarAsync()

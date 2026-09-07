@@ -1,23 +1,35 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using AnalistaPalmaseg.Core.Data;
+using CommunityToolkit.Mvvm.Messaging;
 using AnalistaPalmaseg.Core.Services;
 using AnalistaPalmaseg.Core.Models;
 
 namespace AnalistaPalmaseg.App.ViewModels;
 
+public record MenuFavoritoItem(string Chave, string Titulo, string Icone);
+
 public partial class MainViewModel : ObservableObject
 {
     private readonly ImportacaoService _importacaoService;
-    private readonly AppDbContext _context;
     private readonly SessaoService _sessao;
     private readonly RelatorioRenovacaoService _relatorioRenovacaoService;
+    private readonly FavoritoMenuService _favoritoMenuService;
+
+    private readonly Dictionary<string, (string Titulo, string Icone, Func<Task> Executar)> _menuItems;
+    private readonly HashSet<string> _favoritoKeys = [];
 
     [ObservableProperty] private ObservableObject? _currentView;
     [ObservableProperty] private string _tituloAtivo = "Início";
     [ObservableProperty] private bool _isLoading;
+
+    public ObservableCollection<MenuFavoritoItem> Favoritos { get; } = [];
+    public bool TemFavoritos => Favoritos.Count > 0;
+
+    public bool this[string chave] => _favoritoKeys.Contains(chave);
 
     public bool IsAdmin => _sessao.IsAdmin;
     public string NomeUsuario => _sessao.NomeUsuario;
@@ -111,6 +123,9 @@ public partial class MainViewModel : ObservableObject
     // Clientes
     public ClientesViewModel ClientesVm { get; }
 
+    // Pastas por Produtores
+    public PastasProdutorViewModel PastasProdutorVm { get; }
+
     // Leeds
     public LeadsViewModel LeadsVm { get; }
 
@@ -118,12 +133,8 @@ public partial class MainViewModel : ObservableObject
     public DefinicoesMetasViewModel DefinicoesMetasVm { get; }
     public DashboardMetasViewModel DashboardMetasVm { get; }
 
-    // Salvar Propostas
-    public SalvarPropostasViewModel SalvarPropostasVm { get; }
-
     public MainViewModel(
         ImportacaoService importacaoService,
-        AppDbContext context,
         SessaoService sessao,
         InicioViewModel inicioVm,
         DashboardViewModel dashboardVm,
@@ -148,12 +159,13 @@ public partial class MainViewModel : ObservableObject
         ClientesViewModel clientesVm,
         LeadsViewModel leadsVm,
         DistribuicaoProdutorViewModel distribuicaoProdutorVm,
-        SalvarPropostasViewModel salvarPropostasVm,
-        RelatorioRenovacaoService relatorioRenovacaoService)
+        PastasProdutorViewModel pastasProdutorVm,
+        RelatorioRenovacaoService relatorioRenovacaoService,
+        FavoritoMenuService favoritoMenuService)
     {
         _importacaoService = importacaoService;
-        _context = context;
         _sessao = sessao;
+        _favoritoMenuService = favoritoMenuService;
 
         InicioVm = inicioVm;
         DashboardVm = dashboardVm;
@@ -178,10 +190,89 @@ public partial class MainViewModel : ObservableObject
         ClientesVm             = clientesVm;
         LeadsVm                = leadsVm;
         DistribuicaoProdutorVm = distribuicaoProdutorVm;
-        SalvarPropostasVm = salvarPropostasVm;
+        PastasProdutorVm = pastasProdutorVm;
         _relatorioRenovacaoService = relatorioRenovacaoService;
 
+        WeakReferenceMessenger.Default.Register<AbrirClienteMessage>(this, (_, m) =>
+        {
+            _ = AbrirCadastroClienteAsync(m.DocumentoPrincipal);
+        });
+
         _currentView = inicioVm;
+
+        _menuItems = new Dictionary<string, (string, string, Func<Task>)>
+        {
+            ["Inicio"] = ("Início", "HomeOutline", () => { NavInicio(); return Task.CompletedTask; }),
+            ["AcompanhamentoRenovacoes"] = ("Renovações", "ClipboardCheckOutline", NavAcompanhamentoRenovacoesAsync),
+            ["SeguroNovos"] = ("Seguros Novos", "ShieldPlusOutline", NavSeguroNovosAsync),
+            ["EmissaoDashboard"] = ("Dashboard de Emissões", "FileCheckOutline", NavEmissaoDashboardAsync),
+            ["ControleBoletos"] = ("Controle de Boletos", "ReceiptTextCheckOutline", NavControleBoletosAsync),
+            ["DashboardMetas"] = ("Dashboard de Metas", "TrophyOutline", NavDashboardMetasAsync),
+            ["Clientes"] = ("Clientes", "AccountGroupOutline", NavClientesAsync),
+            ["PastasProdutor"] = ("Pastas por Produtores", "FolderAccountOutline", NavPastasProdutorAsync),
+            ["Leads"] = ("Cotações", "AccountConvertOutline", NavLeadsAsync),
+            ["RelatorioEmissao"] = ("Emissões por produtor", "ChartLine", NavRelatorioEmissaoAsync),
+            ["Dashboard"] = ("Dashboard", "ViewDashboardOutline", () => { NavDashboard(); return Task.CompletedTask; }),
+            ["Renovacoes"] = ("Renovações (Comparativo)", "ClipboardTextOutline", () => { NavRenovacoes(); return Task.CompletedTask; }),
+            ["NovosNegocios"] = ("Novos negócios", "PlusBoxOutline", () => { NavNovosNegocios(); return Task.CompletedTask; }),
+            ["Pendentes"] = ("Pendentes em aberto", "ClockOutline", () => { NavPendentes(); return Task.CompletedTask; }),
+            ["Retencao"] = ("Evolução retenção", "TrendingUp", () => { NavRetencao(); return Task.CompletedTask; }),
+            ["Comparacao"] = ("Comparação produtores", "ChartBarStacked", () => { NavComparacao(); return Task.CompletedTask; }),
+            ["Resultados"] = ("Resultado — Metas", "CheckboxMarkedCircleOutline", () => { NavResultados(); return Task.CompletedTask; }),
+            ["ApolicesDashboard"] = ("Acomp. Apólices", "FileDocumentOutline", () => { NavApolicesDashboard(); return Task.CompletedTask; }),
+            ["FuncionariosDashboard"] = ("Dashboard Funcionários", "AccountMultipleOutline", () => { NavFuncionariosDashboard(); return Task.CompletedTask; }),
+            ["DistribuicaoProdutor"] = ("Dist. por Produtor", "AccountGroupOutline", NavDistribuicaoProdutorAsync),
+            ["GerenciadorRenovacoes"] = ("Renovações (Gerenciador)", "FileRefreshOutline", NavGerenciadorRenovacoesAsync),
+            ["DefinicoesMetas"] = ("Definições de Metas", "ChartTimeline", NavDefinicoesMetasAsync),
+            ["GerenciarUsuarios"] = ("Usuários", "AccountCogOutline", NavGerenciarUsuariosAsync),
+        };
+    }
+
+    // ── Favoritos ──────────────────────────────────────────────
+    public async Task CarregarFavoritosAsync()
+    {
+        var usuarioId = _sessao.UsuarioAtual?.Id;
+        if (usuarioId is null) return;
+
+        var chaves = await _favoritoMenuService.GetFavoritosAsync(usuarioId.Value);
+        _favoritoKeys.Clear();
+        foreach (var chave in chaves) _favoritoKeys.Add(chave);
+
+        AtualizarListaFavoritos();
+        OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+    }
+
+    private void AtualizarListaFavoritos()
+    {
+        Favoritos.Clear();
+        foreach (var chave in _favoritoKeys)
+        {
+            if (_menuItems.TryGetValue(chave, out var info))
+                Favoritos.Add(new MenuFavoritoItem(chave, info.Titulo, info.Icone));
+        }
+        OnPropertyChanged(nameof(TemFavoritos));
+    }
+
+    [RelayCommand]
+    private async Task ToggleFavoritoAsync(string chave)
+    {
+        var usuarioId = _sessao.UsuarioAtual?.Id;
+        if (usuarioId is null || !_menuItems.ContainsKey(chave)) return;
+
+        var agoraFavorito = await _favoritoMenuService.AlternarFavoritoAsync(usuarioId.Value, chave);
+
+        if (agoraFavorito) _favoritoKeys.Add(chave);
+        else _favoritoKeys.Remove(chave);
+
+        AtualizarListaFavoritos();
+        OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+    }
+
+    [RelayCommand]
+    private async Task NavFavoritoAsync(string chave)
+    {
+        if (_menuItems.TryGetValue(chave, out var info))
+            await info.Executar();
     }
 
     // ── Toggle sidebar / seções ───────────────────────────────
@@ -230,14 +321,6 @@ public partial class MainViewModel : ObservableObject
         TituloAtivo = "Acompanhamento de Renovações";
     }
     [RelayCommand] private void Sair() => Application.Current.Shutdown();
-
-    [RelayCommand]
-    private async Task NavSalvarPropostasAsync()
-    {
-        await SalvarPropostasVm.CarregarAsync();
-        CurrentView = SalvarPropostasVm;
-        TituloAtivo = "Salvar Propostas";
-    }
 
     [RelayCommand]
     private async Task NavGerenciarUsuariosAsync()
@@ -292,6 +375,20 @@ public partial class MainViewModel : ObservableObject
         await ClientesVm.CarregarAsync();
         CurrentView = ClientesVm;
         TituloAtivo = "Cadastro de Clientes";
+    }
+
+    private async Task AbrirCadastroClienteAsync(string documentoPrincipal)
+    {
+        await NavClientesAsync();
+        ClientesVm.SelecionarPorDocumento(documentoPrincipal);
+    }
+
+    [RelayCommand]
+    private async Task NavPastasProdutorAsync()
+    {
+        await PastasProdutorVm.CarregarAsync();
+        CurrentView = PastasProdutorVm;
+        TituloAtivo = "Pastas por Produtores";
     }
 
     [RelayCommand]

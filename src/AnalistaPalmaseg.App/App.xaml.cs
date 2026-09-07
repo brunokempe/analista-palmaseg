@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using AnalistaPalmaseg.App.ViewModels;
 using AnalistaPalmaseg.App.Views;
@@ -17,6 +18,10 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         // Força cultura pt-BR para que StringFormat=C2 exiba R$
         var culture = new System.Globalization.CultureInfo("pt-BR");
@@ -38,7 +43,7 @@ public partial class App : Application
                     ?? throw new InvalidOperationException(
                         "Connection string \"Default\" não encontrada em appsettings.json.");
 
-                services.AddDbContext<AppDbContext>(opts =>
+                services.AddDbContextFactory<AppDbContext>(opts =>
                     opts.UseNpgsql(connectionString));
 
                 services.AddSingleton<SessaoService>();
@@ -56,7 +61,8 @@ public partial class App : Application
                 services.AddTransient<ClienteService>();
                 services.AddTransient<LeadService>();
                 services.AddTransient<DistribuicaoReferenciaService>();
-                services.AddTransient<PastaSalvarPropostaService>();
+                services.AddTransient<PastaProdutorService>();
+                services.AddTransient<FavoritoMenuService>();
 
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<LoginWindow>();
@@ -84,7 +90,7 @@ public partial class App : Application
                 services.AddTransient<ClientesViewModel>();
                 services.AddTransient<LeadsViewModel>();
                 services.AddTransient<DistribuicaoProdutorViewModel>();
-                services.AddTransient<SalvarPropostasViewModel>();
+                services.AddTransient<PastasProdutorViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddTransient<MainWindow>();
             })
@@ -117,10 +123,46 @@ public partial class App : Application
         await mainVm.ComparacaoVm.CarregarAsync();
         await mainVm.ResultadosVm.CarregarAsync();
         await mainVm.FuncionariosDashboardVm.CarregarAsync();
+        await mainVm.CarregarFavoritosAsync();
 
         // Agora que a janela principal está aberta, usa o modo padrão
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         mainWindow.Show();
+    }
+
+    private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        LogException(e.Exception);
+        MessageBox.Show(
+            $"Ocorreu um erro inesperado e a operação foi cancelada.\n\nDetalhes: {e.Exception.Message}",
+            "Erro inesperado", MessageBoxButton.OK, MessageBoxImage.Error);
+        e.Handled = true;
+    }
+
+    private void OnAppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+            LogException(ex);
+    }
+
+    private void OnUnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
+    {
+        LogException(e.Exception);
+        e.SetObserved();
+    }
+
+    private static void LogException(Exception ex)
+    {
+        try
+        {
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "erros.log");
+            var linha = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n";
+            File.AppendAllText(logPath, linha);
+        }
+        catch
+        {
+            // Se nem o log funcionar, não há mais nada a fazer — evita mascarar a exceção original.
+        }
     }
 
     private static void RegisterDataTemplates()
@@ -157,7 +199,7 @@ public partial class App : Application
         Add<ClientesViewModel, ClientesView>();
         Add<LeadsViewModel, LeadsView>();
         Add<DistribuicaoProdutorViewModel, DistribuicaoProdutorView>();
-        Add<SalvarPropostasViewModel, SalvarPropostasView>();
+        Add<PastasProdutorViewModel, PastasProdutorView>();
     }
 
     protected override async void OnExit(ExitEventArgs e)

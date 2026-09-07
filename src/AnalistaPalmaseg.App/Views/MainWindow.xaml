@@ -68,14 +68,60 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="56" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="HomeOutline"
                                                      Width="18" Height="18"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="Início"
                                        VerticalAlignment="Center" FontSize="13" />
+                            <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                    Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                    Command="{Binding ToggleFavoritoCommand}" CommandParameter="Inicio"
+                                    ToolTip="Favoritar">
+                                <materialDesign:PackIcon Width="14" Height="14"
+                                                         Kind="{Binding [Inicio], Converter={StaticResource BoolToStarKindConverter}}" />
+                            </Button>
                         </Grid>
                     </Button>
+
+                    <!-- ══ FAVORITOS ══ -->
+                    <StackPanel Visibility="{Binding TemFavoritos, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
+
+                        <TextBlock Text="FAVORITOS" Margin="20,6,12,2"
+                                   FontSize="9.5" FontWeight="Bold"
+                                   Foreground="{StaticResource SidebarTextBrush}"
+                                   Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <ItemsControl ItemsSource="{Binding Favoritos}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.NavFavoritoCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Chave}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                            Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0"
+                                            ToolTip="{Binding Titulo}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <materialDesign:PackIcon Grid.Column="0" Kind="{Binding Icone}"
+                                                                     Width="18" Height="18"
+                                                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Titulo}"
+                                                       VerticalAlignment="Center" FontSize="13" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </StackPanel>
 
                     <!-- ─ separador ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"
@@ -116,11 +162,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardCheckOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="AcompanhamentoRenovacoes"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [AcompanhamentoRenovacoes], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -132,11 +186,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ShieldPlusOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Seguros Novos" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="SeguroNovos"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [SeguroNovos], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -149,11 +211,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="FileCheckOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Dashboard de Emissões" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="EmissaoDashboard"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [EmissaoDashboard], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -166,11 +236,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ReceiptTextCheckOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Controle de Boletos" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="ControleBoletos"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [ControleBoletos], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -183,30 +261,22 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="TrophyOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Dashboard de Metas" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="DashboardMetas"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [DashboardMetas], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
-                        <!-- Salvar Propostas -->
-                        <Button Command="{Binding NavSalvarPropostasCommand}"
-                                Style="{StaticResource MaterialDesignFlatButton}"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="56" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <materialDesign:PackIcon Grid.Column="0" Kind="ContentSaveOutline"
-                                                         Width="18" Height="18"
-                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="Salvar Propostas" VerticalAlignment="Center" FontSize="13" />
-                            </Grid>
-                        </Button>
 
                     </StackPanel>
 
@@ -247,11 +317,43 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroupOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Clientes" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Clientes"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Clientes], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
+                            </Grid>
+                        </Button>
+
+                        <Button Command="{Binding NavPastasProdutorCommand}"
+                                Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Foreground="{StaticResource SidebarTextBrush}" Height="44" Padding="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="56" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FolderAccountOutline"
+                                                         Width="18" Height="18"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="Pastas por Produtores" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="PastasProdutor"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [PastasProdutor], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
                     </StackPanel>
@@ -293,19 +395,29 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="AccountConvertOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Cotações" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Leads"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Leads], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
                     </StackPanel>
 
+                    <!-- ══ COMPARATIVO (somente administradores) ══ -->
+                    <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+
                     <!-- ─ separador comparativo ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A"/>
 
-                    <!-- ══ COMPARATIVO ══ -->
                     <Button Command="{Binding ToggleComparativoCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
@@ -359,11 +471,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ViewDashboardOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Dashboard" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Dashboard"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Dashboard], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -376,11 +496,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ClipboardTextOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Renovacoes"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Renovacoes], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -393,11 +521,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="PlusBoxOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Novos negócios" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="NovosNegocios"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [NovosNegocios], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -410,11 +546,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ClockOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Pendentes em aberto" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Pendentes"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Pendentes], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -427,11 +571,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="TrendingUp"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Evolução retenção" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Retencao"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Retencao], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -444,11 +596,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ChartBarStacked"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Comparação produtores" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Comparacao"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Comparacao], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -461,11 +621,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="CheckboxMarkedCircleOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Resultado — Metas" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="Resultados"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [Resultados], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -478,11 +646,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="FileDocumentOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Acomp. Apólices" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="ApolicesDashboard"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [ApolicesDashboard], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -495,20 +671,32 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="AccountMultipleOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Dashboard Funcionários" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="FuncionariosDashboard"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [FuncionariosDashboard], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
                     </StackPanel>
 
+                    </StackPanel>
+
+                    <!-- ══ GERENCIADOR (somente administradores) ══ -->
+                    <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+
                     <!-- ─ separador gerenciador ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
 
-                    <!-- ══ GERENCIADOR ══ -->
                     <Button Command="{Binding ToggleGerenciadorCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
@@ -544,11 +732,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroupOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Dist. por Produtor" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="DistribuicaoProdutor"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [DistribuicaoProdutor], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -561,11 +757,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="FileRefreshOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="GerenciadorRenovacoes"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [GerenciadorRenovacoes], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -579,11 +783,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="56" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <materialDesign:PackIcon Grid.Column="0" Kind="ChartTimeline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Text="Definições de Metas" VerticalAlignment="Center" FontSize="13" />
+                                <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                        Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                        Command="{Binding ToggleFavoritoCommand}" CommandParameter="DefinicoesMetas"
+                                        ToolTip="Favoritar">
+                                    <materialDesign:PackIcon Width="14" Height="14"
+                                                             Kind="{Binding [DefinicoesMetas], Converter={StaticResource BoolToStarKindConverter}}" />
+                                </Button>
                             </Grid>
                         </Button>
 
@@ -613,6 +825,8 @@
 
                     </StackPanel>
 
+                    </StackPanel>
+
                     <!-- ─ separador relatórios ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
 
@@ -626,19 +840,29 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="56" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="ChartLine"
                                                      Width="18" Height="18"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="Emissões por produtor"
                                        VerticalAlignment="Center" FontSize="13" />
+                            <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                    Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                    Command="{Binding ToggleFavoritoCommand}" CommandParameter="RelatorioEmissao"
+                                    ToolTip="Favoritar">
+                                <materialDesign:PackIcon Width="14" Height="14"
+                                                         Kind="{Binding [RelatorioEmissao], Converter={StaticResource BoolToStarKindConverter}}" />
+                            </Button>
                         </Grid>
                     </Button>
+
+                    <!-- ══ ADMINISTRAÇÃO (somente administradores) ══ -->
+                    <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
 
                     <!-- ─ separador administração ─ -->
                     <Rectangle Height="1" Margin="16,4,16,0" Fill="#3D3F4A" />
 
-                    <!-- ══ ADMINISTRAÇÃO ══ -->
                     <Button Command="{Binding NavGerenciarUsuariosCommand}"
                             Style="{StaticResource MaterialDesignFlatButton}"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
@@ -648,13 +872,23 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="56" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <materialDesign:PackIcon Grid.Column="0" Kind="AccountCogOutline"
                                                      Width="18" Height="18"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="Usuários" VerticalAlignment="Center" FontSize="13" />
+                            <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
+                                    Width="26" Height="26" Padding="0" Margin="0,0,4,0"
+                                    Command="{Binding ToggleFavoritoCommand}" CommandParameter="GerenciarUsuarios"
+                                    ToolTip="Favoritar">
+                                <materialDesign:PackIcon Width="14" Height="14"
+                                                         Kind="{Binding [GerenciarUsuarios], Converter={StaticResource BoolToStarKindConverter}}" />
+                            </Button>
                         </Grid>
                     </Button>
+
+                    </StackPanel>
 
                     <!-- ─ separador sair ─ -->
                     <Rectangle Height="1" Margin="16,8,16,0" Fill="#3D3F4A" />

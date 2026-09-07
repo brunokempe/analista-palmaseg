@@ -146,6 +146,16 @@ public class BoolToCheckKindConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
 
+public class BoolToStarKindConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true
+            ? MaterialDesignThemes.Wpf.PackIconKind.Star
+            : MaterialDesignThemes.Wpf.PackIconKind.StarOutline;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
 public class SeguradoraAbrevConverter : IValueConverter
 {
     private static readonly Dictionary<string, string> _mapa = new(StringComparer.OrdinalIgnoreCase)

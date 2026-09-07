@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Data;
 
-public class DatabaseInitializer(AppDbContext context)
+public class DatabaseInitializer(IDbContextFactory<AppDbContext> contextFactory)
 {
     public void Initialize()
     {
+        using var context = contextFactory.CreateDbContext();
+
         context.Database.Migrate();
 
         // Seed: seguradoras padrão (parceiras e demais)

@@ -37,6 +37,7 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
 {
     private readonly RelatorioRenovacaoService      _renovacaoService;
     private readonly DistribuicaoReferenciaService  _referenciaService;
+    private readonly SessaoService                  _sessao;
     private List<RelatorioRenovacao> _cache = [];
     private bool _computing;
 
@@ -82,10 +83,13 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
 
     public DistribuicaoProdutorViewModel(
         RelatorioRenovacaoService     renovacaoService,
-        DistribuicaoReferenciaService referenciaService)
+        DistribuicaoReferenciaService referenciaService,
+        SessaoService                 sessao)
     {
         _renovacaoService  = renovacaoService;
         _referenciaService = referenciaService;
+        _sessao            = sessao;
+        _filtroProdutorSelecionado = _sessao.NomeUsuario;
     }
 
     partial void OnFiltroMesChanged(int value) => Computar();

@@ -30,10 +30,7 @@ public class FolhaAmarelaService
 
                 var pathFolha = Path.Combine(pasta,
                     $"FolhaAmarela_{Sanitizar(reg.NomeCliente ?? reg.Proposta ?? "Registro")}.odt");
-                if (template != null)
-                    GerarComTemplate(template, pathFolha, reg);
-                else
-                    GerarDoZero(pathFolha, reg);
+                GerarComTemplate(template, pathFolha, reg);
 
                 AnexoService.CopiarParaDiretorio(anexos, pasta);
             }
@@ -55,11 +52,7 @@ public class FolhaAmarelaService
 
         if (File.Exists(path) && ArquivoValido(path)) return path;
 
-        var template = LocalizarTemplate();
-        if (template != null)
-            GerarComTemplate(template, path, reg);
-        else
-            GerarDoZero(path, reg);
+        GerarComTemplate(LocalizarTemplate(), path, reg);
 
         return path;
     }
@@ -78,7 +71,7 @@ public class FolhaAmarelaService
         }
     }
 
-    private static string? LocalizarTemplate()
+    private static string LocalizarTemplate()
     {
         var appData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -102,7 +95,16 @@ public class FolhaAmarelaService
             return appData;
         }
 
-        return null;
+        // Nenhum template encontrado no perfil do usuário (comum em servidores/perfis novos):
+        // usa o template embutido no assembly em vez de recorrer ao GerarDoZero, cujo ODT
+        // gerado manualmente pode ser rejeitado como corrompido por alguns leitores.
+        Directory.CreateDirectory(Path.GetDirectoryName(appData)!);
+        using (var resource = typeof(FolhaAmarelaService).Assembly
+                   .GetManifestResourceStream("AnalistaPalmaseg.Core.Resources.FolhaTemplate.odt")!)
+        using (var destino = File.Create(appData))
+            resource.CopyTo(destino);
+
+        return appData;
     }
 
     private static void GerarComTemplate(string templatePath, string outputPath, RelatorioRenovacao reg)
@@ -122,27 +124,7 @@ public class FolhaAmarelaService
             w.Write(StylesXml());
     }
 
-    private static void GerarDoZero(string path, RelatorioRenovacao reg)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
-        var mime = zip.CreateEntry("mimetype", CompressionLevel.NoCompression);
-        using (var w = new StreamWriter(mime.Open(), new UTF8Encoding(false)))
-            w.Write("application/vnd.oasis.opendocument.text");
-        AddText(zip, "META-INF/manifest.xml", Manifest());
-        AddText(zip, "meta.xml", MetaXml());
-        AddText(zip, "styles.xml", StylesXml());
-        AddText(zip, "content.xml", ContentXml(reg));
-    }
-
     // ── helpers ──────────────────────────────────────────────────────────────
-
-    private static void AddText(ZipArchive zip, string name, string content)
-    {
-        var entry = zip.CreateEntry(name, CompressionLevel.Optimal);
-        using var w = new StreamWriter(entry.Open(), new UTF8Encoding(false));
-        w.Write(content);
-    }
 
     private static string Sanitizar(string s)
     {
@@ -175,28 +157,6 @@ public class FolhaAmarelaService
         string.Join(" ", partes.Where(p => !string.IsNullOrWhiteSpace(p)));
 
     // ── ODT structure ─────────────────────────────────────────────────────────
-
-    private static string Manifest() => """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3">
-          <manifest:file-entry manifest:full-path="/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.text"/>
-          <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
-          <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
-          <manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>
-        </manifest:manifest>
-        """;
-
-    private static string MetaXml() => """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <office:document-meta
-          xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
-          xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
-          office:version="1.4">
-          <office:meta>
-            <meta:generator>AnalistaPalmaseg</meta:generator>
-          </office:meta>
-        </office:document-meta>
-        """;
 
     private static string StylesXml() => """
         <?xml version="1.0" encoding="UTF-8"?>

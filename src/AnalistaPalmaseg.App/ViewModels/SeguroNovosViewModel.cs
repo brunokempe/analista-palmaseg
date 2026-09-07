@@ -15,6 +15,7 @@ public partial class SeguroNovosViewModel : ObservableObject
 {
     private readonly SeguroNovoService _service;
     private readonly SessaoService _sessao;
+    private readonly UsuarioService _usuarios;
     private string? _criadoPorOriginal;
     private ObservableCollection<SeguroNovo> _colecao = [];
     private ListCollectionView? _view;
@@ -27,6 +28,7 @@ public partial class SeguroNovosViewModel : ObservableObject
 
     // Campos do formulário
     [ObservableProperty] private int _editandoId;
+    [ObservableProperty] private string _editandoProdutor = string.Empty;
     [ObservableProperty] private DateTime? _editandoVigencia;
     [ObservableProperty] private string _editandoSegurado = string.Empty;
     [ObservableProperty] private string _editandoCia = string.Empty;
@@ -45,6 +47,7 @@ public partial class SeguroNovosViewModel : ObservableObject
     public bool TemRegistroSelecionado => EditandoId != 0;
 
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
+    public ObservableCollection<string> ListaProdutores { get; } = [];
 
     public static string[] Segmentos { get; } =
     [
@@ -83,10 +86,13 @@ public partial class SeguroNovosViewModel : ObservableObject
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AnalistaPalmaseg", "AnexosSeguroNovos", id.ToString());
 
-    public SeguroNovosViewModel(SeguroNovoService service, SessaoService sessao)
+    public SeguroNovosViewModel(SeguroNovoService service, SessaoService sessao, UsuarioService usuarios)
     {
         _service = service;
         _sessao = sessao;
+        _usuarios = usuarios;
+        _editandoProdutor = _sessao.NomeUsuario;
+        _filtroProdutor = _sessao.NomeUsuario;
     }
 
     partial void OnRegistroSelecionadoChanged(SeguroNovo? value)
@@ -99,6 +105,7 @@ public partial class SeguroNovosViewModel : ObservableObject
     {
         _criadoPorOriginal   = r.CriadoPor;
         EditandoId           = r.Id;
+        EditandoProdutor     = r.CriadoPor ?? string.Empty;
         EditandoVigencia     = r.Vigencia;
         EditandoSegurado     = r.Segurado;
         EditandoCia          = r.Cia;
@@ -121,6 +128,7 @@ public partial class SeguroNovosViewModel : ObservableObject
     {
         _criadoPorOriginal   = null;
         EditandoId           = 0;
+        EditandoProdutor     = _sessao.NomeUsuario;
         EditandoVigencia     = DateTime.Today;
         EditandoSegurado     = string.Empty;
         EditandoCia          = string.Empty;
@@ -145,16 +153,17 @@ public partial class SeguroNovosViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var produtorFiltro = _sessao.IsAdmin ? null : _sessao.NomeUsuario;
-            var lista = await _service.GetTodosAsync(produtorFiltro);
+            var lista = await _service.GetTodosAsync();
 
-            if (_sessao.IsAdmin)
-            {
-                var prods = await _service.GetProdutoresDistinctAsync();
-                ProdutoresDisponiveis.Clear();
-                ProdutoresDisponiveis.Add(string.Empty);
-                foreach (var p in prods) ProdutoresDisponiveis.Add(p);
-            }
+            var prods = await _service.GetProdutoresDistinctAsync();
+            ProdutoresDisponiveis.Clear();
+            ProdutoresDisponiveis.Add(string.Empty);
+            foreach (var p in prods) ProdutoresDisponiveis.Add(p);
+
+            var usuarios = await _usuarios.ListarAsync();
+            ListaProdutores.Clear();
+            foreach (var u in usuarios.Where(u => u.Ativo).OrderBy(u => u.Login))
+                ListaProdutores.Add(u.Login);
 
             _colecao = new ObservableCollection<SeguroNovo>(lista);
             _view = (ListCollectionView)CollectionViewSource.GetDefaultView(_colecao);
@@ -227,7 +236,9 @@ public partial class SeguroNovosViewModel : ObservableObject
                 AssinaturaFeita = EditandoAssinaturaFeita,
                 Observacao      = EditandoObservacao.Trim(),
                 CriadoEm        = DateTime.Now,
-                CriadoPor       = EditandoId == 0 ? _sessao.NomeUsuario : _criadoPorOriginal,
+                CriadoPor       = string.IsNullOrWhiteSpace(EditandoProdutor)
+                                    ? (EditandoId == 0 ? _sessao.NomeUsuario : _criadoPorOriginal)
+                                    : EditandoProdutor.Trim(),
                 EmitidoPor      = _sessao.NomeUsuario
             };
 
@@ -243,7 +254,7 @@ public partial class SeguroNovosViewModel : ObservableObject
             {
                 _colecao.Insert(0, salvo);
 
-                if (_sessao.IsAdmin && !string.IsNullOrEmpty(salvo.CriadoPor)
+                if (!string.IsNullOrEmpty(salvo.CriadoPor)
                     && !ProdutoresDisponiveis.Contains(salvo.CriadoPor))
                     ProdutoresDisponiveis.Add(salvo.CriadoPor);
             }

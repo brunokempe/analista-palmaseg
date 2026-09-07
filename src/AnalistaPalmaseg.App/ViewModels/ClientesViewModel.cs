@@ -176,6 +176,14 @@ public partial class ClientesViewModel : ObservableObject
 
     partial void OnFiltroTextoChanged(string value) => _view?.Refresh();
 
+    public void SelecionarPorDocumento(string documentoPrincipal)
+    {
+        FiltroTexto = string.Empty;
+        var cliente = _colecao.FirstOrDefault(c =>
+            string.Equals(c.Cpf, documentoPrincipal, StringComparison.OrdinalIgnoreCase));
+        if (cliente != null) ClienteSelecionado = cliente;
+    }
+
     [RelayCommand]
     private void Novo() => LimparFormulario();
 

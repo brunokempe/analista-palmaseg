@@ -1,0 +1,185 @@
+<UserControl x:Class="AnalistaPalmaseg.App.Views.PastasProdutorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:AnalistaPalmaseg.App.Converters"
+             Background="{StaticResource PageBgBrush}"
+             FontFamily="Lato, Segoe UI">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── Cabeçalho ── -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrush}" Padding="20,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="FolderAccountOutline" Width="22" Height="22"
+                                             Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="Pastas por Produtores" FontSize="16" FontWeight="SemiBold"
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ProgressBar IsIndeterminate="True" Width="80" Height="3"
+                                 Foreground="White"
+                                 Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                 Margin="0,0,16,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ── Conteúdo principal ── -->
+        <Grid Grid.Row="1" Margin="12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" MinWidth="200"/>
+                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Lista de produtores ── -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Produtores (colaboradores)"
+                           FontSize="12.5" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="2,0,0,8"/>
+
+                <materialDesign:Card Grid.Row="1" Padding="0">
+                    <ListBox ItemsSource="{Binding Produtores}"
+                             SelectedItem="{Binding ProdutorSelecionado}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="8,7">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="AccountOutline" Width="16" Height="16"
+                                                                 VerticalAlignment="Center"
+                                                                 Foreground="{StaticResource TextSecondaryBrush}"
+                                                                 Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding Login}"
+                                                   FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </materialDesign:Card>
+            </Grid>
+
+            <!-- ── Separador ── -->
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch" Background="Transparent"/>
+
+            <!-- ── Painel de diretórios do produtor selecionado ── -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4,0,0,16">
+
+                    <!-- Estado vazio: nenhum produtor selecionado -->
+                    <StackPanel Visibility="{Binding TemProdutorSelecionado, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,60,0,0">
+                        <materialDesign:PackIcon Kind="FolderAccountOutline" Width="40" Height="40"
+                                                 HorizontalAlignment="Center"
+                                                 Foreground="{StaticResource TextMutedBrush}"
+                                                 Margin="0,0,0,10"/>
+                        <TextBlock Text="Selecione um produtor para gerenciar os diretórios."
+                                   FontSize="13" HorizontalAlignment="Center"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding TemProdutorSelecionado, Converter={StaticResource BoolToVisibilityConverter}}">
+
+                        <materialDesign:Card Padding="20,18" Margin="0,0,0,16" UniformCornerRadius="8">
+                            <StackPanel>
+                                <TextBlock FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           Margin="0,0,0,6">
+                                    <Run Text="Diretórios de "/>
+                                    <Run Text="{Binding ProdutorSelecionado.Login}"/>
+                                </TextBlock>
+                                <TextBlock Text="Cadastre um ou mais diretórios para este produtor."
+                                           FontSize="12.5" TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Margin="0,0,0,14"/>
+
+                                <Button Command="{Binding AdicionarDiretorioCommand}"
+                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Background="{StaticResource PrimaryBrush}"
+                                        Foreground="White"
+                                        HorizontalAlignment="Left"
+                                        Height="44"
+                                        Padding="16,0"
+                                        Margin="0,0,0,14"
+                                        materialDesign:ButtonAssist.CornerRadius="6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FolderPlusOutline"
+                                                                 Width="16" Height="16"
+                                                                 VerticalAlignment="Center"
+                                                                 Margin="0,0,6,0"/>
+                                        <TextBlock Text="Adicionar diretório" VerticalAlignment="Center" FontSize="13"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <DataGrid ItemsSource="{Binding Diretorios}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          IsReadOnly="True"
+                                          HeadersVisibility="Column"
+                                          Style="{StaticResource MaterialDesignDataGrid}"
+                                          GridLinesVisibility="Horizontal"
+                                          BorderThickness="0"
+                                          MaxHeight="360">
+
+                                    <DataGrid.Columns>
+
+                                        <DataGridTextColumn Header="Caminho"
+                                                            Binding="{Binding Caminho}"
+                                                            Width="*"
+                                                            ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}"/>
+
+                                        <DataGridTemplateColumn Header="Ações" Width="120">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.RemoverDiretorioCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                            CommandParameter="{Binding}"
+                                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                                            Foreground="{StaticResource DangerBrush}"
+                                                            Padding="8,4" Height="32" FontSize="12"
+                                                            ToolTip="Remover diretório">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="TrashCanOutline" Width="14" Height="14"
+                                                                                     VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Remover" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
