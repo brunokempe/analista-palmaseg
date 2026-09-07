@@ -11,15 +11,17 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class RetencaoViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
+    private readonly SessaoService _sessao;
 
     [ObservableProperty] private ObservableCollection<string> _produtores = [];
     [ObservableProperty] private string? _produtorSelecionado;
     [ObservableProperty] private ISeries[] _series = [];
     [ObservableProperty] private Axis[] _axesX = [];
 
-    public RetencaoViewModel(RelatorioService relatorioService)
+    public RetencaoViewModel(RelatorioService relatorioService, SessaoService sessao)
     {
         _relatorioService = relatorioService;
+        _sessao = sessao;
     }
 
     public async Task CarregarAsync()
@@ -27,7 +29,13 @@ public partial class RetencaoViewModel : ObservableObject
         var resumos = await _relatorioService.GetResumoAsync();
         var produtores = resumos.Select(r => r.Importacao.Produtor).Distinct().ToList();
         Produtores = new ObservableCollection<string>(produtores);
-        ProdutorSelecionado = produtores.FirstOrDefault();
+
+        if (ProdutorSelecionado != null && produtores.Contains(ProdutorSelecionado))
+            return;
+
+        ProdutorSelecionado = produtores.Contains(_sessao.NomeUsuario)
+            ? _sessao.NomeUsuario
+            : produtores.FirstOrDefault();
     }
 
     partial void OnProdutorSelecionadoChanged(string? value)

@@ -21,17 +21,21 @@ public record ResumoImportacao(
 {
     public decimal TotalPl => PlRenovado + NovosPl;
     public decimal TotalComissao => ComissaoRenovacoes + Participacao;
+    public decimal PlMeta => Importacao.Resultados.Sum(r => r.Meta);
+    public decimal PlVendidoMenosMeta => TotalPl - PlMeta;
 };
 
 public record ParticipacaoSeguradora(string Cia, decimal PlRenovado, decimal Comissao, decimal Percentual);
 
-public class RelatorioService(AppDbContext context)
+public class RelatorioService(IDbContextFactory<AppDbContext> contextFactory)
 {
     public async Task<List<ResumoImportacao>> GetResumoAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Include(i => i.Renovacoes)
             .Include(i => i.NovosNegocios)
+            .Include(i => i.Resultados)
             .OrderByDescending(i => i.Ano).ThenByDescending(i => i.Mes)
             .ToListAsync();
 
@@ -40,9 +44,11 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<ResumoImportacao?> GetResumoAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacao = await context.Importacoes
             .Include(i => i.Renovacoes)
             .Include(i => i.NovosNegocios)
+            .Include(i => i.Resultados)
             .FirstOrDefaultAsync(i => i.Id == importacaoId);
 
         return importacao == null ? null : CalcularResumo(importacao);
@@ -50,6 +56,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<Renovacao>> GetRenovacoesAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.Renovacoes
             .Where(r => r.ImportacaoId == importacaoId)
             .OrderBy(r => r.Vigencia)
@@ -58,6 +65,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<Renovacao>> GetPendentesAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.Renovacoes
             .Where(r => r.ImportacaoId == importacaoId && (r.Status == "Procurado" || r.Status == "Pendente" || r.Status == "Agendado"))
             .OrderBy(r => r.Vigencia)
@@ -66,6 +74,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<NovoNegocio>> GetNovosNegociosAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.NovosNegocios
             .Where(n => n.ImportacaoId == importacaoId)
             .OrderBy(n => n.Vigencia)
@@ -74,6 +83,8 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<ParticipacaoSeguradora>> GetParticipacaoAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var renovacoes = await context.Renovacoes
             .Where(r => r.ImportacaoId == importacaoId && r.NovoPl.HasValue)
             .ToListAsync();
@@ -110,6 +121,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<FuncionarioResultado>> GetFuncionariosAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var lista = await context.FuncionariosResultados
             .Where(f => f.ImportacaoId == importacaoId)
             .ToListAsync();
@@ -118,6 +130,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<string>> GetFuncionariosNomesAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.FuncionariosResultados
             .Select(f => f.Nome)
             .Distinct()
@@ -127,6 +140,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<(Importacao Importacao, List<FuncionarioResultado> Resultados)>> GetTimelineFuncionarioAsync(string nome)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Where(i => i.Produtor == nome)
             .Include(i => i.FuncionariosResultados)
@@ -141,15 +155,17 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<ResultadoMeta>> GetResultadosAsync(int importacaoId)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var lista = await context.Resultados
             .Where(r => r.ImportacaoId == importacaoId && r.Funcionario != "TOTAIS")
             .ToListAsync();
 
-        return [.. lista.OrderByDescending(r => r.PercentualAtingimento)];
+        return [.. lista.OrderBy(r => r.Funcionario)];
     }
 
     public async Task<List<(string Periodo, decimal Retencao)>> GetEvolucaoRetencaoAsync(string produtor)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Include(i => i.Renovacoes)
             .Where(i => i.Produtor == produtor)
@@ -167,6 +183,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<string>> GetProdutoresAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.Importacoes
             .Select(i => i.Produtor)
             .Distinct()
@@ -176,6 +193,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<(ResumoImportacao Resumo, List<Renovacao> Renovacoes)>> GetTimelineRenovacoesAsync(string produtor)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Where(i => i.Produtor == produtor)
             .Include(i => i.Renovacoes)
@@ -190,6 +208,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<(ResumoImportacao Resumo, List<NovoNegocio> Negocios)>> GetTimelineNegociosAsync(string produtor)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Where(i => i.Produtor == produtor)
             .Include(i => i.Renovacoes)
@@ -204,6 +223,7 @@ public class RelatorioService(AppDbContext context)
 
     public async Task<List<(ResumoImportacao Resumo, List<Renovacao> Pendentes)>> GetTimelinePendentesAsync(string produtor)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var importacoes = await context.Importacoes
             .Where(i => i.Produtor == produtor)
             .Include(i => i.Renovacoes)

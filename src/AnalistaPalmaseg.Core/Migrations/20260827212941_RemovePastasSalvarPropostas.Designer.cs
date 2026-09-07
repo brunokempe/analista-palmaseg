@@ -3,6 +3,7 @@ using System;
 using AnalistaPalmaseg.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AnalistaPalmaseg.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827212941_RemovePastasSalvarPropostas")]
+    partial class RemovePastasSalvarPropostas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,32 +226,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DistribuicaoReferencias");
-                });
-
-            modelBuilder.Entity("AnalistaPalmaseg.Core.Models.FavoritoMenu", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("MenuKey")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId", "MenuKey")
-                        .IsUnique();
-
-                    b.ToTable("FavoritosMenu");
                 });
 
             modelBuilder.Entity("AnalistaPalmaseg.Core.Models.FuncionarioResultado", b =>
@@ -513,32 +490,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                     b.HasIndex("ImportacaoId");
 
                     b.ToTable("NovosNegocios");
-                });
-
-            modelBuilder.Entity("AnalistaPalmaseg.Core.Models.PastaProdutor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Caminho")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId", "Caminho")
-                        .IsUnique();
-
-                    b.ToTable("PastasProdutor");
                 });
 
             modelBuilder.Entity("AnalistaPalmaseg.Core.Models.RelatorioRenovacao", b =>
@@ -879,9 +830,9 @@ namespace AnalistaPalmaseg.Core.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CodigoDocumento")
+                    b.HasIndex("Proposta")
                         .IsUnique()
-                        .HasFilter("\"CodigoDocumento\" IS NOT NULL");
+                        .HasFilter("\"Proposta\" IS NOT NULL");
 
                     b.ToTable("RelatorioRenovacoes");
                 });
@@ -1143,17 +1094,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AnalistaPalmaseg.Core.Models.FavoritoMenu", b =>
-                {
-                    b.HasOne("AnalistaPalmaseg.Core.Models.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("AnalistaPalmaseg.Core.Models.FuncionarioResultado", b =>
                 {
                     b.HasOne("AnalistaPalmaseg.Core.Models.Importacao", null)
@@ -1183,17 +1123,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("Importacao");
-                });
-
-            modelBuilder.Entity("AnalistaPalmaseg.Core.Models.PastaProdutor", b =>
-                {
-                    b.HasOne("AnalistaPalmaseg.Core.Models.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("AnalistaPalmaseg.Core.Models.Renovacao", b =>

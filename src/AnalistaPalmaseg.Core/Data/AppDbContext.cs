@@ -25,7 +25,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Cliente>                Clientes                { get; set; }
     public DbSet<Lead>                   Leads                   { get; set; }
     public DbSet<DistribuicaoReferencia> DistribuicaoReferencias { get; set; }
-    public DbSet<PastaSalvarProposta>    PastasSalvarPropostas   { get; set; }
+    public DbSet<PastaProdutor>           PastasProdutor          { get; set; }
+    public DbSet<FavoritoMenu>            FavoritosMenu           { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,7 +77,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<RelatorioRenovacao>(e =>
         {
-            e.HasIndex(x => x.Proposta).IsUnique().HasFilter("\"Proposta\" IS NOT NULL");
+            // CódigoDocumento (não Proposta) é a chave natural: seguradoras às vezes reaproveitam o
+            // mesmo número de proposta/apólice em registros diferentes (ex.: renovação de outro item,
+            // ou apólices distintas do mesmo cliente), mas o código do documento nunca se repete.
+            e.HasIndex(x => x.CodigoDocumento).IsUnique().HasFilter("\"CodigoDocumento\" IS NOT NULL");
             e.Ignore(x => x.DiaDaSemana);
             e.Ignore(x => x.IsChecked);
 
@@ -146,6 +150,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.Property(x => x.PremioLiquidoRef).HasColumnType("decimal(18,2)");
             e.Property(x => x.ComissaoRef).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<PastaProdutor>(e =>
+        {
+            e.HasIndex(x => new { x.UsuarioId, x.Caminho }).IsUnique();
+            e.HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FavoritoMenu>(e =>
+        {
+            e.HasIndex(x => new { x.UsuarioId, x.MenuKey }).IsUnique();
+            e.HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // O app só lida com datas locais (sem fuso horário) — mapeia todas as colunas

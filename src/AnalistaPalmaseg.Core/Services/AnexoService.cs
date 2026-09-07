@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class AnexoService(AppDbContext context)
+public class AnexoService(IDbContextFactory<AppDbContext> contextFactory)
 {
     private static string BaseDir => Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory,
@@ -13,18 +13,24 @@ public class AnexoService(AppDbContext context)
     public static string ObterPasta(int relatorioId) =>
         Path.Combine(BaseDir, relatorioId.ToString());
 
-    public async Task<List<Anexo>> GetAnexosAsync(int relatorioId) =>
-        await context.Anexos
+    public async Task<List<Anexo>> GetAnexosAsync(int relatorioId)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.Anexos
             .Where(a => a.RelatorioRenovacaoId == relatorioId)
             .OrderBy(a => a.AdicionadoEm)
             .ToListAsync();
+    }
 
-    public async Task<Dictionary<int, List<Anexo>>> GetAnexosParaRegistrosAsync(IList<int> ids) =>
-        (await context.Anexos
+    public async Task<Dictionary<int, List<Anexo>>> GetAnexosParaRegistrosAsync(IList<int> ids)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return (await context.Anexos
             .Where(a => ids.Contains(a.RelatorioRenovacaoId))
             .ToListAsync())
             .GroupBy(a => a.RelatorioRenovacaoId)
             .ToDictionary(g => g.Key, g => g.ToList());
+    }
 
     public async Task<Anexo> AdicionarAsync(int relatorioId, string caminhoOrigem)
     {
@@ -46,6 +52,8 @@ public class AnexoService(AppDbContext context)
             TamanhoBytes = new FileInfo(caminhoOrigem).Length,
             AdicionadoEm = DateTime.Now
         };
+
+        await using var context = await contextFactory.CreateDbContextAsync();
         context.Anexos.Add(anexo);
         await context.SaveChangesAsync();
         return anexo;
@@ -66,6 +74,26 @@ public class AnexoService(AppDbContext context)
                 while (File.Exists(dest));
             }
             File.Copy(a.CaminhoArquivo, dest, overwrite: false);
+        }
+    }
+
+    public static void CopiarParaDiretorio(IEnumerable<string> arquivos, string diretorio)
+    {
+        Directory.CreateDirectory(diretorio);
+        foreach (var origem in arquivos)
+        {
+            if (!File.Exists(origem)) continue;
+            var nome = Path.GetFileName(origem);
+            var dest = Path.Combine(diretorio, nome);
+            if (File.Exists(dest))
+            {
+                var stem = Path.GetFileNameWithoutExtension(nome);
+                var ext2 = Path.GetExtension(nome);
+                var n = 1;
+                do { dest = Path.Combine(diretorio, $"{stem}_{n++}{ext2}"); }
+                while (File.Exists(dest));
+            }
+            File.Copy(origem, dest, overwrite: false);
         }
     }
 }

@@ -4,23 +4,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class ClienteService(AppDbContext context)
+public class ClienteService(IDbContextFactory<AppDbContext> contextFactory)
 {
-    public async Task<List<Cliente>> GetTodosAsync() =>
-        await context.Clientes
+    public async Task<List<Cliente>> GetTodosAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.Clientes
             .AsNoTracking()
             .OrderBy(c => c.Nome)
             .ToListAsync();
+    }
 
-    public async Task<List<RelatorioRenovacao>> GetSegurosDoClienteAsync(string cpf) =>
-        await context.RelatorioRenovacoes
+    public async Task<List<RelatorioRenovacao>> GetSegurosDoClienteAsync(string cpf)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .AsNoTracking()
             .Where(r => r.DocumentoPrincipal == cpf)
             .OrderByDescending(r => r.VigenciaFinal)
             .ToListAsync();
+    }
 
     public async Task<Cliente> SalvarAsync(Cliente cliente)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         if (cliente.Id == 0)
         {
             cliente.CriadoEm = DateTime.Now;
@@ -29,19 +37,17 @@ public class ClienteService(AppDbContext context)
         else
         {
             cliente.AtualizadoEm = DateTime.Now;
-            var entry = context.Entry(cliente);
-            if (entry.State == EntityState.Detached)
-                context.Attach(cliente);
-            entry.State = EntityState.Modified;
+            context.Attach(cliente);
+            context.Entry(cliente).State = EntityState.Modified;
         }
 
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
         return cliente;
     }
 
     public async Task ExcluirAsync(int id)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         await context.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Clientes\" WHERE \"Id\" = {0}", id);
     }
@@ -55,6 +61,8 @@ public class ClienteService(AppDbContext context)
             .ToList();
 
         if (validos.Count == 0) return;
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         var cpfs = validos.Select(r => r.DocumentoPrincipal!).ToList();
         var existentes = await context.Clientes
@@ -80,7 +88,6 @@ public class ClienteService(AppDbContext context)
         }
 
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
     }
 
     private static void AtualizarDadosDaRenovacao(Cliente c, RelatorioRenovacao reg)

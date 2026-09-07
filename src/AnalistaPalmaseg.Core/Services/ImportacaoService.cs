@@ -3,10 +3,11 @@ using System.Text.RegularExpressions;
 using AnalistaPalmaseg.Core.Data;
 using AnalistaPalmaseg.Core.Models;
 using ExcelDataReader;
+using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class ImportacaoService(AppDbContext context)
+public class ImportacaoService(IDbContextFactory<AppDbContext> contextFactory)
 {
     private readonly LibreOfficeDecryptorService _decryptor = new();
 
@@ -59,6 +60,8 @@ public class ImportacaoService(AppDbContext context)
             }
         }
         System.Diagnostics.Debug.WriteLine($"[Import] Identificação: produtor='{produtor}', mes={mes}, ano={ano}");
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         // Passo 4: dedup — compara nome normalizado (sem acentos, maiúsculas) para não
         // criar duplicatas quando o nome vem do arquivo vs. da planilha com grafia diferente.

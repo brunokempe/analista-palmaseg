@@ -10,4 +10,5 @@ public class ResultadoMeta
 
     public bool BateuMeta => Meta > 0 && Realizado >= Meta;
     public decimal PercentualAtingimento => Meta > 0 ? Math.Round(Realizado / Meta * 100m, 1) : 0m;
+    public decimal Saldo => Realizado - Meta;
 }

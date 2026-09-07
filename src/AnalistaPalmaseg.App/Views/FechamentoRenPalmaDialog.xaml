@@ -37,18 +37,34 @@
                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
                       materialDesign:HintAssist.Hint="Seguradora *"
                       Height="46" FontSize="13" Margin="0,0,0,12">
+                <ComboBoxItem Content="Aliro" />
                 <ComboBoxItem Content="Allianz" />
-                <ComboBoxItem Content="Azul Seguros" />
-                <ComboBoxItem Content="Bradesco Seguros" />
+                <ComboBoxItem Content="Allseg" />
+                <ComboBoxItem Content="AssistCard" />
+                <ComboBoxItem Content="Axa" />
+                <ComboBoxItem Content="Azul" />
+                <ComboBoxItem Content="Bradesco" />
+                <ComboBoxItem Content="Capemisa" />
                 <ComboBoxItem Content="Chubb" />
-                <ComboBoxItem Content="Itaú Seguros" />
-                <ComboBoxItem Content="Liberty" />
+                <ComboBoxItem Content="Darwin" />
+                <ComboBoxItem Content="Ezze" />
+                <ComboBoxItem Content="Hdi" />
+                <ComboBoxItem Content="Itaú" />
                 <ComboBoxItem Content="Mapfre" />
-                <ComboBoxItem Content="Porto Seguro" />
+                <ComboBoxItem Content="Metlife" />
+                <ComboBoxItem Content="Mitsui" />
+                <ComboBoxItem Content="Pier" />
+                <ComboBoxItem Content="Porto" />
+                <ComboBoxItem Content="Sancor" />
                 <ComboBoxItem Content="Sompo" />
-                <ComboBoxItem Content="SulAmérica" />
-                <ComboBoxItem Content="Tokio Marine" />
+                <ComboBoxItem Content="Suhai" />
+                <ComboBoxItem Content="SulAm" />
+                <ComboBoxItem Content="Sura" />
+                <ComboBoxItem Content="Tokio" />
+                <ComboBoxItem Content="Unimed" />
+                <ComboBoxItem Content="Yelum" />
                 <ComboBoxItem Content="Zurich" />
+                <ComboBoxItem Content="OUTRAS" />
             </ComboBox>
 
             <!-- Prêmio Líquido + Comissão (linha 2) -->

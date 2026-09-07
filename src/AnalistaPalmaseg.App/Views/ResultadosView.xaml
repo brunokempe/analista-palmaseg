@@ -26,6 +26,50 @@
         </StackPanel>
 
         <materialDesign:Card DockPanel.Dock="Bottom">
+            <DockPanel>
+            <Grid DockPanel.Dock="Bottom" Background="#F2F2F2" Margin="0" Height="44">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="120" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Total" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0" />
+                <TextBlock Grid.Column="1" Text="{Binding TotalMeta, Converter={StaticResource CurrencyFormatConverter}}"
+                           FontWeight="Bold" VerticalAlignment="Center" Margin="12,0" />
+                <TextBlock Grid.Column="2" Text="{Binding TotalRealizado, Converter={StaticResource CurrencyFormatConverter}}"
+                           FontWeight="Bold" VerticalAlignment="Center" Margin="12,0" />
+                <TextBlock Grid.Column="3" Text="{Binding TotalSaldo, Converter={StaticResource CurrencyFormatConverter}}"
+                           FontWeight="Bold" VerticalAlignment="Center" Margin="12,0" />
+                <TextBlock Grid.Column="4" Text="{Binding TotalPercentualAtingimento, Converter={StaticResource PercentFormatConverter}}"
+                           FontWeight="Bold" VerticalAlignment="Center" Margin="12,0" />
+                <Border Grid.Column="5" CornerRadius="3" Padding="8,3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#EC3237" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TotalBateuMeta}" Value="True">
+                                    <Setter Property="Background" Value="#A7CF45" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock FontSize="11" FontWeight="Medium" Foreground="White">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="✗ Não bateu" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TotalBateuMeta}" Value="True">
+                                        <Setter Property="Text" Value="✓ Bateu meta" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Border>
+            </Grid>
             <DataGrid ItemsSource="{Binding Resultados}" AutoGenerateColumns="False"
                       IsReadOnly="True" CanUserAddRows="False"
                       Style="{StaticResource MaterialDesignDataGrid}">
@@ -37,6 +81,9 @@
                         Width="140" />
                     <DataGridTextColumn Header="Realizado"
                         Binding="{Binding Realizado, Converter={StaticResource CurrencyFormatConverter}}"
+                        Width="140" />
+                    <DataGridTextColumn Header="Saldo"
+                        Binding="{Binding Saldo, Converter={StaticResource CurrencyFormatConverter}}"
                         Width="140" />
                     <DataGridTextColumn Header="% Atingimento"
                         Binding="{Binding PercentualAtingimento, Converter={StaticResource PercentFormatConverter}}"
@@ -64,6 +111,7 @@
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
+            </DockPanel>
         </materialDesign:Card>
 
     </DockPanel>

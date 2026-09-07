@@ -26,7 +26,21 @@ public class RelatorioRenovacao : INotifyPropertyChanged
     // Datas
     public DateTime? Emissao { get; set; }
     public DateTime? VigenciaInicial { get; set; }
-    public DateTime? VigenciaFinal { get; set; }
+
+    private DateTime? _vigenciaFinal;
+    public DateTime? VigenciaFinal
+    {
+        get => _vigenciaFinal;
+        set
+        {
+            if (_vigenciaFinal == value) return;
+            _vigenciaFinal = value;
+            PropertyChanged?.Invoke(this, new(nameof(VigenciaFinal)));
+            PropertyChanged?.Invoke(this, new(nameof(DiaDaSemana)));
+            PropertyChanged?.Invoke(this, new(nameof(RenovacaoVencida)));
+            PropertyChanged?.Invoke(this, new(nameof(RenovacaoVenceEmBreve)));
+        }
+    }
     public DateTime? Transmissao { get; set; }
     public DateTime? DataControle { get; set; }
 
@@ -168,12 +182,46 @@ public class RelatorioRenovacao : INotifyPropertyChanged
             _situacaoAcompanhamento = value;
             PropertyChanged?.Invoke(this, new(nameof(SituacaoAcompanhamento)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoRealizada)));
+            PropertyChanged?.Invoke(this, new(nameof(SituacaoPendenteCritica)));
+            PropertyChanged?.Invoke(this, new(nameof(RenovacaoVencida)));
+            PropertyChanged?.Invoke(this, new(nameof(RenovacaoVenceEmBreve)));
         }
     }
 
     [NotMapped]
     public bool RenovacaoRealizada =>
         SituacaoAcompanhamento is "Emitido" or "Ren. Palma" or "Ren. Outro";
+
+    // Situações consideradas críticas para os alertas de vencimento — renovação ainda
+    // não encaminhada de forma alguma (agendada/recusada/etc. já têm tratamento próprio).
+    private static readonly HashSet<string> SituacoesCriticas = new(StringComparer.Ordinal)
+        { "À Renovar", "Calculado", "Procurado" };
+
+    [NotMapped]
+    public bool SituacaoPendenteCritica => SituacoesCriticas.Contains(SituacaoAcompanhamento);
+
+    // Vencimento já passou e a apólice segue sem renovação — precisa de destaque forte,
+    // pois o cliente já está sem cobertura.
+    [NotMapped]
+    public bool RenovacaoVencida =>
+        SituacaoPendenteCritica && VigenciaFinal.HasValue && VigenciaFinal.Value.Date < DateTime.Today;
+
+    // Vence hoje, ou (numa sexta-feira) vence no fim de semana seguinte — nesses casos hoje
+    // é o último dia útil para agir antes que o cliente fique sem cobertura.
+    [NotMapped]
+    public bool RenovacaoVenceEmBreve
+    {
+        get
+        {
+            if (!SituacaoPendenteCritica || !VigenciaFinal.HasValue) return false;
+            var vencimento = VigenciaFinal.Value.Date;
+            var hoje = DateTime.Today;
+            if (vencimento < hoje) return false;
+            if (vencimento == hoje) return true;
+            return hoje.DayOfWeek == DayOfWeek.Friday &&
+                   (vencimento == hoje.AddDays(1) || vencimento == hoje.AddDays(2));
+        }
+    }
 
     // Metadados de importação
     public DateTime ImportadoEm { get; set; }

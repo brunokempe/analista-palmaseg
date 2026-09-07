@@ -7,6 +7,7 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class NovosNegociosViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
+    private readonly SessaoService _sessao;
 
     [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
     [ObservableProperty] private string? _nomeSelecionado;
@@ -16,9 +17,10 @@ public partial class NovosNegociosViewModel : ObservableObject
 
     public string[] StatusOpcoes { get; } = ["Todos", "Novo", "Renovação", "Prospecção", "Mercado"];
 
-    public NovosNegociosViewModel(RelatorioService relatorioService)
+    public NovosNegociosViewModel(RelatorioService relatorioService, SessaoService sessao)
     {
         _relatorioService = relatorioService;
+        _sessao = sessao;
     }
 
     public async Task CarregarAsync()
@@ -29,7 +31,9 @@ public partial class NovosNegociosViewModel : ObservableObject
         if (NomeSelecionado != null && NomesDisponiveis.Contains(NomeSelecionado))
             await CarregarPeriodosAsync(NomeSelecionado);
         else
-            NomeSelecionado = NomesDisponiveis.FirstOrDefault();
+            NomeSelecionado = NomesDisponiveis.Contains(_sessao.NomeUsuario)
+                ? _sessao.NomeUsuario
+                : NomesDisponiveis.FirstOrDefault();
     }
 
     partial void OnNomeSelecionadoChanged(string? value)

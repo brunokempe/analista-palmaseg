@@ -4,29 +4,33 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class MetaService(AppDbContext context)
+public class MetaService(IDbContextFactory<AppDbContext> contextFactory)
 {
     // ── Seguradoras ───────────────────────────────────────────────────────────
 
-    public Task<List<Seguradora>> GetSeguradorasAsync(bool soAtivas = false) =>
-        (soAtivas
+    public async Task<List<Seguradora>> GetSeguradorasAsync(bool soAtivas = false)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await (soAtivas
             ? context.Seguradoras.Where(s => s.Ativo)
             : context.Seguradoras)
-        .AsNoTracking()
-        .OrderBy(s => !s.IsParceira).ThenBy(s => s.Nome)
-        .ToListAsync();
+            .AsNoTracking()
+            .OrderBy(s => !s.IsParceira).ThenBy(s => s.Nome)
+            .ToListAsync();
+    }
 
     public async Task<Seguradora> SalvarSeguradoraAsync(Seguradora s)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         if (s.Id == 0) context.Seguradoras.Add(s);
         else context.Seguradoras.Update(s);
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
         return s;
     }
 
     public async Task ExcluirSeguradoraAsync(int id)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var s = await context.Seguradoras.FindAsync(id)
             ?? throw new InvalidOperationException("Seguradora não encontrada.");
         context.Seguradoras.Remove(s);
@@ -35,17 +39,21 @@ public class MetaService(AppDbContext context)
 
     // ── Metas por seguradora ──────────────────────────────────────────────────
 
-    public Task<List<MetaSeguradora>> GetMetasAsync(int mes, int ano) =>
-        context.MetasSeguradoras
+    public async Task<List<MetaSeguradora>> GetMetasAsync(int mes, int ano)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.MetasSeguradoras
             .AsNoTracking()
             .Include(m => m.Seguradora)
             .Where(m => m.Mes == mes && m.Ano == ano)
             .OrderBy(m => m.Seguradora!.IsParceira ? 0 : 1)
             .ThenBy(m => m.Seguradora!.Nome)
             .ToListAsync();
+    }
 
     public async Task SalvarMetasAsync(List<MetaSeguradora> metas)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         foreach (var meta in metas)
         {
             var existing = await context.MetasSeguradoras
@@ -62,11 +70,16 @@ public class MetaService(AppDbContext context)
 
     // ── Premiação ─────────────────────────────────────────────────────────────
 
-    public Task<List<MetaPremiacao>> GetPremiacaoAsync() =>
-        context.MetasPremiacao.AsNoTracking().OrderBy(p => p.Ordem).ToListAsync();
+    public async Task<List<MetaPremiacao>> GetPremiacaoAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.MetasPremiacao.AsNoTracking().OrderBy(p => p.Ordem).ToListAsync();
+    }
 
     public async Task SalvarPremiacaoAsync(List<MetaPremiacao> premiacoes)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var existentes = await context.MetasPremiacao.ToListAsync();
         context.MetasPremiacao.RemoveRange(existentes);
 
@@ -78,37 +91,44 @@ public class MetaService(AppDbContext context)
         }
 
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
     }
 
     // ── Crescimento ───────────────────────────────────────────────────────────
 
-    public Task<List<MetaCrescimento>> GetCrescimentoAsync() =>
-        context.MetasCrescimento
+    public async Task<List<MetaCrescimento>> GetCrescimentoAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.MetasCrescimento
             .AsNoTracking()
             .OrderBy(c => c.Tipo)
             .ThenBy(c => c.PercentualMeta)
             .ToListAsync();
+    }
 
     public async Task SalvarCrescimentoAsync(List<MetaCrescimento> crescimentos)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         foreach (var c in crescimentos)
         {
             if (c.Id == 0) context.MetasCrescimento.Add(c);
             else context.MetasCrescimento.Update(c);
         }
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
     }
 
     // ── Valores de referência ─────────────────────────────────────────────────
 
-    public Task<ValorReferencia?> GetValorReferenciaAsync(int mes, int ano, string colaborador) =>
-        context.ValoresReferencia.AsNoTracking()
+    public async Task<ValorReferencia?> GetValorReferenciaAsync(int mes, int ano, string colaborador)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.ValoresReferencia.AsNoTracking()
             .FirstOrDefaultAsync(v => v.Colaborador == colaborador && v.Mes == mes && v.Ano == ano);
+    }
 
     public async Task<ValorReferencia> SalvarValorReferenciaAsync(ValorReferencia v)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var existing = await context.ValoresReferencia
             .FirstOrDefaultAsync(x => x.Colaborador == v.Colaborador && x.Mes == v.Mes && x.Ano == v.Ano);
         if (existing == null)
@@ -125,18 +145,23 @@ public class MetaService(AppDbContext context)
 
     // ── Colaboradores e posição atual (via RelatorioRenovacoes — Ren. Palma) ──
 
-    public Task<List<string>> GetColaboradoresAsync(int mes, int ano) =>
-        context.Usuarios
+    public async Task<List<string>> GetColaboradoresAsync(int mes, int ano)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.Usuarios
             .AsNoTracking()
             .Where(u => u.Ativo)
             .OrderBy(u => u.Login)
             .Select(u => u.Login)
             .ToListAsync();
+    }
 
     public async Task<(decimal PremioRen, decimal PremioNovos, decimal ComissaoCorretora)> GetPosicaoDetalhadaAsync(int mes, int ano, string? colaborador)
     {
         var inicio = new DateTime(ano, mes, 1);
         var fim    = inicio.AddMonths(1);
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         var queryRen = context.RelatorioRenovacoes
             .AsNoTracking()
@@ -187,6 +212,8 @@ public class MetaService(AppDbContext context)
                 s.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase) ||
                 nome.Contains(s.Nome, StringComparison.OrdinalIgnoreCase));
         }
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         var queryRen = context.RelatorioRenovacoes
             .AsNoTracking()
@@ -295,6 +322,8 @@ public class MetaService(AppDbContext context)
                 nome.Contains(s.Nome, StringComparison.OrdinalIgnoreCase));
         }
 
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var queryRen = context.RelatorioRenovacoes.AsNoTracking()
             .Where(r => r.SituacaoAcompanhamento == "Ren. Palma"
                      && r.VigenciaFinal.HasValue
@@ -382,6 +411,8 @@ public class MetaService(AppDbContext context)
     {
         var inicio = new DateTime(ano, mes, 1);
         var fim    = inicio.AddMonths(1);
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         var queryRen = context.RelatorioRenovacoes
             .AsNoTracking()

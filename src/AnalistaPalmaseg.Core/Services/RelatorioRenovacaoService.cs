@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class RelatorioRenovacaoService(AppDbContext context, ClienteService clienteService)
+public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFactory, ClienteService clienteService)
 {
     public async Task<int> ImportarAsync(string caminhoArquivo)
     {
@@ -145,25 +145,30 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
             });
         }
 
-        // Deduplica por Proposta (mantém última ocorrência), evitando violação do índice único
-        // quando a planilha contém linhas repetidas com a mesma proposta.
+        // Deduplica por Código Documento (mantém última ocorrência), evitando violação do índice
+        // único quando a planilha contém linhas repetidas com o mesmo código. Não usamos Proposta
+        // aqui porque a seguradora pode reaproveitar o mesmo número de proposta/apólice em
+        // registros diferentes (ex.: itens/ramos distintos do mesmo cliente) — o Código Documento
+        // é o único campo que identifica cada registro de forma inequívoca.
         var registrosPorProposta = registros
-            .GroupBy(r => r.Proposta)
+            .GroupBy(r => r.CodigoDocumento)
             .Select(g => g.Last())
             .ToList();
 
-        var propostas = registrosPorProposta
-            .Select(r => r.Proposta)
+        var codigosDocumento = registrosPorProposta
+            .Select(r => r.CodigoDocumento)
             .ToList();
 
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var existentes = await context.RelatorioRenovacoes
-            .Where(r => propostas.Contains(r.Proposta))
-            .ToDictionaryAsync(r => r.Proposta!);
+            .Where(r => codigosDocumento.Contains(r.CodigoDocumento))
+            .ToDictionaryAsync(r => r.CodigoDocumento!);
 
         int inseridos = 0;
         foreach (var reg in registrosPorProposta)
         {
-            if (reg.Proposta != null && existentes.TryGetValue(reg.Proposta, out var existing))
+            if (reg.CodigoDocumento != null && existentes.TryGetValue(reg.CodigoDocumento, out var existing))
             {
                 // Preserva campos editados manualmente antes de sobrescrever com dados da planilha
                 var novoProdutor             = existing.NovoProdutor;
@@ -208,7 +213,6 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
         }
 
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
 
         await clienteService.SincronizarClientesAsync(registrosPorProposta);
 
@@ -272,46 +276,56 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
 
     public async Task SalvarEdicaoAsync(RelatorioRenovacao reg)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         // Entidade pode estar sem rastreamento (AsNoTracking); attach + marca só as colunas editáveis
+        context.Attach(reg);
         var entry = context.Entry(reg);
-        if (entry.State == EntityState.Detached)
-            context.Attach(reg);
 
         entry.Property(x => x.NovoProdutor).IsModified = true;
         entry.Property(x => x.Observacao).IsModified = true;
         entry.Property(x => x.PercentualComissaoMinimo).IsModified = true;
         await context.SaveChangesAsync();
-
-        // Desanexa para evitar acúmulo no change tracker (contexto é efetivamente singleton)
-        entry.State = EntityState.Detached;
     }
 
     public async Task SalvarSituacaoAsync(RelatorioRenovacao reg)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        context.Attach(reg);
         var entry = context.Entry(reg);
-        if (entry.State == EntityState.Detached)
-            context.Attach(reg);
 
         entry.Property(x => x.SituacaoAcompanhamento).IsModified = true;
         entry.Property(x => x.MotivoSituacao).IsModified = true;
         await context.SaveChangesAsync();
-        entry.State = EntityState.Detached;
     }
 
     public async Task SalvarStatusAdministrativoAsync(RelatorioRenovacao reg)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        context.Attach(reg);
         var entry = context.Entry(reg);
-        if (entry.State == EntityState.Detached)
-            context.Attach(reg);
         entry.Property(x => x.AssinaturaFeita).IsModified = true;
         entry.Property(x => x.SeguroEmitido).IsModified   = true;
         entry.Property(x => x.EmitidoPor).IsModified      = true;
         await context.SaveChangesAsync();
-        entry.State = EntityState.Detached;
+    }
+
+    public async Task SalvarVigenciaAsync(RelatorioRenovacao reg)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        context.Attach(reg);
+        var entry = context.Entry(reg);
+        entry.Property(x => x.VigenciaInicial).IsModified = true;
+        entry.Property(x => x.VigenciaFinal).IsModified   = true;
+        await context.SaveChangesAsync();
     }
 
     public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         await context.Database.ExecuteSqlRawAsync(
             "UPDATE \"RelatorioRenovacoes\" SET \"BoletosGerados\" = {0} WHERE \"Id\" = {1}",
             boletosGerados, id);
@@ -319,9 +333,10 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
 
     public async Task SalvarFechamentoAsync(RelatorioRenovacao reg)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        context.Attach(reg);
         var entry = context.Entry(reg);
-        if (entry.State == EntityState.Detached)
-            context.Attach(reg);
 
         entry.Property(x => x.SituacaoAcompanhamento).IsModified   = true;
         entry.Property(x => x.FechamentoSeguradora).IsModified      = true;
@@ -331,17 +346,20 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
         entry.Property(x => x.FechamentoParcelamento).IsModified    = true;
         entry.Property(x => x.FechamentoAssinatura).IsModified      = true;
         await context.SaveChangesAsync();
-        entry.State = EntityState.Detached;
     }
 
-    public async Task<Dictionary<string, int>> GetContadorSituacoesAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<Dictionary<string, int>> GetContadorSituacoesAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .AsNoTracking()
             .GroupBy(r => r.SituacaoAcompanhamento)
             .ToDictionaryAsync(g => g.Key, g => g.Count());
+    }
 
     public async Task<(int Total, int AssinaturaOk, int EmitidoOk, decimal PremioTotal)> GetRenPalmaStatsAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         var stats = await context.RelatorioRenovacoes
             .AsNoTracking()
             .Where(r => r.SituacaoAcompanhamento == "Ren. Palma")
@@ -354,25 +372,34 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
             stats.Sum(x => x.FechamentoPremioLiquido ?? 0));
     }
 
-    public async Task<List<RelatorioRenovacao>> GetRenPalmaAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<RelatorioRenovacao>> GetRenPalmaAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .AsNoTracking()
             .Where(r => r.SituacaoAcompanhamento == "Ren. Palma")
             .OrderBy(r => r.NovoProdutor).ThenBy(r => r.NomeCliente)
             .ToListAsync();
+    }
 
-    public async Task<List<RelatorioRenovacao>> GetParaProdutorAsync(string login) =>
-        await context.RelatorioRenovacoes
+    public async Task<List<RelatorioRenovacao>> GetParaProdutorAsync(string login)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .AsNoTracking()
             .Where(r => r.NovoProdutor == login)
             .OrderBy(r => r.VigenciaFinal)
             .ToListAsync();
+    }
 
-    public async Task<List<RelatorioRenovacao>> GetTodosAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<RelatorioRenovacao>> GetTodosAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .AsNoTracking()
             .OrderBy(r => r.VigenciaFinal)
             .ToListAsync();
+    }
 
     public async Task<List<RelatorioRenovacao>> FiltrarAsync(
         string? status = null,
@@ -382,6 +409,8 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
         DateTime? vigenciaInicio = null,
         DateTime? vigenciaFim = null)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         var q = context.RelatorioRenovacoes.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -405,47 +434,60 @@ public class RelatorioRenovacaoService(AppDbContext context, ClienteService clie
         return await q.OrderBy(r => r.VigenciaFinal).ToListAsync();
     }
 
-    public async Task<List<string>> GetStatusDistinctAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<string>> GetStatusDistinctAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .Where(r => r.Status != null)
             .Select(r => r.Status!)
             .Distinct().OrderBy(s => s).ToListAsync();
+    }
 
-    public async Task<List<string>> GetSeguradorasDistinctAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<string>> GetSeguradorasDistinctAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .Where(r => r.Seguradora != null)
             .Select(r => r.Seguradora!)
             .Distinct().OrderBy(s => s).ToListAsync();
+    }
 
-    public async Task<List<string>> GetRamosDistinctAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<string>> GetRamosDistinctAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .Where(r => r.Ramo != null && r.Ramo != "")
             .Select(r => r.Ramo!)
             .Distinct().OrderBy(s => s).ToListAsync();
+    }
 
-    public async Task<List<string>> GetVendedoresDistinctAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<string>> GetVendedoresDistinctAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .Where(r => r.VendedorPrincipal != null)
             .Select(r => r.VendedorPrincipal!)
             .Distinct().OrderBy(s => s).ToListAsync();
+    }
 
-    public async Task<List<string>> GetNovoProdutorDistinctAsync() =>
-        await context.RelatorioRenovacoes
+    public async Task<List<string>> GetNovoProdutorDistinctAsync()
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
             .Where(r => r.NovoProdutor != null && r.NovoProdutor != "")
             .Select(r => r.NovoProdutor!)
             .Distinct().OrderBy(s => s).ToListAsync();
+    }
 
     public async Task SalvarNovoProdutorEmMassaAsync(IList<RelatorioRenovacao> registros)
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
         foreach (var reg in registros)
         {
-            var entry = context.Entry(reg);
-            if (entry.State == EntityState.Detached)
-                context.Attach(reg);
-            entry.Property(x => x.NovoProdutor).IsModified = true;
+            context.Attach(reg);
+            context.Entry(reg).Property(x => x.NovoProdutor).IsModified = true;
         }
         await context.SaveChangesAsync();
-        foreach (var reg in registros)
-            context.Entry(reg).State = EntityState.Detached;
     }
 }

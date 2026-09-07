@@ -26,6 +26,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     private int _mesFiltroMes;
     private readonly Dictionary<string, (int Year, int Month)> _mesLookup = [];
     private Dictionary<int, string> _situacaoAnterior = [];
+    private bool _filtroProdutorInicializado;
 
     [ObservableProperty] private ICollectionView? _registrosView;
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
@@ -34,6 +35,8 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     [ObservableProperty] private string _mesSelecionado = "Todos";
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _resumo = string.Empty;
+    [ObservableProperty] private bool _temAlertaCritico;
+    [ObservableProperty] private string _alertaCriticoTexto = string.Empty;
 
     public bool IsAdmin => _sessao.IsAdmin;
     public bool TemRegistroSelecionado => RegistroSelecionado != null;
@@ -91,9 +94,12 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             foreach (var r in _todos)
             {
                 if (r.DocumentoPrincipal != null &&
-                    clientePorCpf.TryGetValue(r.DocumentoPrincipal, out var cliente) &&
-                    !string.IsNullOrWhiteSpace(cliente.Nome))
-                    r.NomeCliente = cliente.Nome;
+                    clientePorCpf.TryGetValue(r.DocumentoPrincipal, out var cliente))
+                {
+                    if (!string.IsNullOrWhiteSpace(cliente.Nome))
+                        r.NomeCliente = cliente.Nome;
+                    r.ClienteHistorico = cliente.Historico;
+                }
             }
 
             _situacaoAnterior = _todos.ToDictionary(r => r.Id, r => r.SituacaoAcompanhamento);
@@ -101,6 +107,13 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             var prods = await _service.GetNovoProdutorDistinctAsync();
             ProdutoresDisponiveis.Clear();
             foreach (var p in prods) ProdutoresDisponiveis.Add(p);
+
+            if (!_filtroProdutorInicializado)
+            {
+                _filtroProdutorInicializado = true;
+                if (ProdutoresDisponiveis.Contains(_sessao.NomeUsuario))
+                    ProdutoresSelecionados.Add(_sessao.NomeUsuario);
+            }
 
             var ramos = await _service.GetRamosDistinctAsync();
             RamosDisponiveis.Clear();
@@ -128,16 +141,34 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             var col = new ObservableCollection<RelatorioRenovacao>(_todos);
             _view = (ListCollectionView)CollectionViewSource.GetDefaultView(col);
             _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.NomeCliente)));
+
+            // Padrão ao abrir: grupos ordenados pelo vencimento mais próximo (crescente), e
+            // dentro de cada grupo também por vencimento crescente.
+            var menorVencimentoPorCliente = _todos
+                .GroupBy(r => r.NomeCliente ?? string.Empty)
+                .ToDictionary(g => g.Key, g => g.Min(r => r.VigenciaFinal));
+
             _view.CustomSort = Comparer<object>.Create((a, b) =>
             {
                 var ra = (RelatorioRenovacao)a;
                 var rb = (RelatorioRenovacao)b;
-                var nome = StringComparer.OrdinalIgnoreCase.Compare(ra.NomeCliente, rb.NomeCliente);
-                return nome != 0 ? nome : Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+                var nomeA = ra.NomeCliente ?? string.Empty;
+                var nomeB = rb.NomeCliente ?? string.Empty;
+                if (nomeA != nomeB)
+                {
+                    var cmpGrupo = Nullable.Compare(menorVencimentoPorCliente[nomeA], menorVencimentoPorCliente[nomeB]);
+                    return cmpGrupo != 0 ? cmpGrupo : string.CompareOrdinal(nomeA, nomeB);
+                }
+                return Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
             });
             _view.Filter = FiltroItem;
             RegistrosView = _view;
+
+            // Abre sempre na aba do mês mais recente (não em "Todos")
+            if (MesesDisponiveis.Count > 1)
+                MesSelecionado = MesesDisponiveis[^1];
             AtualizarResumo();
+            AtualizarAlertaCriticos();
         }
         finally
         {
@@ -271,7 +302,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         _debounceCts?.Cancel();
         _debounceCts = new CancellationTokenSource();
         var token = _debounceCts.Token;
-        Task.Delay(300, token).ContinueWith(_ =>
+        Task.Delay(300, token).ContinueWith(_ =>   
         {
             if (token.IsCancellationRequested) return;
             Application.Current?.Dispatcher.Invoke(AplicarFiltro);
@@ -333,6 +364,36 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         if (_view == null) return;
         _view.Refresh();
         AtualizarResumo();
+        AtualizarAlertaCriticos();
+    }
+
+    // Alerta de situações críticas (vencidas ou vencendo agora) — deliberadamente ignora o
+    // filtro de mês/situação/ramo/texto, pois o objetivo é chamar atenção mesmo quando o
+    // registro não está visível no grid no momento (ex.: aba do mês mais recente, que é a
+    // aberta por padrão, não mostra vencimentos de meses anteriores já ultrapassados).
+    private void AtualizarAlertaCriticos()
+    {
+        IEnumerable<RelatorioRenovacao> baseQuery = _todos.Where(r => r.NovoProdutor != "Cancelado");
+        if (SomenteComProdutor)
+            baseQuery = baseQuery.Where(r => !string.IsNullOrWhiteSpace(r.NovoProdutor));
+        if (ProdutoresSelecionados.Count > 0)
+            baseQuery = baseQuery.Where(r => ProdutoresSelecionados.Contains(r.NovoProdutor ?? string.Empty));
+
+        var criticos = baseQuery.Where(r => r.SituacaoPendenteCritica).ToList();
+        var vencidas = criticos.Count(r => r.RenovacaoVencida);
+        var venceEmBreve = criticos.Count(r => r.RenovacaoVenceEmBreve);
+
+        TemAlertaCritico = vencidas > 0 || venceEmBreve > 0;
+        if (!TemAlertaCritico)
+        {
+            AlertaCriticoTexto = string.Empty;
+            return;
+        }
+
+        var partes = new List<string>();
+        if (vencidas > 0) partes.Add($"{vencidas} vencida(s) sem renovação");
+        if (venceEmBreve > 0) partes.Add($"{venceEmBreve} vencendo agora");
+        AlertaCriticoTexto = "⚠ " + string.Join(" · ", partes) + " — pode não estar visível no filtro/mês atual";
     }
 
     private void AtualizarResumo()
@@ -351,6 +412,8 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         GerarFolhaAmarelaCommand.NotifyCanExecuteChanged();
         AnexarArquivosCommand.NotifyCanExecuteChanged();
         AbrirPastaAnexosCommand.NotifyCanExecuteChanged();
+        AlterarVigenciaCommand.NotifyCanExecuteChanged();
+        AbrirCadastroClienteCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -433,6 +496,41 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
             : $"{ok} arquivo(s) anexado(s). {erros} falhou(ram).";
         MessageBox.Show(msg, "Anexos", MessageBoxButton.OK,
             erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+    }
+
+    [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
+    private async Task AlterarVigenciaAsync()
+    {
+        if (RegistroSelecionado == null) return;
+        var reg = RegistroSelecionado;
+
+        var dialog = new AnalistaPalmaseg.App.Views.AlterarVigenciaDialog(reg.NomeCliente ?? "Cliente", reg.VigenciaInicial, reg.VigenciaFinal)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        reg.VigenciaInicial = dialog.VigenciaInicial;
+        reg.VigenciaFinal = dialog.VigenciaFinal;
+
+        try
+        {
+            await _service.SalvarVigenciaAsync(reg);
+            EnviarRefreshDashboard(reg);
+            await CarregarAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao salvar vigência:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
+    private void AbrirCadastroCliente()
+    {
+        if (string.IsNullOrWhiteSpace(RegistroSelecionado?.DocumentoPrincipal)) return;
+        WeakReferenceMessenger.Default.Send(new AbrirClienteMessage(RegistroSelecionado.DocumentoPrincipal));
     }
 
     [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]

@@ -40,7 +40,6 @@ string[] tables =
     "Clientes",
     "Leads",
     "DistribuicaoReferencias",
-    "PastasSalvarPropostas",
 ];
 
 await using var sqlite = new SqliteConnection($"Data Source={sqlitePath}");

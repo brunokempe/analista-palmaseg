@@ -70,13 +70,12 @@
                          materialDesign:HintAssist.Hint="Buscar por segurado, cia, segmento, status..."
                          Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13"/>
 
-                <!-- Filtro por Produtor (admin only) -->
+                <!-- Filtro por Produtor -->
                 <ComboBox Grid.Column="1"
                           ItemsSource="{Binding ProdutoresDisponiveis}"
                           SelectedItem="{Binding FiltroProdutor}"
                           Style="{StaticResource MaterialDesignOutlinedComboBox}"
                           materialDesign:HintAssist.Hint="Produtor"
-                          Visibility="{Binding IsAdmin, ElementName=Root, Converter={StaticResource BoolToVisibilityConverter}}"
                           Margin="0,0,8,0" VerticalAlignment="Center" FontSize="13">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
@@ -149,11 +148,8 @@
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
-                        <!-- Coluna Produtor visível apenas para admin -->
-                        <DataGridTemplateColumn Header="Produtor" Width="110"
-                                                Visibility="{Binding DataContext.IsAdmin,
-                                                             ElementName=Root,
-                                                             Converter={StaticResource BoolToVisibilityConverter}}">
+                        <!-- Coluna Produtor -->
+                        <DataGridTemplateColumn Header="Produtor" Width="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding CriadoPor}" VerticalAlignment="Center"
@@ -196,6 +192,17 @@
             <!-- ── Formulário ── -->
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
                 <StackPanel Margin="24,20,24,24">
+
+                    <!-- Linha 0: Produtor -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Produtor" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox IsEditable="True"
+                                  Text="{Binding EditandoProdutor, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding ListaProdutores}"
+                                  materialDesign:HintAssist.Hint="Selecione o produtor"
+                                  Style="{StaticResource MaterialDesignComboBox}"
+                                  FontSize="13"/>
+                    </StackPanel>
 
                     <!-- Linha 1: Vigência + Segurado -->
                     <Grid Margin="0,0,0,16">

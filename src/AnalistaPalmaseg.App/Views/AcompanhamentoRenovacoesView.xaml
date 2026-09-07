@@ -67,6 +67,17 @@
                               IsChecked="{Binding SomenteComProdutor}"
                               VerticalAlignment="Center" FontSize="12" />
                 </Grid>
+
+                <!-- Alerta de situações críticas (vencidas ou vencendo agora) — só aparece quando existem ocorrências -->
+                <Border Background="#B71C1C" CornerRadius="4" Padding="10,6" Margin="0,8,0,0"
+                        Visibility="{Binding TemAlertaCritico, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AlertOctagon" Width="18" Height="18"
+                                                 VerticalAlignment="Center" Foreground="White" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding AlertaCriticoTexto}" FontSize="12" FontWeight="Bold"
+                                   Foreground="White" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </materialDesign:Card>
 
@@ -143,7 +154,7 @@
                 <materialDesign:PackIcon Kind="FileDocumentOutline" Width="15" Height="15"
                                          VerticalAlignment="Center" Foreground="#6B7280" Margin="0,0,8,0" />
                 <TextBlock Text="{Binding RegistroSelecionado.NomeCliente}"
-                           FontSize="12" FontWeight="SemiBold" Foreground="#374151"
+                           FontSize="14" FontWeight="SemiBold" Foreground="#374151"
                            VerticalAlignment="Center" Margin="0,0,16,0" />
                 <Button Command="{Binding GerarFolhaAmarelaCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
@@ -166,7 +177,7 @@
                 </Button>
                 <Button Command="{Binding AbrirPastaAnexosCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                        Height="30" Padding="10,0" FontSize="12"
+                        Height="30" Padding="10,0" FontSize="12" Margin="0,0,8,0"
                         ToolTip="Abrir pasta de anexos">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="FolderOpen" Width="13" Height="13"
@@ -174,11 +185,21 @@
                         <TextBlock Text="Pasta de anexos" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding AbrirCadastroClienteCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="30" Padding="10,0" FontSize="12"
+                        ToolTip="Abrir cadastro do cliente">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="AccountOutline" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="Cadastro do cliente" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
         <!-- Grid de registros -->
-        <DataGrid Grid.Row="4"
+        <DataGrid Grid.Row="4" x:Name="MainGrid"
                   ItemsSource="{Binding RegistrosView}"
                   SelectedItem="{Binding RegistroSelecionado}"
                   AutoGenerateColumns="False"
@@ -194,7 +215,31 @@
                   EnableRowVirtualization="True"
                   VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                   VirtualizingPanel.ScrollUnit="Pixel"
-                  ScrollViewer.CanContentScroll="True">
+                  ScrollViewer.CanContentScroll="True"
+                  Sorting="MainGrid_Sorting">
+
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Alterar vigência..."
+                              Command="{Binding PlacementTarget.DataContext.AlterarVigenciaCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13"/>
+                    <Separator/>
+                    <MenuItem Header="Anexar arquivo(s)..."
+                              Command="{Binding PlacementTarget.DataContext.AnexarArquivosCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13"/>
+                    <MenuItem Header="Abrir pasta de anexos"
+                              Command="{Binding PlacementTarget.DataContext.AbrirPastaAnexosCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13"/>
+                    <Separator/>
+                    <MenuItem Header="Abrir cadastro do cliente"
+                              Command="{Binding PlacementTarget.DataContext.AbrirCadastroClienteCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
@@ -204,6 +249,19 @@
                         </Trigger>
                         <DataTrigger Binding="{Binding RenovacaoRealizada}" Value="True">
                             <Setter Property="Background" Value="#C8E6C9"/>
+                        </DataTrigger>
+                        <!-- Vence hoje (ou no fim de semana seguinte a uma sexta-feira) e ainda pendente:
+                             último dia útil para agir antes que o cliente fique sem cobertura. -->
+                        <DataTrigger Binding="{Binding RenovacaoVenceEmBreve}" Value="True">
+                            <Setter Property="Background" Value="#FFD600"/>
+                            <Setter Property="Foreground" Value="Black"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </DataTrigger>
+                        <!-- Vencimento já passou e a apólice segue sem renovação: destaque máximo. -->
+                        <DataTrigger Binding="{Binding RenovacaoVencida}" Value="True">
+                            <Setter Property="Background" Value="#B71C1C"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -221,7 +279,7 @@
                                                 <StackPanel Orientation="Horizontal">
                                                     <!-- Nome do cliente é a chave do grupo -->
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                                               FontSize="12" Foreground="{StaticResource PrimaryBrush}" />
+                                                               FontSize="16" Foreground="{StaticResource PrimaryBrush}" />
                                                     <!-- CPF/CNPJ via ContentControl (Items[0] é object) -->
                                                     <ContentControl Content="{Binding Items[0]}">
                                                         <ContentControl.ContentTemplate>
@@ -299,11 +357,24 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
-                                    Width="*" MinWidth="80" FontSize="12">
+                                    Width="*" MinWidth="80" FontSize="14">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
                             <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <!-- Histórico do cliente (vindo do cadastro) -->
+                <DataGridTextColumn Header="Histórico" Binding="{Binding ClienteHistorico}"
+                                    Width="150" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding ClienteHistorico}"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>

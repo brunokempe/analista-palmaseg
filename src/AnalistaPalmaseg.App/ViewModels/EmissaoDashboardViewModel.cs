@@ -27,6 +27,7 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     private readonly SessaoService _sessao;
     private readonly MetaService _metaService;
     private readonly AnexoService _anexoService;
+    private readonly PastaProdutorService _pastaProdutorService;
     private List<RelatorioRenovacao> _todos = [];
     private List<SeguroNovo> _todosSeguroNovos = [];
 
@@ -105,13 +106,16 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         SeguroNovoService seguroNovoService,
         SessaoService sessao,
         MetaService metaService,
-        AnexoService anexoService)
+        AnexoService anexoService,
+        PastaProdutorService pastaProdutorService)
     {
         _service = service;
         _seguroNovoService = seguroNovoService;
         _sessao = sessao;
         _metaService = metaService;
         _anexoService = anexoService;
+        _pastaProdutorService = pastaProdutorService;
+        _filtroProdutor = _sessao.NomeUsuario;
     }
 
     public async Task CarregarAsync()
@@ -299,7 +303,11 @@ public partial class EmissaoDashboardViewModel : ObservableObject
             reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
             MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
+
+        if (reg.SeguroEmitido)
+            await AnexarEDistribuirRenPalmaAsync(reg);
     }
 
     [RelayCommand]
@@ -335,7 +343,11 @@ public partial class EmissaoDashboardViewModel : ObservableObject
             reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
             MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
         }
+
+        if (reg.SeguroEmitido)
+            await AnexarEDistribuirSeguroNovoAsync(reg);
     }
 
     [RelayCommand]
@@ -345,6 +357,38 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     private async Task Recarregar() => await CarregarAsync();
 
     // ── Anexos: Contratos Ren. Palma ──────────────────────────────────────────
+
+    private async Task AnexarEDistribuirRenPalmaAsync(RelatorioRenovacao reg)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Anexar arquivo da apólice emitida (opcional)",
+            Multiselect = true,
+            Filter = "Todos os arquivos|*.*|Imagens|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp|PDF|*.pdf|Word|*.docx;*.doc|Excel|*.xlsx;*.xls"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        IsLoading = true;
+        try
+        {
+            int ok = 0, erros = 0;
+            foreach (var file in dialog.FileNames)
+            {
+                try { await _anexoService.AdicionarAsync(reg.Id, file); ok++; }
+                catch { erros++; }
+            }
+
+            var pastasDistribuidas = await DistribuirParaPastasProdutorAsync(reg.NovoProdutor, dialog.FileNames);
+
+            var msg = $"{ok} arquivo(s) anexado(s)" + (erros > 0 ? $", {erros} com erro" : "") + "." +
+                (pastasDistribuidas > 0
+                    ? $"\nDistribuído para {pastasDistribuidas} pasta(s) cadastrada(s) do produtor."
+                    : "\nNenhuma pasta cadastrada para o produtor — arquivo não distribuído.");
+            MessageBox.Show(msg, "Anexar arquivos", MessageBoxButton.OK,
+                erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        }
+        finally { IsLoading = false; }
+    }
 
     [RelayCommand]
     private async Task AnexarArquivosRenPalma()
@@ -393,6 +437,51 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AnalistaPalmaseg", "AnexosSeguroNovos", id.ToString());
+
+    private async Task AnexarEDistribuirSeguroNovoAsync(SeguroNovo reg)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Anexar arquivo da apólice emitida (opcional)",
+            Multiselect = true,
+            Filter = "Todos os arquivos|*.*|Imagens|*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.webp|PDF|*.pdf|Word|*.docx;*.doc|Excel|*.xlsx;*.xls"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        var pasta = ObterPastaAnexosSeguroNovo(reg.Id);
+
+        IsLoading = true;
+        try
+        {
+            int ok = 0, erros = 0;
+            try { AnexoService.CopiarParaDiretorio(dialog.FileNames, pasta); ok = dialog.FileNames.Length; }
+            catch { erros = dialog.FileNames.Length; }
+
+            var pastasDistribuidas = await DistribuirParaPastasProdutorAsync(reg.CriadoPor, dialog.FileNames);
+
+            var msg = $"{ok} arquivo(s) anexado(s)" + (erros > 0 ? $", {erros} com erro" : "") + "." +
+                (pastasDistribuidas > 0
+                    ? $"\nDistribuído para {pastasDistribuidas} pasta(s) cadastrada(s) do produtor."
+                    : "\nNenhuma pasta cadastrada para o produtor — arquivo não distribuído.");
+            MessageBox.Show(msg, "Anexos", MessageBoxButton.OK,
+                erros == 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        }
+        finally { IsLoading = false; }
+    }
+
+    // ── Distribuição para pastas cadastradas do produtor ───────────────────────
+    private async Task<int> DistribuirParaPastasProdutorAsync(string? produtorLogin, IEnumerable<string> arquivos)
+    {
+        var pastas = await _pastaProdutorService.GetDiretoriosPorLoginAsync(produtorLogin);
+        var lista = arquivos.ToList();
+        var distribuidas = 0;
+        foreach (var pasta in pastas)
+        {
+            try { AnexoService.CopiarParaDiretorio(lista, pasta.Caminho); distribuidas++; }
+            catch { /* pasta pode estar indisponível (drive removido/rede offline) — segue para as demais */ }
+        }
+        return distribuidas;
+    }
 
     [RelayCommand]
     private async Task AnexarArquivosSeguroNovo()

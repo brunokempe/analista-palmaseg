@@ -11,6 +11,7 @@ namespace AnalistaPalmaseg.App.ViewModels;
 public partial class DashboardViewModel : ObservableObject
 {
     private readonly RelatorioService _relatorioService;
+    private readonly SessaoService _sessao;
     private List<ResumoImportacao> _todosResumos = [];
 
     [ObservableProperty] private ObservableCollection<string> _nomesDisponiveis = [];
@@ -28,9 +29,10 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private ISeries[] _seriesParticipacao = [];
     [ObservableProperty] private Axis[] _axesParticipacaoX = [];
 
-    public DashboardViewModel(RelatorioService relatorioService)
+    public DashboardViewModel(RelatorioService relatorioService, SessaoService sessao)
     {
         _relatorioService = relatorioService;
+        _sessao = sessao;
     }
 
     public async Task CarregarAsync()
@@ -48,7 +50,9 @@ public partial class DashboardViewModel : ObservableObject
         if (NomeSelecionado != null && NomesDisponiveis.Contains(NomeSelecionado))
             await AtualizarPeriodosAsync(NomeSelecionado);
         else
-            NomeSelecionado = NomesDisponiveis.FirstOrDefault();
+            NomeSelecionado = NomesDisponiveis.Contains(_sessao.NomeUsuario)
+                ? _sessao.NomeUsuario
+                : NomesDisponiveis.FirstOrDefault();
     }
 
     partial void OnNomeSelecionadoChanged(string? value)

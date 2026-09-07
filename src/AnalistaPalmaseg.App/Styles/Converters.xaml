@@ -13,4 +13,5 @@
     <conv:BoolToCheckKindConverter x:Key="BoolToCheckKindConverter" />
     <conv:MesFormatConverter x:Key="MesFormatConverter" />
     <conv:SeguradoraAbrevConverter x:Key="SeguradoraAbrevConverter" />
+    <conv:BoolToStarKindConverter x:Key="BoolToStarKindConverter" />
 </ResourceDictionary>

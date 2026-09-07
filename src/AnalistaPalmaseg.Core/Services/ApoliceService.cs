@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnalistaPalmaseg.Core.Services;
 
-public class ApoliceService(AppDbContext context)
+public class ApoliceService(IDbContextFactory<AppDbContext> contextFactory)
 {
     public async Task<ImportacaoApolice> ImportarAsync(string caminhoArquivo)
     {
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        await using var context = await contextFactory.CreateDbContextAsync();
 
         // Replace all existing apólices on each import
         var antigas = await context.ImportacoesApolice.ToListAsync();
@@ -46,6 +48,7 @@ public class ApoliceService(AppDbContext context)
 
     public async Task<List<Apolice>> GetTodasAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.Apolices
             .OrderBy(a => a.DataVencimentoPagamento)
             .ToListAsync();
@@ -53,6 +56,7 @@ public class ApoliceService(AppDbContext context)
 
     public async Task<ImportacaoApolice?> GetUltimaImportacaoAsync()
     {
+        await using var context = await contextFactory.CreateDbContextAsync();
         return await context.ImportacoesApolice
             .OrderByDescending(i => i.ImportadoEm)
             .FirstOrDefaultAsync();
