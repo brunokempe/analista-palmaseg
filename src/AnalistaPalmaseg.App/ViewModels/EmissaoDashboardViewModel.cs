@@ -28,6 +28,7 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     private readonly MetaService _metaService;
     private readonly AnexoService _anexoService;
     private readonly PastaProdutorService _pastaProdutorService;
+    private readonly UsuarioService _usuarioService;
     private List<RelatorioRenovacao> _todos = [];
     private List<SeguroNovo> _todosSeguroNovos = [];
 
@@ -107,7 +108,8 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         SessaoService sessao,
         MetaService metaService,
         AnexoService anexoService,
-        PastaProdutorService pastaProdutorService)
+        PastaProdutorService pastaProdutorService,
+        UsuarioService usuarioService)
     {
         _service = service;
         _seguroNovoService = seguroNovoService;
@@ -115,6 +117,7 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         _metaService = metaService;
         _anexoService = anexoService;
         _pastaProdutorService = pastaProdutorService;
+        _usuarioService = usuarioService;
         _filtroProdutor = _sessao.NomeUsuario;
     }
 
@@ -391,6 +394,32 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task AtualizarInformacoesRenPalma()
+    {
+        var reg = RenPalmaSelecionado;
+        if (reg == null) return;
+
+        var anexos = await _anexoService.GetAnexosAsync(reg.Id);
+        var dialog = new Views.FechamentoRenPalmaDialog(reg, anexos)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await _service.SalvarFechamentoInfoAsync(reg);
+            AtualizarCards();
+            AtualizarResumoProdutor();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
     private async Task AnexarArquivosRenPalma()
     {
         var reg = RenPalmaSelecionado;
@@ -435,8 +464,8 @@ public partial class EmissaoDashboardViewModel : ObservableObject
 
     private static string ObterPastaAnexosSeguroNovo(int id) =>
         Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AnalistaPalmaseg", "AnexosSeguroNovos", id.ToString());
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Anexos", "SeguroNovos", id.ToString());
 
     private async Task AnexarEDistribuirSeguroNovoAsync(SeguroNovo reg)
     {
@@ -481,6 +510,33 @@ public partial class EmissaoDashboardViewModel : ObservableObject
             catch { /* pasta pode estar indisponível (drive removido/rede offline) — segue para as demais */ }
         }
         return distribuidas;
+    }
+
+    [RelayCommand]
+    private async Task AtualizarInformacoesSeguroNovo()
+    {
+        var reg = SeguroNovoSelecionado;
+        if (reg == null) return;
+
+        var usuarios = await _usuarioService.ListarAsync();
+        var produtores = usuarios.Where(u => u.Ativo).OrderBy(u => u.Login).Select(u => u.Login).ToList();
+
+        var dialog = new Views.AtualizarSeguroNovoDialog(reg, produtores)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await _seguroNovoService.SalvarAsync(reg);
+            AtualizarCards();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     [RelayCommand]

@@ -11,6 +11,15 @@
         Background="{DynamicResource MaterialDesign.Brush.Background}"
         TextElement.FontFamily="{materialDesign:MaterialDesignFont}">
 
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#757575" />
+            <Setter Property="Margin" Value="2,0,0,4" />
+        </Style>
+    </Window.Resources>
+
     <StackPanel>
 
         <!-- Header verde -->
@@ -32,10 +41,10 @@
         <StackPanel Margin="20,16,20,0">
 
             <!-- Seguradora (linha 1) -->
+            <TextBlock Text="Seguradora *" Style="{StaticResource FieldLabel}" />
             <ComboBox x:Name="SeguradoraCombo"
                       IsEditable="True"
                       Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                      materialDesign:HintAssist.Hint="Seguradora *"
                       Height="46" FontSize="13" Margin="0,0,0,12">
                 <ComboBoxItem Content="Aliro" />
                 <ComboBoxItem Content="Allianz" />
@@ -75,17 +84,19 @@
                     <ColumnDefinition Width="140" />
                 </Grid.ColumnDefinitions>
 
-                <TextBox Grid.Column="0"
-                         x:Name="PremioTextBox"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         materialDesign:HintAssist.Hint="Prêmio Líquido (R$)"
-                         Height="46" FontSize="13" />
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Prêmio Líquido (R$)" Style="{StaticResource FieldLabel}" />
+                    <TextBox x:Name="PremioTextBox"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Height="46" FontSize="13" />
+                </StackPanel>
 
-                <TextBox Grid.Column="2"
-                         x:Name="ComissaoTextBox"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         materialDesign:HintAssist.Hint="Comissão (%)"
-                         Height="46" FontSize="13" />
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Comissão (%)" Style="{StaticResource FieldLabel}" />
+                    <TextBox x:Name="ComissaoTextBox"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Height="46" FontSize="13" />
+                </StackPanel>
             </Grid>
 
             <!-- Forma de Pagamento + Parcelamento (linha 3) -->
@@ -96,24 +107,25 @@
                     <ColumnDefinition Width="150" />
                 </Grid.ColumnDefinitions>
 
-                <ComboBox Grid.Column="0"
-                          x:Name="FormaPagamentoCombo"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          materialDesign:HintAssist.Hint="Forma de Pagamento"
-                          Height="46" FontSize="13">
-                    <ComboBoxItem Content="Boleto" />
-                    <ComboBoxItem Content="Cartão de Crédito" />
-                    <ComboBoxItem Content="Débito em Conta" />
-                    <ComboBoxItem Content="PIX" />
-                    <ComboBoxItem Content="Débito Automático" />
-                    <ComboBoxItem Content="Financiamento" />
-                </ComboBox>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Forma de Pagamento" Style="{StaticResource FieldLabel}" />
+                    <ComboBox x:Name="FormaPagamentoCombo"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Height="46" FontSize="13">
+                        <ComboBoxItem Content="Boleto" />
+                        <ComboBoxItem Content="Cartão de Crédito" />
+                        <ComboBoxItem Content="Débito em Conta" />
+                        <ComboBoxItem Content="PIX" />
+                        <ComboBoxItem Content="Débito Automático" />
+                        <ComboBoxItem Content="Financiamento" />
+                    </ComboBox>
+                </StackPanel>
 
-                <ComboBox Grid.Column="2"
-                          x:Name="ParcelamentoCombo"
-                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                          materialDesign:HintAssist.Hint="Parcelamento"
-                          Height="46" FontSize="13">
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Parcelamento" Style="{StaticResource FieldLabel}" />
+                    <ComboBox x:Name="ParcelamentoCombo"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              Height="46" FontSize="13">
                     <ComboBoxItem Content="1x" />
                     <ComboBoxItem Content="2x" />
                     <ComboBoxItem Content="3x" />
@@ -129,7 +141,8 @@
                     <ComboBoxItem Content="24x" />
                     <ComboBoxItem Content="30x" />
                     <ComboBoxItem Content="36x" />
-                </ComboBox>
+                    </ComboBox>
+                </StackPanel>
             </Grid>
 
             <!-- Assinatura -->

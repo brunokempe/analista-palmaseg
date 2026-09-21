@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <!-- Filtros -->
-        <materialDesign:Card Grid.Row="0" Margin="12,12,12,0" Padding="12,6">
+        <materialDesign:Card Grid.Row="0" Margin="16,12,16,0" Padding="12,6">
             <StackPanel>
                 <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
@@ -44,6 +44,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
@@ -62,7 +63,14 @@
                         ItemsSource="{Binding ProdutoresDisponiveis}"
                         SelectedItems="{Binding ProdutoresSelecionados}" />
 
-                    <CheckBox Grid.Column="3"
+                    <ComboBox Grid.Column="3" Margin="0,0,8,0"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              materialDesign:HintAssist.Hint="Agrupar por"
+                              FontSize="13" VerticalAlignment="Center"
+                              ItemsSource="{Binding TiposAgrupamento}"
+                              SelectedItem="{Binding AgrupamentoSelecionado}" />
+
+                    <CheckBox Grid.Column="4"
                               Content="Somente com produtor"
                               IsChecked="{Binding SomenteComProdutor}"
                               VerticalAlignment="Center" FontSize="12" />
@@ -84,7 +92,7 @@
         <!-- Abas por mês de vencimento -->
         <Border Grid.Row="1" Background="White"
                 BorderBrush="#E5E7EB" BorderThickness="0,1,0,1"
-                Margin="12,6,12,0">
+                Margin="16,6,16,0">
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Hidden">
                 <ListBox ItemsSource="{Binding MesesDisponiveis}"
@@ -140,7 +148,7 @@
 
         <!-- Resumo -->
         <Border Grid.Row="2" Background="{StaticResource SidebarBgDarkBrush}"
-                Padding="16,6" Margin="12,6,12,0">
+                Padding="16,6" Margin="16,6,16,0">
             <TextBlock Text="{Binding Resumo}" FontSize="12"
                        Foreground="#9CA3AF" FontStyle="Italic" />
         </Border>
@@ -149,7 +157,7 @@
         <Border Grid.Row="3"
                 Visibility="{Binding TemRegistroSelecionado, Converter={StaticResource BoolToVisibilityConverter}}"
                 Background="#F8F9FA" BorderBrush="#E5E7EB" BorderThickness="0,1,0,1"
-                Padding="16,5" Margin="12,0,12,0">
+                Padding="16,5" Margin="16,0,16,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <materialDesign:PackIcon Kind="FileDocumentOutline" Width="15" Height="15"
                                          VerticalAlignment="Center" Foreground="#6B7280" Margin="0,0,8,0" />
@@ -207,9 +215,8 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   SelectionMode="Single"
-                  AlternationCount="2"
-                  RowHeight="40"
-                  Margin="12,6,12,12"
+                  RowHeight="48"
+                  Margin="16,6,16,12"
                   Style="{StaticResource MaterialDesignDataGrid}"
                   ColumnHeaderStyle="{StaticResource MaterialDesignDataGridColumnHeader}"
                   EnableRowVirtualization="True"
@@ -244,11 +251,12 @@
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
                     <Style.Triggers>
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                            <Setter Property="Background" Value="#F9FAFB"/>
-                        </Trigger>
                         <DataTrigger Binding="{Binding RenovacaoRealizada}" Value="True">
                             <Setter Property="Background" Value="#C8E6C9"/>
+                        </DataTrigger>
+                        <!-- Renovação perdida (Ren. Outro) ou não renovada: mesmo tom claro do verde acima, em vermelho. -->
+                        <DataTrigger Binding="{Binding RenovacaoNaoRealizada}" Value="True">
+                            <Setter Property="Background" Value="#FFCDD2"/>
                         </DataTrigger>
                         <!-- Vence hoje (ou no fim de semana seguinte a uma sexta-feira) e ainda pendente:
                              último dia útil para agir antes que o cliente fique sem cobertura. -->
@@ -263,9 +271,21 @@
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                         </DataTrigger>
+                        <!-- Hover sempre em uma única cor, por cima de qualquer status/alternância -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                        </Trigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
+
+            <!-- Linha grossa preta separando cada registro -->
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                    <Setter Property="BorderBrush" Value="Black"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                </Style>
+            </DataGrid.CellStyle>
 
             <DataGrid.GroupStyle>
                 <GroupStyle>
@@ -277,11 +297,15 @@
                                         <Expander IsExpanded="True">
                                             <Expander.Header>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <!-- Nome do cliente é a chave do grupo -->
+                                                    <!-- Nome do cliente ou data de vencimento (conforme o agrupamento) é a chave do grupo -->
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                                                FontSize="16" Foreground="{StaticResource PrimaryBrush}" />
-                                                    <!-- CPF/CNPJ via ContentControl (Items[0] é object) -->
-                                                    <ContentControl Content="{Binding Items[0]}">
+                                                    <!-- CPF/CNPJ só faz sentido quando o grupo é um único cliente -->
+                                                    <ContentControl Content="{Binding Items[0]}"
+                                                        Visibility="{Binding DataContext.AgrupamentoSelecionado,
+                                                                     RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                                     Converter={StaticResource StringEqualsToVisibilityConverter},
+                                                                     ConverterParameter=Cliente}">
                                                         <ContentControl.ContentTemplate>
                                                             <DataTemplate>
                                                                 <StackPanel Orientation="Horizontal">
@@ -448,6 +472,16 @@
 
                 <DataGridTextColumn Header="Status" Binding="{Binding Status}"
                                     Width="140" FontSize="12">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center"/>
+                            <Setter Property="Margin" Value="4,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn Header="Preposto" Binding="{Binding Preposto}"
+                                    Width="120" FontSize="12">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>

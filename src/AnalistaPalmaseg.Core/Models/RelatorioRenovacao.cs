@@ -37,6 +37,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
             _vigenciaFinal = value;
             PropertyChanged?.Invoke(this, new(nameof(VigenciaFinal)));
             PropertyChanged?.Invoke(this, new(nameof(DiaDaSemana)));
+            PropertyChanged?.Invoke(this, new(nameof(VencimentoLabel)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoVencida)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoVenceEmBreve)));
         }
@@ -145,6 +146,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
     public string? NovoProdutor { get; set; }
     public string? MotivoSituacao { get; set; }
     public decimal? PercentualComissaoMinimo { get; set; }
+    public string? Preposto { get; set; }
 
     // Campos de fechamento (preenchidos no popup ao definir Ren. Palma)
     public string? FechamentoSeguradora { get; set; }
@@ -182,6 +184,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
             _situacaoAcompanhamento = value;
             PropertyChanged?.Invoke(this, new(nameof(SituacaoAcompanhamento)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoRealizada)));
+            PropertyChanged?.Invoke(this, new(nameof(RenovacaoNaoRealizada)));
             PropertyChanged?.Invoke(this, new(nameof(SituacaoPendenteCritica)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoVencida)));
             PropertyChanged?.Invoke(this, new(nameof(RenovacaoVenceEmBreve)));
@@ -190,7 +193,13 @@ public class RelatorioRenovacao : INotifyPropertyChanged
 
     [NotMapped]
     public bool RenovacaoRealizada =>
-        SituacaoAcompanhamento is "Emitido" or "Ren. Palma" or "Ren. Outro";
+        SituacaoAcompanhamento is "Emitido" or "Ren. Palma";
+
+    // Renovação encerrada sem sucesso (perdida para outra corretora ou não renovada) —
+    // destaque em vermelho claro, no mesmo tom do verde usado para Ren. Palma.
+    [NotMapped]
+    public bool RenovacaoNaoRealizada =>
+        SituacaoAcompanhamento is "Ren. Outro" or "Não renovado";
 
     // Situações consideradas críticas para os alertas de vencimento — renovação ainda
     // não encaminhada de forma alguma (agendada/recusada/etc. já têm tratamento próprio).
@@ -233,6 +242,11 @@ public class RelatorioRenovacao : INotifyPropertyChanged
             ? Math.Round(FechamentoPremioLiquido.Value * FechamentoComissao.Value / 100m, 2)
             : null;
 
+    // Valor da comissão calculado a partir do prêmio líquido e do % de comissão importados
+    // da planilha (usado na tela Dist. Renovações, ao lado da coluna % Comissão).
+    [NotMapped]
+    public decimal ValorComissao => Math.Round(PremioLiquido * Comissao / 100m, 2);
+
     [NotMapped]
     public decimal PercentualComissaoColab { get; set; }
 
@@ -259,5 +273,21 @@ public class RelatorioRenovacao : INotifyPropertyChanged
             var d = VigenciaFinal.Value.ToString("dddd", PtBr);
             return d.Length > 0 ? char.ToUpperInvariant(d[0]) + d[1..] : d;
         }
+    }
+
+    // Usado como chave de agrupamento quando a tela agrupa por data de vencimento.
+    [NotMapped]
+    public string VencimentoLabel =>
+        VigenciaFinal.HasValue ? VigenciaFinal.Value.ToString("dd/MM/yyyy", PtBr) : "Sem vencimento";
+
+    // Cor de fundo alternada por linha (não por grupo) — recalculada pela tela conforme a
+    // ordem visível atual (após filtro/ordenação/agrupamento), já que o AlternationIndex
+    // nativo do DataGrid reinicia a cada grupo e não serve para isso.
+    private bool _linhaAlternada;
+    [NotMapped]
+    public bool LinhaAlternada
+    {
+        get => _linhaAlternada;
+        set { if (_linhaAlternada == value) return; _linhaAlternada = value; PropertyChanged?.Invoke(this, new(nameof(LinhaAlternada))); }
     }
 }

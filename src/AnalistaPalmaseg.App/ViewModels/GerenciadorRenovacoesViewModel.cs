@@ -32,11 +32,15 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     [ObservableProperty] private RelatorioRenovacao? _registroSelecionado;
     [ObservableProperty] private string _filtroTexto = string.Empty;
     [ObservableProperty] private string _mesSelecionado = "Todos";
+    [ObservableProperty] private string _agrupamentoSelecionado = "Data de vencimento";
     [ObservableProperty] private string _novoProdutorEmMassa = string.Empty;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _resumo = string.Empty;
 
     public bool TemMarcados => _todos.Any(r => r.IsChecked);
+    public int QuantidadeMarcados => _todos.Count(r => r.IsChecked);
+
+    public const string SemProdutorDefinido = "(Sem produtor definido)";
 
     public ObservableCollection<string> StatusDisponiveis { get; } = [];
     public ObservableCollection<string> SeguradorasDisponiveis { get; } = [];
@@ -45,6 +49,8 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
     public ObservableCollection<string> MesesDisponiveis { get; } = [];
     public ObservableCollection<string> UsuariosDisponiveis { get; } = [];
+
+    public string[] TiposAgrupamento { get; } = ["Cliente", "Data de vencimento"];
 
     // Filtros de múltipla seleção — vazio significa "sem filtro" (mostra todos)
     public ObservableCollection<string> StatusSelecionados { get; } = [];
@@ -115,6 +121,7 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
 
             var prods = await _service.GetNovoProdutorDistinctAsync();
             ProdutoresDisponiveis.Clear();
+            ProdutoresDisponiveis.Add(SemProdutorDefinido);
             foreach (var p in prods) ProdutoresDisponiveis.Add(p);
 
             if (!_filtroProdutorInicializado)
@@ -155,16 +162,18 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
 
             var col = new ObservableCollection<RelatorioRenovacao>(_todos);
             _view = (ListCollectionView)CollectionViewSource.GetDefaultView(col);
-            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.DocumentoPrincipal)));
-            _view.CustomSort = Comparer<object>.Create((a, b) =>
-            {
-                var ra = (RelatorioRenovacao)a;
-                var rb = (RelatorioRenovacao)b;
-                var cpf = StringComparer.OrdinalIgnoreCase.Compare(ra.DocumentoPrincipal, rb.DocumentoPrincipal);
-                return cpf != 0 ? cpf : Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
-            });
             _view.Filter = FiltroItem;
             RegistrosView = _view;
+            ConfigurarAgrupamento();
+
+            // Abre sempre na aba do mês atual (não em "Todos"); se não houver registros
+            // vencendo no mês corrente, cai para o mês mais recente disponível.
+            if (MesesDisponiveis.Count > 1)
+            {
+                var hoje = DateTime.Today;
+                var abaMesAtual = _mesLookup.FirstOrDefault(kv => kv.Value.Year == hoje.Year && kv.Value.Month == hoje.Month).Key;
+                MesSelecionado = abaMesAtual ?? MesesDisponiveis[^1];
+            }
             AtualizarResumo();
         }
         finally
@@ -187,9 +196,63 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         }, TaskScheduler.Default);
     }
 
+    partial void OnAgrupamentoSelecionadoChanged(string value) => ConfigurarAgrupamento();
+
+    // Define o agrupamento (por cliente ou por data de vencimento) e a ordenação
+    // correspondente — o CustomSort determina também a ordem de exibição dos grupos,
+    // já que o ListCollectionView cria cada grupo na ordem em que é encontrado ao
+    // percorrer a lista ordenada.
+    private void ConfigurarAgrupamento()
+    {
+        if (_view == null) return;
+
+        _view.GroupDescriptions.Clear();
+
+        if (AgrupamentoSelecionado == "Data de vencimento")
+        {
+            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.VencimentoLabel)));
+            _view.CustomSort = Comparer<object>.Create((a, b) =>
+            {
+                var ra = (RelatorioRenovacao)a;
+                var rb = (RelatorioRenovacao)b;
+                var cmpData = Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+                return cmpData != 0 ? cmpData : string.CompareOrdinal(ra.NomeCliente ?? string.Empty, rb.NomeCliente ?? string.Empty);
+            });
+        }
+        else
+        {
+            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.NomeCliente)));
+
+            // Grupos ordenados pelo vencimento mais próximo (crescente), e dentro de
+            // cada grupo também por vencimento crescente.
+            var menorVencimentoPorCliente = _todos
+                .GroupBy(r => r.NomeCliente ?? string.Empty)
+                .ToDictionary(g => g.Key, g => g.Min(r => r.VigenciaFinal));
+
+            _view.CustomSort = Comparer<object>.Create((a, b) =>
+            {
+                var ra = (RelatorioRenovacao)a;
+                var rb = (RelatorioRenovacao)b;
+                var nomeA = ra.NomeCliente ?? string.Empty;
+                var nomeB = rb.NomeCliente ?? string.Empty;
+                if (nomeA != nomeB)
+                {
+                    var cmpGrupo = Nullable.Compare(menorVencimentoPorCliente[nomeA], menorVencimentoPorCliente[nomeB]);
+                    return cmpGrupo != 0 ? cmpGrupo : string.CompareOrdinal(nomeA, nomeB);
+                }
+                return Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+            });
+        }
+
+        _view.Refresh();
+        AtualizarResumo();
+    }
+
     partial void OnMesSelecionadoChanged(string value)
     {
-        if (value == "Todos" || !_mesLookup.TryGetValue(value, out var mes))
+        // O ListBox de abas pode zerar a seleção (value == null) momentaneamente enquanto
+        // MesesDisponiveis é recarregado (ex.: durante CarregarAsync) — trata como "Todos".
+        if (value == null || value == "Todos" || !_mesLookup.TryGetValue(value, out var mes))
         {
             _mesFiltroAno = 0;
             _mesFiltroMes = 0;
@@ -218,7 +281,14 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         if (SeguradorasSelecionadas.Count > 0 && !SeguradorasSelecionadas.Contains(r.Seguradora ?? string.Empty)) return false;
         if (RamosSelecionados.Count > 0 && !RamosSelecionados.Contains(r.Ramo ?? string.Empty)) return false;
         if (VendedoresSelecionados.Count > 0 && !VendedoresSelecionados.Contains(r.VendedorPrincipal ?? string.Empty)) return false;
-        if (ProdutoresSelecionados.Count > 0 && !ProdutoresSelecionados.Contains(r.NovoProdutor ?? string.Empty)) return false;
+        if (ProdutoresSelecionados.Count > 0)
+        {
+            var semProdutor = string.IsNullOrWhiteSpace(r.NovoProdutor);
+            var corresponde = semProdutor
+                ? ProdutoresSelecionados.Contains(SemProdutorDefinido)
+                : ProdutoresSelecionados.Contains(r.NovoProdutor!);
+            if (!corresponde) return false;
+        }
 
         if (!string.IsNullOrWhiteSpace(FiltroTexto))
         {
@@ -244,12 +314,19 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     {
         if (_view == null) { Resumo = string.Empty; return; }
         var itens = _view.Cast<RelatorioRenovacao>().ToList();
+
+        // Alternância de cor por linha, calculada pela posição visível atual (não pelo
+        // AlternationIndex do DataGrid, que reinicia a cada grupo).
+        for (int i = 0; i < itens.Count; i++)
+            itens[i].LinhaAlternada = i % 2 == 1;
+
         var total = itens.Sum(r => r.PremioLiquido);
         var marcados = itens.Count(r => r.IsChecked);
         Resumo = marcados > 0
             ? $"{itens.Count} registro(s) · {marcados} marcado(s) · Prêmio líquido: {total:C2}"
             : $"{itens.Count} registro(s) · Prêmio líquido: {total:C2}";
         OnPropertyChanged(nameof(TemMarcados));
+        OnPropertyChanged(nameof(QuantidadeMarcados));
     }
 
     [RelayCommand]
@@ -293,6 +370,45 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         catch (Exception ex)
         {
             MessageBox.Show($"Erro ao atribuir produtor:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExcluirMarcados()
+    {
+        var marcados = _todos.Where(r => r.IsChecked).ToList();
+        if (marcados.Count == 0) return;
+
+        var confirmar = MessageBox.Show(
+            $"Excluir {marcados.Count} registro(s) importado(s)? Esta ação não pode ser desfeita.",
+            "Confirmar exclusão", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirmar != MessageBoxResult.Yes) return;
+
+        IsLoading = true;
+        try
+        {
+            var ids = marcados.Select(r => r.Id).ToList();
+            await _service.ExcluirAsync(ids);
+
+            _todos.RemoveAll(r => ids.Contains(r.Id));
+            if (_view?.SourceCollection is ObservableCollection<RelatorioRenovacao> fonte)
+            {
+                foreach (var r in marcados)
+                    fonte.Remove(r);
+            }
+            AtualizarResumo();
+
+            MessageBox.Show($"{marcados.Count} registro(s) excluído(s).",
+                "Exclusão concluída", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao excluir registros:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally

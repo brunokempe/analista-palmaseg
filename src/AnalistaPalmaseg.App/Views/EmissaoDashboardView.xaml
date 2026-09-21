@@ -333,6 +333,11 @@
                                   VirtualizingPanel.IsVirtualizing="True">
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem Header="Atualizar informações"
+                                              Command="{Binding PlacementTarget.DataContext.AtualizarInformacoesRenPalmaCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                    <Separator/>
                                     <MenuItem Header="Anexar arquivo(s)..."
                                               Command="{Binding PlacementTarget.DataContext.AnexarArquivosRenPalmaCommand,
                                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -629,6 +634,11 @@
                                   VirtualizingPanel.IsVirtualizing="True">
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem Header="Atualizar informações"
+                                              Command="{Binding PlacementTarget.DataContext.AtualizarInformacoesSeguroNovoCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              FontSize="13"/>
+                                    <Separator/>
                                     <MenuItem Header="Anexar arquivo(s)..."
                                               Command="{Binding PlacementTarget.DataContext.AnexarArquivosSeguroNovoCommand,
                                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
@@ -654,13 +664,23 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="Vigência"
+                                <DataGridTextColumn Header="Vigência Final"
                                                     Binding="{Binding Vigencia, StringFormat=dd/MM/yyyy}"
                                                     Width="105">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                             <Setter Property="HorizontalAlignment" Value="Center"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Produtor" Binding="{Binding CriadoPor}" Width="145">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Margin" Value="4,0"/>
+                                            <Setter Property="FontStyle" Value="Italic"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -705,6 +725,15 @@
                                             <Setter Property="HorizontalAlignment" Value="Right"/>
                                             <Setter Property="Margin" Value="0,0,8,0"/>
                                             <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn Header="Forma Pgto" Binding="{Binding FormaPagamento}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Center"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -836,16 +865,6 @@
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
 
-                                <DataGridTextColumn Header="Cadastrado por" Binding="{Binding CriadoPor}" Width="145">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center"/>
-                                            <Setter Property="Margin" Value="4,0"/>
-                                            <Setter Property="FontStyle" Value="Italic"/>
-                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
                                 <DataGridTextColumn Header="Cadastrado em"
                                                     Binding="{Binding CriadoEm, StringFormat=dd/MM/yyyy}"
                                                     Width="115">

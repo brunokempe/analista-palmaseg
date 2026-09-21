@@ -222,7 +222,7 @@ public partial class MainViewModel : ObservableObject
             ["ApolicesDashboard"] = ("Acomp. Apólices", "FileDocumentOutline", () => { NavApolicesDashboard(); return Task.CompletedTask; }),
             ["FuncionariosDashboard"] = ("Dashboard Funcionários", "AccountMultipleOutline", () => { NavFuncionariosDashboard(); return Task.CompletedTask; }),
             ["DistribuicaoProdutor"] = ("Dist. por Produtor", "AccountGroupOutline", NavDistribuicaoProdutorAsync),
-            ["GerenciadorRenovacoes"] = ("Renovações (Gerenciador)", "FileRefreshOutline", NavGerenciadorRenovacoesAsync),
+            ["GerenciadorRenovacoes"] = ("Dist. Renovações", "FileRefreshOutline", NavGerenciadorRenovacoesAsync),
             ["DefinicoesMetas"] = ("Definições de Metas", "ChartTimeline", NavDefinicoesMetasAsync),
             ["GerenciarUsuarios"] = ("Usuários", "AccountCogOutline", NavGerenciarUsuariosAsync),
         };

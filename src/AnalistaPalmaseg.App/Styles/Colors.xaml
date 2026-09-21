@@ -34,6 +34,10 @@
     <Color x:Key="TextSecondary">#606061</Color>
     <Color x:Key="TextMuted">#9DA3AE</Color>
 
+    <!-- Estado de hover das linhas de grid — único em todas as telas, sobrepondo
+         qualquer cor de status/alternância quando o mouse está sobre a linha. -->
+    <Color x:Key="RowHover">#EAECEF</Color>
+
     <!-- Brushes -->
     <SolidColorBrush x:Key="PrimaryBrush"         Color="{StaticResource PrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryLightBrush"    Color="{StaticResource PrimaryLightColor}" />
@@ -56,5 +60,6 @@
     <SolidColorBrush x:Key="TextPrimaryBrush"     Color="{StaticResource TextPrimary}" />
     <SolidColorBrush x:Key="TextSecondaryBrush"   Color="{StaticResource TextSecondary}" />
     <SolidColorBrush x:Key="TextMutedBrush"       Color="{StaticResource TextMuted}" />
+    <SolidColorBrush x:Key="RowHoverBrush"        Color="{StaticResource RowHover}" />
 
 </ResourceDictionary>
