@@ -184,6 +184,7 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
                 var assinaturaFeita          = existing.AssinaturaFeita;
                 var seguroEmitido            = existing.SeguroEmitido;
                 var percentualComissaoMinimo = existing.PercentualComissaoMinimo;
+                var preposto                 = existing.Preposto;
 
                 // SetValues copia todos os campos, incluindo Id. Para evitar que o EF marque
                 // a chave primária como modificada (o que lança InvalidOperationException),
@@ -204,6 +205,7 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
                 existing.AssinaturaFeita          = assinaturaFeita;
                 existing.SeguroEmitido            = seguroEmitido;
                 existing.PercentualComissaoMinimo = percentualComissaoMinimo;
+                existing.Preposto                 = preposto;
             }
             else
             {
@@ -285,6 +287,7 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
         entry.Property(x => x.NovoProdutor).IsModified = true;
         entry.Property(x => x.Observacao).IsModified = true;
         entry.Property(x => x.PercentualComissaoMinimo).IsModified = true;
+        entry.Property(x => x.Preposto).IsModified = true;
         await context.SaveChangesAsync();
     }
 
@@ -339,6 +342,22 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
         var entry = context.Entry(reg);
 
         entry.Property(x => x.SituacaoAcompanhamento).IsModified   = true;
+        entry.Property(x => x.FechamentoSeguradora).IsModified      = true;
+        entry.Property(x => x.FechamentoPremioLiquido).IsModified   = true;
+        entry.Property(x => x.FechamentoFormaPagamento).IsModified  = true;
+        entry.Property(x => x.FechamentoComissao).IsModified        = true;
+        entry.Property(x => x.FechamentoParcelamento).IsModified    = true;
+        entry.Property(x => x.FechamentoAssinatura).IsModified      = true;
+        await context.SaveChangesAsync();
+    }
+
+    public async Task SalvarFechamentoInfoAsync(RelatorioRenovacao reg)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        context.Attach(reg);
+        var entry = context.Entry(reg);
+
         entry.Property(x => x.FechamentoSeguradora).IsModified      = true;
         entry.Property(x => x.FechamentoPremioLiquido).IsModified   = true;
         entry.Property(x => x.FechamentoFormaPagamento).IsModified  = true;
@@ -489,5 +508,13 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
             context.Entry(reg).Property(x => x.NovoProdutor).IsModified = true;
         }
         await context.SaveChangesAsync();
+    }
+
+    public async Task ExcluirAsync(IList<int> ids)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        await context.RelatorioRenovacoes
+            .Where(r => ids.Contains(r.Id))
+            .ExecuteDeleteAsync();
     }
 }

@@ -206,7 +206,9 @@ public partial class DashboardMetasViewModel : ObservableObject
                 foreach (var c in cols) Colaboradores.Add(c);
                 ColaboradorSelecionado = Colaboradores.Contains(previous)
                     ? previous
-                    : Colaboradores.FirstOrDefault() ?? string.Empty;
+                    : Colaboradores.Contains(_sessao.NomeUsuario)
+                        ? _sessao.NomeUsuario
+                        : Colaboradores.FirstOrDefault() ?? string.Empty;
             }
             else
             {

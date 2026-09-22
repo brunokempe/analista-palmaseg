@@ -47,6 +47,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="160" />
                     </Grid.ColumnDefinitions>
 
                     <controls:MultiSelectFilterControl Grid.Column="0" Margin="0,0,8,0"
@@ -69,10 +70,17 @@
                         ItemsSource="{Binding VendedoresDisponiveis}"
                         SelectedItems="{Binding VendedoresSelecionados}" />
 
-                    <controls:MultiSelectFilterControl Grid.Column="4"
+                    <controls:MultiSelectFilterControl Grid.Column="4" Margin="0,0,8,0"
                         Hint="Novo Produtor"
                         ItemsSource="{Binding ProdutoresDisponiveis}"
                         SelectedItems="{Binding ProdutoresSelecionados}" />
+
+                    <ComboBox Grid.Column="5"
+                              Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                              materialDesign:HintAssist.Hint="Agrupar por"
+                              FontSize="13" VerticalAlignment="Center"
+                              ItemsSource="{Binding TiposAgrupamento}"
+                              SelectedItem="{Binding AgrupamentoSelecionado}" />
                 </Grid>
             </StackPanel>
         </materialDesign:Card>
@@ -163,7 +171,26 @@
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         VerticalAlignment="Center"
                         Height="36" Padding="14,0" FontSize="12"
-                        Content="Atribuir" />
+                        Content="Atribuir" Margin="0,0,16,0" />
+
+                <Border Width="1" Background="#90CAF9" Margin="0,4,16,4" />
+
+                <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#1565C0" Margin="0,0,8,0">
+                    <Run Text="{Binding QuantidadeMarcados, Mode=OneWay}" />
+                    <Run Text=" marcado(s)" />
+                </TextBlock>
+                <Button Command="{Binding DesmarcarTodosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        VerticalAlignment="Center"
+                        Height="36" Padding="12,0" FontSize="12"
+                        Content="Desmarcar todos" Margin="0,0,8,0" />
+                <Button Command="{Binding ExcluirMarcadosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        VerticalAlignment="Center"
+                        Height="36" Padding="12,0" FontSize="12"
+                        Foreground="#C62828" BorderBrush="#C62828"
+                        Content="Excluir marcados" />
             </StackPanel>
         </Border>
 
@@ -177,7 +204,6 @@
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="Horizontal"
-                  AlternationCount="2"
                   HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto"
                   FontSize="12"
@@ -221,6 +247,11 @@
                               Command="{Binding PlacementTarget.DataContext.GerarFolhasMarcadasCommand,
                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                               FontSize="13" FontWeight="SemiBold"/>
+                    <Separator/>
+                    <MenuItem Header="Excluir marcados..."
+                              Command="{Binding PlacementTarget.DataContext.ExcluirMarcadosCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13" Foreground="#C62828"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
@@ -285,33 +316,70 @@
                         </Setter.Value>
                     </Setter>
                     <Style.Triggers>
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                        <!-- Alternância calculada pela posição visível (ver LinhaAlternada no ViewModel) —
+                             o AlternationIndex nativo do DataGrid reinicia a cada grupo e faz a cor
+                             parecer amarrada ao grupo em vez de à linha. -->
+                        <DataTrigger Binding="{Binding LinhaAlternada}" Value="True">
                             <Setter Property="Background" Value="#F9FAFB"/>
-                        </Trigger>
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsChecked}" Value="True">
                             <Setter Property="Background" Value="#C8E6C9"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </DataTrigger>
+                        <!-- Hover sempre em uma única cor, por cima de qualquer status/alternância -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource RowHoverBrush}"/>
+                        </Trigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
 
             <DataGrid.GroupStyle>
                 <GroupStyle>
-                    <GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            <Border Background="#E3F2FD" Padding="10,5" Margin="0,3,0,0" CornerRadius="4">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock FontWeight="Bold" FontSize="12" Foreground="#1565C0"
-                                               Text="{Binding Items[0].NomeCliente, TargetNullValue='(sem nome)'}"/>
-                                    <TextBlock FontSize="12" Foreground="#1565C0" Margin="8,0,0,0"
-                                               Text="{Binding Name, StringFormat='— CPF: {0}', TargetNullValue='— CPF: (não informado)'}"/>
-                                    <TextBlock FontSize="11" Foreground="#1976D2" Margin="8,0,0,0"
-                                               Text="{Binding ItemCount, StringFormat='({0} apólice(s))'}"/>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="GroupItem">
+                                        <Expander IsExpanded="True">
+                                            <Expander.Header>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <!-- Nome do cliente ou data de vencimento (conforme o agrupamento) é a chave do grupo -->
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                               FontSize="16" Foreground="{StaticResource PrimaryBrush}" />
+                                                    <!-- CPF/CNPJ só faz sentido quando o grupo é um único cliente -->
+                                                    <ContentControl Content="{Binding Items[0]}"
+                                                        Visibility="{Binding DataContext.AgrupamentoSelecionado,
+                                                                     RelativeSource={RelativeSource AncestorType=DataGrid},
+                                                                     Converter={StaticResource StringEqualsToVisibilityConverter},
+                                                                     ConverterParameter=Cliente}">
+                                                        <ContentControl.ContentTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text=" — " FontSize="12"
+                                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                                    <TextBlock Text="{Binding DocumentoPrincipal}"
+                                                                               FontSize="11" VerticalAlignment="Center"
+                                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ContentControl.ContentTemplate>
+                                                    </ContentControl>
+                                                    <TextBlock Text=" · " FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                    <TextBlock Text="{Binding ItemCount}" FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                    <TextBlock Text=" apólice(s)" FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}" />
+                                                </StackPanel>
+                                            </Expander.Header>
+                                            <ItemsPresenter />
+                                        </Expander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
                 </GroupStyle>
             </DataGrid.GroupStyle>
 
@@ -412,6 +480,17 @@
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
+                <DataGridTextColumn Header="Preposto"
+                                    Binding="{Binding Preposto, UpdateSourceTrigger=LostFocus}"
+                                    Width="140">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                            <Setter Property="Background" Value="#FFF9C4"/>
+                            <Setter Property="ToolTip" Value="Clique duas vezes para editar."/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+
                 <DataGridTextColumn Header="Observações do Cliente"
                                     Binding="{Binding ClienteObservacoes}"   Width="220" IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
@@ -426,6 +505,8 @@
                                     Binding="{Binding PremioLiquido, StringFormat=C2}"            Width="120" IsReadOnly="True"/>
                 <DataGridTextColumn Header="% Comissão"
                                     Binding="{Binding Comissao, StringFormat=N2}"                 Width="100" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Valor Comissão"
+                                    Binding="{Binding ValorComissao, StringFormat=C2}"            Width="120" IsReadOnly="True"/>
 
                 <DataGridTextColumn Header="Histórico do Cliente"
                                     Binding="{Binding ClienteHistorico}"     Width="220" IsReadOnly="True">
@@ -450,7 +531,14 @@
 
                 <DataGridTextColumn Header="Proposta"      Binding="{Binding Proposta}"          Width="120" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Apólice"       Binding="{Binding Apolice}"            Width="180" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Cliente"       Binding="{Binding NomeCliente}"        Width="200" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Cliente"       Binding="{Binding NomeCliente}"        Width="200" IsReadOnly="True">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
                 <DataGridTextColumn Header="CPF/CNPJ"      Binding="{Binding DocumentoPrincipal}" Width="130" IsReadOnly="True"/>
 
                 <DataGridTextColumn Header="Observação"

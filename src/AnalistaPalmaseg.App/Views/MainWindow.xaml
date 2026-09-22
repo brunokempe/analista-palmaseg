@@ -762,7 +762,7 @@
                                 <materialDesign:PackIcon Grid.Column="0" Kind="FileRefreshOutline"
                                                          Width="18" Height="18"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="Renovações" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Grid.Column="1" Text="Dist. Renovações" VerticalAlignment="Center" FontSize="13" />
                                 <Button Grid.Column="2" Style="{StaticResource MaterialDesignIconButton}"
                                         Width="26" Height="26" Padding="0" Margin="0,0,4,0"
                                         Command="{Binding ToggleFavoritoCommand}" CommandParameter="GerenciadorRenovacoes"

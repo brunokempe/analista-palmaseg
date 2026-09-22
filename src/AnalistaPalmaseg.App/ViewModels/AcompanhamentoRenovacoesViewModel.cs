@@ -33,6 +33,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     [ObservableProperty] private string _filtroTexto = string.Empty;
     [ObservableProperty] private bool _somenteComProdutor = true;
     [ObservableProperty] private string _mesSelecionado = "Todos";
+    [ObservableProperty] private string _agrupamentoSelecionado = "Data de vencimento";
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _resumo = string.Empty;
     [ObservableProperty] private bool _temAlertaCritico;
@@ -42,14 +43,23 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     public bool TemRegistroSelecionado => RegistroSelecionado != null;
 
     public string[] SituacoesEditar { get; } =
-        ["À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido"];
+        ["À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido", "Cancelado"];
 
+    // Situações ainda em tratativa com o cliente (o seguro ainda não foi renovado nem
+    // decidido) — agrupadas sob o filtro "Pendente"; as demais caem em "Finalizadas".
+    private static readonly string[] SituacoesPendentes =
+        ["À Renovar", "Agendado", "Calculado", "Procurado"];
+
+    // "Pendente"/"Finalizadas" são atalhos de grupo que somam-se às situações individuais,
+    // que continuam disponíveis como filtro (seleção múltipla combina os dois por OR).
     public string[] SituacoesFiltrar { get; } =
-        ["À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido"];
+        ["Pendente", "Finalizadas", "À Renovar", "Agendado", "Calculado", "Procurado", "Ren. Palma", "Ren. Outro", "Não renovado", "Recusado", "Emitido", "Cancelado"];
 
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
     public ObservableCollection<string> RamosDisponiveis { get; } = [];
     public ObservableCollection<string> MesesDisponiveis { get; } = [];
+
+    public string[] TiposAgrupamento { get; } = ["Cliente", "Data de vencimento"];
 
     // Filtros de múltipla seleção — vazio significa "sem filtro" (mostra todos)
     public ObservableCollection<string> SituacoesSelecionadas { get; } = [];
@@ -71,6 +81,10 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
 
         foreach (var colecao in new[] { SituacoesSelecionadas, ProdutoresSelecionados, RamosSelecionados })
             colecao.CollectionChanged += (_, _) => AplicarFiltro();
+
+        // Padrão: ao entrar na tela, o produtor vê apenas o que ainda precisa tratar,
+        // priorizado pelos vencimentos mais próximos (ordenação padrão por vencimento).
+        SituacoesSelecionadas.Add("Pendente");
     }
 
     public async Task CarregarAsync()
@@ -140,33 +154,18 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
 
             var col = new ObservableCollection<RelatorioRenovacao>(_todos);
             _view = (ListCollectionView)CollectionViewSource.GetDefaultView(col);
-            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.NomeCliente)));
-
-            // Padrão ao abrir: grupos ordenados pelo vencimento mais próximo (crescente), e
-            // dentro de cada grupo também por vencimento crescente.
-            var menorVencimentoPorCliente = _todos
-                .GroupBy(r => r.NomeCliente ?? string.Empty)
-                .ToDictionary(g => g.Key, g => g.Min(r => r.VigenciaFinal));
-
-            _view.CustomSort = Comparer<object>.Create((a, b) =>
-            {
-                var ra = (RelatorioRenovacao)a;
-                var rb = (RelatorioRenovacao)b;
-                var nomeA = ra.NomeCliente ?? string.Empty;
-                var nomeB = rb.NomeCliente ?? string.Empty;
-                if (nomeA != nomeB)
-                {
-                    var cmpGrupo = Nullable.Compare(menorVencimentoPorCliente[nomeA], menorVencimentoPorCliente[nomeB]);
-                    return cmpGrupo != 0 ? cmpGrupo : string.CompareOrdinal(nomeA, nomeB);
-                }
-                return Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
-            });
             _view.Filter = FiltroItem;
             RegistrosView = _view;
+            ConfigurarAgrupamento();
 
-            // Abre sempre na aba do mês mais recente (não em "Todos")
+            // Abre sempre na aba do mês atual (não em "Todos"); se não houver registros
+            // vencendo no mês corrente, cai para o mês mais recente disponível.
             if (MesesDisponiveis.Count > 1)
-                MesSelecionado = MesesDisponiveis[^1];
+            {
+                var hoje = DateTime.Today;
+                var abaMesAtual = _mesLookup.FirstOrDefault(kv => kv.Value.Year == hoje.Year && kv.Value.Month == hoje.Month).Key;
+                MesSelecionado = abaMesAtual ?? MesesDisponiveis[^1];
+            }
             AtualizarResumo();
             AtualizarAlertaCriticos();
         }
@@ -311,9 +310,63 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
 
     partial void OnSomenteComProdutorChanged(bool value) => AplicarFiltro();
 
+    partial void OnAgrupamentoSelecionadoChanged(string value) => ConfigurarAgrupamento();
+
+    // Define o agrupamento (por cliente ou por data de vencimento) e a ordenação
+    // correspondente — o CustomSort determina também a ordem de exibição dos grupos,
+    // já que o ListCollectionView cria cada grupo na ordem em que é encontrado ao
+    // percorrer a lista ordenada.
+    private void ConfigurarAgrupamento()
+    {
+        if (_view == null) return;
+
+        _view.GroupDescriptions.Clear();
+
+        if (AgrupamentoSelecionado == "Data de vencimento")
+        {
+            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.VencimentoLabel)));
+            _view.CustomSort = Comparer<object>.Create((a, b) =>
+            {
+                var ra = (RelatorioRenovacao)a;
+                var rb = (RelatorioRenovacao)b;
+                var cmpData = Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+                return cmpData != 0 ? cmpData : string.CompareOrdinal(ra.NomeCliente ?? string.Empty, rb.NomeCliente ?? string.Empty);
+            });
+        }
+        else
+        {
+            _view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RelatorioRenovacao.NomeCliente)));
+
+            // Grupos ordenados pelo vencimento mais próximo (crescente), e dentro de
+            // cada grupo também por vencimento crescente.
+            var menorVencimentoPorCliente = _todos
+                .GroupBy(r => r.NomeCliente ?? string.Empty)
+                .ToDictionary(g => g.Key, g => g.Min(r => r.VigenciaFinal));
+
+            _view.CustomSort = Comparer<object>.Create((a, b) =>
+            {
+                var ra = (RelatorioRenovacao)a;
+                var rb = (RelatorioRenovacao)b;
+                var nomeA = ra.NomeCliente ?? string.Empty;
+                var nomeB = rb.NomeCliente ?? string.Empty;
+                if (nomeA != nomeB)
+                {
+                    var cmpGrupo = Nullable.Compare(menorVencimentoPorCliente[nomeA], menorVencimentoPorCliente[nomeB]);
+                    return cmpGrupo != 0 ? cmpGrupo : string.CompareOrdinal(nomeA, nomeB);
+                }
+                return Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+            });
+        }
+
+        _view.Refresh();
+        AtualizarResumo();
+    }
+
     partial void OnMesSelecionadoChanged(string value)
     {
-        if (value == "Todos" || !_mesLookup.TryGetValue(value, out var mes))
+        // O ListBox de abas pode zerar a seleção (value == null) momentaneamente enquanto
+        // MesesDisponiveis é recarregado (ex.: durante CarregarAsync) — trata como "Todos".
+        if (value == null || value == "Todos" || !_mesLookup.TryGetValue(value, out var mes))
         {
             _mesFiltroAno = 0;
             _mesFiltroMes = 0;
@@ -340,7 +393,13 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                 return false;
         }
 
-        if (SituacoesSelecionadas.Count > 0 && !SituacoesSelecionadas.Contains(r.SituacaoAcompanhamento)) return false;
+        if (SituacoesSelecionadas.Count > 0)
+        {
+            var categoria = SituacoesPendentes.Contains(r.SituacaoAcompanhamento) ? "Pendente" : "Finalizadas";
+            var corresponde = SituacoesSelecionadas.Contains(categoria) ||
+                               SituacoesSelecionadas.Contains(r.SituacaoAcompanhamento);
+            if (!corresponde) return false;
+        }
         if (RamosSelecionados.Count > 0 && !RamosSelecionados.Contains(r.Ramo ?? string.Empty)) return false;
 
         if (SomenteComProdutor && string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
@@ -400,6 +459,12 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     {
         if (_view == null) { Resumo = string.Empty; return; }
         var itens = _view.Cast<RelatorioRenovacao>().ToList();
+
+        // Alternância de cor por linha, calculada pela posição visível atual (não pelo
+        // AlternationIndex do DataGrid, que reinicia a cada grupo).
+        for (int i = 0; i < itens.Count; i++)
+            itens[i].LinhaAlternada = i % 2 == 1;
+
         var realizadas = itens.Count(r => r.RenovacaoRealizada);
         var aRenovar = itens.Count(r => r.SituacaoAcompanhamento == "À Renovar");
         var total = itens.Sum(r => r.PremioTotal);
@@ -448,10 +513,12 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
     {
         if (reg == null) return;
         reg.SeguroEmitido = !reg.SeguroEmitido;
+        reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
         try { await _service.SalvarStatusAdministrativoAsync(reg); }
         catch (Exception ex)
         {
             reg.SeguroEmitido = !reg.SeguroEmitido; // reverte
+            reg.EmitidoPor    = reg.SeguroEmitido ? _sessao.NomeUsuario : null;
             MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }

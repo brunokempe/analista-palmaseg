@@ -89,7 +89,6 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
         _renovacaoService  = renovacaoService;
         _referenciaService = referenciaService;
         _sessao            = sessao;
-        _filtroProdutorSelecionado = _sessao.NomeUsuario;
     }
 
     partial void OnFiltroMesChanged(int value) => Computar();
@@ -107,10 +106,27 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
         try
         {
             _cache = await _renovacaoService.GetTodosAsync();
+            DefinirMesAnoParaUltimoImportado();
             await CarregarReferenciaAsync();
             Computar();
         }
         finally { IsLoading = false; }
+    }
+
+    // Abre sempre no mês/ano de vencimento mais recente entre os dados importados.
+    private void DefinirMesAnoParaUltimoImportado()
+    {
+        var meses = _cache
+            .Where(r => r.VigenciaFinal.HasValue)
+            .Select(r => new { r.VigenciaFinal!.Value.Year, r.VigenciaFinal!.Value.Month })
+            .Distinct()
+            .OrderBy(m => m.Year).ThenBy(m => m.Month)
+            .ToList();
+        if (meses.Count == 0) return;
+
+        var ultimo = meses[^1];
+        FiltroAno = ultimo.Year;
+        FiltroMes = ultimo.Month;
     }
 
     private async Task CarregarReferenciaAsync()
@@ -129,20 +145,24 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
         _computing = true;
         try
         {
-            // Apenas registros com NovoProdutor definido, filtrados por ano/mês
+            // Filtra apenas por ano/mês; produtor (incluindo vazio e Cancelado) é tratado abaixo
             var base_ = _cache.Where(r =>
             {
                 if (!r.VigenciaFinal.HasValue) return false;
-                if (string.IsNullOrWhiteSpace(r.NovoProdutor)) return false;
-                if (r.NovoProdutor == "Cancelado") return false;
                 if (FiltroAno > 0 && r.VigenciaFinal.Value.Year  != FiltroAno) return false;
                 if (FiltroMes > 0 && r.VigenciaFinal.Value.Month != FiltroMes) return false;
                 return true;
             }).ToList();
 
+            string ProdutorEfetivo(RelatorioRenovacao r) =>
+                string.IsNullOrWhiteSpace(r.NovoProdutor) ? "Sem produtor definido" : r.NovoProdutor!;
+
             // Atualiza lista de produtores disponíveis
+            // "Sem produtor definido" e "Cancelado" ficam sempre disponíveis no filtro,
+            // mesmo sem registros no período selecionado.
             var produtores = base_
-                .Select(r => r.NovoProdutor!)
+                .Select(ProdutorEfetivo)
+                .Concat(["Sem produtor definido", "Cancelado"])
                 .Distinct()
                 .OrderBy(p => p)
                 .ToList();
@@ -156,14 +176,14 @@ public partial class DistribuicaoProdutorViewModel : ObservableObject
             // Aplica filtro por produtor
             var filtrados = FiltroProdutorSelecionado == "(Todos)"
                 ? base_
-                : base_.Where(r => r.NovoProdutor == FiltroProdutorSelecionado).ToList();
+                : base_.Where(r => ProdutorEfetivo(r) == FiltroProdutorSelecionado).ToList();
 
             TotalPremioLiquido = filtrados.Sum(r => r.PremioLiquido);
             TotalComissao      = filtrados.Sum(r => r.ComissaoGerada);
             TotalApolices      = filtrados.Count;
 
             PorProdutor = filtrados
-                .GroupBy(r => r.NovoProdutor!)
+                .GroupBy(ProdutorEfetivo)
                 .Select(g =>
                 {
                     var ramos = g.Where(r => !string.IsNullOrWhiteSpace(r.Ramo))

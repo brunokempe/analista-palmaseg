@@ -83,8 +83,8 @@ public partial class SeguroNovosViewModel : ObservableObject
 
     private static string ObterPastaAnexos(int id) =>
         Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AnalistaPalmaseg", "AnexosSeguroNovos", id.ToString());
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Anexos", "SeguroNovos", id.ToString());
 
     public SeguroNovosViewModel(SeguroNovoService service, SessaoService sessao, UsuarioService usuarios)
     {
