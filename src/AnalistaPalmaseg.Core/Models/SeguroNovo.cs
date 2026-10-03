@@ -17,6 +17,7 @@ public class SeguroNovo : INotifyPropertyChanged
     public decimal? Pl { get; set; }
     public decimal? Fator { get; set; }
     public decimal? Valor { get; set; }
+    public decimal? PremioTotal { get; set; }
     public string FormaPagamento { get; set; } = string.Empty;
     public int? Parcelas { get; set; }
 
@@ -35,6 +36,7 @@ public class SeguroNovo : INotifyPropertyChanged
     }
 
     public int BoletosGerados { get; set; }
+    public string? ObservacaoBoletos { get; set; }
     public string Observacao { get; set; } = string.Empty;
     public DateTime CriadoEm { get; set; } = DateTime.Now;
     public string? CriadoPor { get; set; }

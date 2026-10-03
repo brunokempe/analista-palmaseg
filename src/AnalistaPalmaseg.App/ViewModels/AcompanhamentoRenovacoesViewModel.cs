@@ -113,6 +113,7 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                     if (!string.IsNullOrWhiteSpace(cliente.Nome))
                         r.NomeCliente = cliente.Nome;
                     r.ClienteHistorico = cliente.Historico;
+                    r.ClienteObservacoes = cliente.Observacoes;
                 }
             }
 
@@ -285,6 +286,8 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
                 {
                     reg.FechamentoSeguradora = null;
                     reg.FechamentoPremioLiquido = null;
+                    reg.FechamentoPremioTotal = null;
+                    reg.FechamentoObservacao = null;
                     reg.FechamentoFormaPagamento = null;
                     reg.FechamentoComissao = null;
                     reg.FechamentoParcelamento = null;

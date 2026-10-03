@@ -8,19 +8,334 @@
 
     <UserControl.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <!-- Card/linha clicável sem o visual padrão de botão -->
+        <Style x:Key="CardButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#FFFAFA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        </Style>
+
+        <Style x:Key="KpiLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="KpiHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+        </Style>
+
+        <Style x:Key="PanelBorder" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLightBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+
+        <!-- Lista de alertas (renovações / pendências) -->
+        <DataTemplate x:Key="AlertaTemplate">
+            <Button Style="{StaticResource CardButton}" Margin="0,0,0,6" Padding="12,9"
+                    Command="{Binding DataContext.NavegarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding Destino}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{Binding Cor}" CornerRadius="2" Margin="0,0,10,0"/>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding Titulo}" FontWeight="SemiBold" FontSize="13"
+                                   Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Detalhe}" FontSize="11.5"
+                                   Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding Prazo}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{Binding Cor}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                </Grid>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:Key="SituacaoTemplate">
+            <Grid Margin="0,0,0,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <TextBlock Text="{Binding Nome}" FontSize="12.5" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding Quantidade}" FontSize="12.5" FontWeight="SemiBold"
+                               HorizontalAlignment="Right" Foreground="{StaticResource TextPrimaryBrush}"/>
+                </Grid>
+                <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding Percentual, Mode=OneWay}"
+                             Height="8" Margin="0,4,0,0" Foreground="{Binding Cor}"
+                             Background="#EEF0F3" BorderThickness="0"/>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
-    <Border Background="White">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock FontSize="22" FontWeight="SemiBold"
-                       Foreground="{StaticResource SidebarBgDarkBrush}"
-                       HorizontalAlignment="Center" Margin="0,0,0,4">
-                <Run Text="Bem-vindo(a)," />
-                <Run Text="{Binding NomeUsuario, Mode=OneWay}" FontWeight="Bold" />
-            </TextBlock>
-            <TextBlock Text="Selecione uma seção no menu lateral para começar."
-                       FontSize="13" Foreground="{StaticResource SidebarBgDarkBrush}"
-                       HorizontalAlignment="Center" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,24,28,28" MaxWidth="1400" HorizontalAlignment="Stretch">
+
+            <!-- Cabeçalho -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource SidebarBgDarkBrush}">
+                        <Run Text="Bem-vindo(a),"/>
+                        <Run Text="{Binding NomeUsuario, Mode=OneWay}" FontWeight="Bold"/>
+                    </TextBlock>
+                    <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0">
+                        <Run Text="{Binding DataHoje, Mode=OneWay}"/>
+                        <Run Text=" · "/>
+                        <Run Text="{Binding EscopoTexto, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="Produtor:" VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <ComboBox ItemsSource="{Binding ProdutoresDisponiveis}"
+                              SelectedItem="{Binding ProdutorSelecionado}" MinWidth="180"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Indicadores principais (clicáveis) -->
+            <UniformGrid Columns="4" Margin="0,0,0,20">
+                <Button Style="{StaticResource CardButton}" Margin="0,0,12,0" Padding="18,16"
+                        Command="{Binding NavegarCommand}" CommandParameter="AcompanhamentoRenovacoes">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AlertCircleOutline" Width="20" Height="20"
+                                                     Foreground="{StaticResource DangerBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Renovações vencidas" Style="{StaticResource KpiLabel}"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding RenovacoesVencidas}" FontSize="36" FontWeight="Bold" Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RenovacoesVencidas}" Value="0">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="Cliente sem cobertura — ver renovações ›" Style="{StaticResource KpiHint}"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Margin="0,0,12,0" Padding="18,16"
+                        Command="{Binding NavegarCommand}" CommandParameter="AcompanhamentoRenovacoes">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="CalendarClock" Width="20" Height="20"
+                                                     Foreground="#F59E0B" VerticalAlignment="Center"/>
+                            <TextBlock Text="Vencem em até 7 dias" Style="{StaticResource KpiLabel}"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding RenovacoesProximas}" FontSize="36" FontWeight="Bold" Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#F59E0B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RenovacoesProximas}" Value="0">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource KpiHint}">
+                            <Run Text="{Binding RenovacoesHoje, Mode=OneWay}"/>
+                            <Run Text="vencem hoje ›"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Margin="0,0,12,0" Padding="18,16"
+                        Command="{Binding NavegarCommand}" CommandParameter="EmissaoDashboard">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="DrawPen" Width="20" Height="20"
+                                                     Foreground="{StaticResource AccentBlueBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Assinaturas pendentes" Style="{StaticResource KpiLabel}"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding AssinaturasPendentes}" FontSize="36" FontWeight="Bold" Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AssinaturasPendentes}" Value="0">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="Renovações e seguros novos ›" Style="{StaticResource KpiHint}"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Padding="18,16"
+                        Command="{Binding NavegarCommand}" CommandParameter="EmissaoDashboard">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileClockOutline" Width="20" Height="20"
+                                                     Foreground="{StaticResource AccentTealBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Emissões pendentes" Style="{StaticResource KpiLabel}"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding EmissoesPendentes}" FontSize="36" FontWeight="Bold" Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentTealBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EmissoesPendentes}" Value="0">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="Aguardando emissão na seguradora ›" Style="{StaticResource KpiHint}"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <!-- Listas de ação -->
+            <UniformGrid Columns="2" Margin="0,0,0,20">
+                <Border Style="{StaticResource PanelBorder}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="Renovações que precisam de atenção" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="Vencidas ou vencendo nos próximos 7 dias, ainda sem encaminhamento"
+                                   FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,12"/>
+                        <ItemsControl ItemsSource="{Binding RenovacoesEmAtencao}"
+                                      ItemTemplate="{StaticResource AlertaTemplate}"/>
+                        <TextBlock Text="Nenhuma renovação urgente. Tudo em dia!" FontSize="13"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,8"
+                                   Visibility="{Binding SemRenovacoesEmAtencao, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <Button Content="Ver todas as renovações ›" Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Left" Margin="-8,6,0,0"
+                                Command="{Binding NavegarCommand}" CommandParameter="AcompanhamentoRenovacoes"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource PanelBorder}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Assinaturas e emissões pendentes" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock Text="Renovações fechadas (Ren. Palma) e seguros novos"
+                                   FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,12"/>
+                        <ItemsControl ItemsSource="{Binding PendenciasEmissao}"
+                                      ItemTemplate="{StaticResource AlertaTemplate}"/>
+                        <TextBlock Text="Nenhuma pendência de assinatura ou emissão." FontSize="13"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,8"
+                                   Visibility="{Binding SemPendenciasEmissao, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        <Button Content="Abrir dashboard de emissões ›" Style="{StaticResource MaterialDesignFlatButton}"
+                                HorizontalAlignment="Left" Margin="-8,6,0,0"
+                                Command="{Binding NavegarCommand}" CommandParameter="EmissaoDashboard"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Visão geral -->
+            <UniformGrid Columns="2">
+                <Border Style="{StaticResource PanelBorder}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="Situação das renovações" Style="{StaticResource SectionTitle}" Margin="0,0,0,14"/>
+                        <ItemsControl ItemsSource="{Binding Situacoes}" ItemTemplate="{StaticResource SituacaoTemplate}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource PanelBorder}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitle}" Margin="0,0,0,14">
+                            <Run Text="Resumo de"/>
+                            <Run Text="{Binding MesNome, Mode=OneWay}"/>
+                        </TextBlock>
+
+                        <Grid>
+                            <TextBlock Text="Taxa de renovação do mês" FontSize="12.5"
+                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock HorizontalAlignment="Right" FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}">
+                                <Run Text="{Binding MesRenovadas, Mode=OneWay}"/>
+                                <Run Text="de"/>
+                                <Run Text="{Binding MesTotal, Mode=OneWay}"/>
+                                <Run Text="("/><Run Text="{Binding MesTaxaRenovacao, Mode=OneWay, StringFormat={}{0:F0}%}"/><Run Text=")"/>
+                            </TextBlock>
+                        </Grid>
+                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding MesTaxaRenovacao, Mode=OneWay}"
+                                     Height="10" Margin="0,4,0,18" Foreground="{StaticResource SuccessBrush}"
+                                     Background="#EEF0F3" BorderThickness="0"/>
+
+                        <UniformGrid Columns="3">
+                            <Button Style="{StaticResource CardButton}" Margin="0,0,8,0" Padding="12,10"
+                                    Command="{Binding NavegarCommand}" CommandParameter="AcompanhamentoRenovacoes">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding RenovacoesEmTratativa}" FontSize="24" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Renovações em tratativa" Style="{StaticResource KpiLabel}" FontSize="11.5"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource CardButton}" Margin="0,0,8,0" Padding="12,10"
+                                    Command="{Binding NavegarCommand}" CommandParameter="SeguroNovos">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SegurosNovosMes}" FontSize="24" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Seguros novos no mês" Style="{StaticResource KpiLabel}" FontSize="11.5"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource CardButton}" Padding="12,10"
+                                    Command="{Binding NavegarCommand}" CommandParameter="Leads">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding CotacoesEmAberto}" FontSize="24" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Cotações em aberto" Style="{StaticResource KpiLabel}" FontSize="11.5"/>
+                                </StackPanel>
+                            </Button>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
         </StackPanel>
-    </Border>
+    </ScrollViewer>
 </UserControl>

@@ -3,6 +3,7 @@ using System;
 using AnalistaPalmaseg.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AnalistaPalmaseg.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261004120000_AddPremioTotal")]
+    partial class AddPremioTotal
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -704,9 +707,6 @@ namespace AnalistaPalmaseg.Core.Migrations
 
                     b.Property<decimal?>("FechamentoComissao")
                         .HasColumnType("numeric(18,2)");
-
-                    b.Property<string>("FechamentoObservacao")
-                        .HasColumnType("text");
 
                     b.Property<string>("FechamentoFormaPagamento")
                         .HasColumnType("text");

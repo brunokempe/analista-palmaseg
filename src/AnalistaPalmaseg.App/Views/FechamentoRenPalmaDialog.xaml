@@ -81,17 +81,28 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="110" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Prêmio Líquido (R$)" Style="{StaticResource FieldLabel}" />
                     <TextBox x:Name="PremioTextBox"
+                             TextChanged="PremioTextBox_TextChanged" PreviewTextInput="Valor_PreviewTextInput"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Height="46" FontSize="13" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2">
+                    <TextBlock x:Name="PremioTotalLabel" Text="Prêmio Total (R$)" Style="{StaticResource FieldLabel}" />
+                    <TextBox x:Name="PremioTotalTextBox"
+                             TextChanged="PremioTotalTextBox_TextChanged" PreviewTextInput="Valor_PreviewTextInput"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Height="46" FontSize="13" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="4">
                     <TextBlock Text="Comissão (%)" Style="{StaticResource FieldLabel}" />
                     <TextBox x:Name="ComissaoTextBox"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
@@ -144,6 +155,15 @@
                     </ComboBox>
                 </StackPanel>
             </Grid>
+
+            <!-- Observações gerais -->
+            <TextBlock Text="Observações" Style="{StaticResource FieldLabel}" />
+            <TextBox x:Name="ObservacaoTextBox"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     AcceptsReturn="True" TextWrapping="Wrap"
+                     MinHeight="70" MaxHeight="140" FontSize="13"
+                     VerticalScrollBarVisibility="Auto"
+                     Margin="0,0,0,12" />
 
             <!-- Assinatura -->
             <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4"

@@ -212,6 +212,23 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
+                <!-- Observações -->
+                <DataGridTemplateColumn Header="Observações" Width="2*" MinWidth="200"
+                                        SortMemberPath="Observacao">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Observacao, UpdateSourceTrigger=LostFocus}"
+                                     LostFocus="Observacao_LostFocus"
+                                     materialDesign:HintAssist.Hint="Anotar observação..."
+                                     materialDesign:TextFieldAssist.CharacterCounterVisibility="Collapsed"
+                                     BorderThickness="0"
+                                     VerticalAlignment="Center" Margin="4,0"
+                                     TextWrapping="NoWrap" MaxLength="500"
+                                     ToolTip="{Binding Observacao}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
             </DataGrid.Columns>
         </DataGrid>
 

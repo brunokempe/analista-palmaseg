@@ -93,7 +93,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 nameof(RelatorioRenovacao.PremioCusto), nameof(RelatorioRenovacao.Iof),
                 nameof(RelatorioRenovacao.ValorParcelas), nameof(RelatorioRenovacao.FranquiaApolice),
                 nameof(RelatorioRenovacao.ValorDeterminado), nameof(RelatorioRenovacao.PercentualComissaoMinimo),
-                nameof(RelatorioRenovacao.FechamentoPremioLiquido), nameof(RelatorioRenovacao.FechamentoComissao),
+                nameof(RelatorioRenovacao.FechamentoPremioLiquido), nameof(RelatorioRenovacao.FechamentoPremioTotal), nameof(RelatorioRenovacao.FechamentoComissao),
                 nameof(RelatorioRenovacao.DanosMateriasPremio), nameof(RelatorioRenovacao.DanosMaterialLmi),
                 nameof(RelatorioRenovacao.DanosMaterialFranquia), nameof(RelatorioRenovacao.DanosMoraisPremio),
                 nameof(RelatorioRenovacao.DanosMoraisLmi), nameof(RelatorioRenovacao.DanosMoraisFranquia),
@@ -114,6 +114,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Pl).HasColumnType("decimal(18,2)");
             e.Property(x => x.Fator).HasColumnType("decimal(18,2)");
             e.Property(x => x.Valor).HasColumnType("decimal(18,2)");
+            e.Property(x => x.PremioTotal).HasColumnType("decimal(18,2)");
         });
 
         modelBuilder.Entity<MetaSeguradora>(e =>

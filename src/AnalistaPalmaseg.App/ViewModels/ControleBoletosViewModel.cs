@@ -25,6 +25,9 @@ public partial class ItemControleBoleto : ObservableObject
 
     public string Progresso => $"{BoletosGerados}/{Parcelas}";
     public bool Completo => Parcelas > 0 && BoletosGerados >= Parcelas;
+    [ObservableProperty]
+    private string _observacao = string.Empty;
+
     public string TipoLabel => Tipo == TipoOrigem.SeguroNovo ? "NOVO" : "RENOV.";
 }
 
@@ -71,6 +74,7 @@ public partial class ControleBoletosViewModel : ObservableObject
                     Produtor   = s.CriadoPor ?? string.Empty,
                     Parcelas   = parcelas,
                     BoletosGerados = s.BoletosGerados,
+                    Observacao = s.ObservacaoBoletos ?? string.Empty,
                 });
             }
 
@@ -91,6 +95,7 @@ public partial class ControleBoletosViewModel : ObservableObject
                     Produtor   = r.NovoProdutor ?? string.Empty,
                     Parcelas   = parcelas,
                     BoletosGerados = r.BoletosGerados,
+                    Observacao = r.ObservacaoBoletos ?? string.Empty,
                 });
             }
 
@@ -142,6 +147,25 @@ public partial class ControleBoletosViewModel : ObservableObject
         catch (Exception ex)
         {
             MessageBox.Show($"Erro ao salvar:\n{ex.Message}", "Erro",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task SalvarObservacao(ItemControleBoleto? item)
+    {
+        if (item == null) return;
+        try
+        {
+            var texto = string.IsNullOrWhiteSpace(item.Observacao) ? null : item.Observacao.Trim();
+            if (item.Tipo == TipoOrigem.SeguroNovo)
+                await _seguroNovoService.SalvarObservacaoBoletosAsync(item.Id, texto);
+            else
+                await _renovacaoService.SalvarObservacaoBoletosAsync(item.Id, texto);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao salvar observação:\n{ex.Message}", "Erro",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }

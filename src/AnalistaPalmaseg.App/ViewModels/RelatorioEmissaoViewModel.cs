@@ -82,10 +82,10 @@ public partial class RelatorioEmissaoViewModel : ObservableObject
 
         // seguros novos no ano selecionado
         var novLinhas = novos
-            .Where(s => !string.IsNullOrWhiteSpace(s.CriadoPor))
+            .Where(s => s.SeguroEmitido && !string.IsNullOrWhiteSpace(s.EmitidoPor))
             .Where(s => (s.Vigencia?.Year ?? s.CriadoEm.Year) == AnoSelecionado)
             .GroupBy(s => (
-                Produtor: s.CriadoPor!,
+                Produtor: s.EmitidoPor!,
                 Mes: new DateTime((s.Vigencia ?? s.CriadoEm).Year,
                                   (s.Vigencia ?? s.CriadoEm).Month, 1)))
             .Select(g => (g.Key.Produtor, g.Key.Mes,

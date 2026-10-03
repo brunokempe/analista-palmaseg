@@ -3,6 +3,7 @@ using System;
 using AnalistaPalmaseg.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AnalistaPalmaseg.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261003184500_AddObservacaoBoletos")]
+    partial class AddObservacaoBoletos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -705,9 +708,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                     b.Property<decimal?>("FechamentoComissao")
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<string>("FechamentoObservacao")
-                        .HasColumnType("text");
-
                     b.Property<string>("FechamentoFormaPagamento")
                         .HasColumnType("text");
 
@@ -715,9 +715,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal?>("FechamentoPremioLiquido")
-                        .HasColumnType("numeric(18,2)");
-
-                    b.Property<decimal?>("FechamentoPremioTotal")
                         .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("FechamentoSeguradora")
@@ -1062,9 +1059,6 @@ namespace AnalistaPalmaseg.Core.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("Pl")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("PremioTotal")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Segmento")

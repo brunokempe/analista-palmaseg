@@ -13,6 +13,7 @@
     <conv:BoolToCheckKindConverter x:Key="BoolToCheckKindConverter" />
     <conv:MesFormatConverter x:Key="MesFormatConverter" />
     <conv:SeguradoraAbrevConverter x:Key="SeguradoraAbrevConverter" />
+    <conv:RamoAbrevConverter x:Key="RamoAbrevConverter" />
     <conv:BoolToStarKindConverter x:Key="BoolToStarKindConverter" />
     <conv:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter" />
 </ResourceDictionary>

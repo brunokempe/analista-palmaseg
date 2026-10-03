@@ -198,6 +198,11 @@ public partial class MainViewModel : ObservableObject
             _ = AbrirCadastroClienteAsync(m.DocumentoPrincipal);
         });
 
+        WeakReferenceMessenger.Default.Register<NavegarMenuMessage>(this, (_, m) =>
+        {
+            _ = NavFavoritoAsync(m.Chave);
+        });
+
         _currentView = inicioVm;
 
         _menuItems = new Dictionary<string, (string, string, Func<Task>)>
@@ -286,7 +291,13 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] private void ToggleComparativo()  => IsComparativoExpanded  = !IsComparativoExpanded;
 
     // ── Navegação ──────────────────────────────────────────────
-    [RelayCommand] private void NavInicio()           { CurrentView = InicioVm;           TituloAtivo = "Início"; }
+    [RelayCommand]
+    private void NavInicio()
+    {
+        CurrentView = InicioVm;
+        TituloAtivo = "Início";
+        _ = InicioVm.CarregarAsync(); // reflete alterações feitas nas outras telas
+    }
     [RelayCommand] private void NavDashboard()        { CurrentView = DashboardVm;         TituloAtivo = "Dashboard"; }
     [RelayCommand] private void NavRenovacoes()       { CurrentView = RenovacoesVm;        TituloAtivo = "Renovações"; }
     [RelayCommand] private void NavNovosNegocios()    { CurrentView = NovosNegociosVm;     TituloAtivo = "Novos negócios"; }
