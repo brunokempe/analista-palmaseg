@@ -190,6 +190,40 @@ public class SeguradoraAbrevConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
 
+public class RamoAbrevConverter : IValueConverter
+{
+    // Abreviações por trecho do nome (comparação sem acento/caixa); ordem importa.
+    private static readonly (string Trecho, string Abrev)[] _mapa =
+    [
+        ("automovel", "Auto"),
+        ("auto", "Auto"),
+        ("residencial", "Resid."),
+        ("empresarial", "Empres."),
+        ("condominio", "Condom."),
+        ("equipamento", "Equip."),
+        ("responsabilidade civil", "RC"),
+        ("transporte", "Transp."),
+        ("vida", "Vida"),
+        ("saude", "Saúde"),
+        ("rural", "Rural"),
+        ("patrimonial", "Patrim."),
+        ("maquina", "Máq."),
+    ];
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string s || string.IsNullOrWhiteSpace(s)) return value ?? string.Empty;
+        var norm = new string(s.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray()).ToLowerInvariant();
+        foreach (var (trecho, abrev) in _mapa)
+            if (norm.Contains(trecho)) return abrev;
+        return s.Length > 8 ? s[..7] + "." : s;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+}
+
 public class StringEqualsToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

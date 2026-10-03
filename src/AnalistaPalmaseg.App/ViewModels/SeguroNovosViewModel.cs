@@ -16,9 +16,11 @@ public partial class SeguroNovosViewModel : ObservableObject
     private readonly SeguroNovoService _service;
     private readonly SessaoService _sessao;
     private readonly UsuarioService _usuarios;
+    private readonly ClienteService _clientes;
     private string? _criadoPorOriginal;
     private ObservableCollection<SeguroNovo> _colecao = [];
     private ListCollectionView? _view;
+    private List<Cliente> _clientesCadastrados = [];
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private SeguroNovo? _registroSelecionado;
@@ -38,16 +40,54 @@ public partial class SeguroNovosViewModel : ObservableObject
     [ObservableProperty] private decimal? _editandoPl;
     [ObservableProperty] private decimal? _editandoFator;
     [ObservableProperty] private decimal? _editandoValor;
+    [ObservableProperty] private decimal? _editandoPremioTotal;
     [ObservableProperty] private string _editandoFormaPagamento = string.Empty;
     [ObservableProperty] private int? _editandoParcelas;
     [ObservableProperty] private bool _editandoAssinaturaFeita;
     [ObservableProperty] private string _editandoObservacao = string.Empty;
+
+    private bool _atualizandoPremio;
+
+    // PL informado: PT é somente leitura (PL + IOF). PL zerado: PT editável e calcula o PL.
+    public bool PremioTotalEditavel => EditandoValor is not > 0;
+    public bool PremioTotalSomenteLeitura => !PremioTotalEditavel;
+    public decimal AliquotaIof => IofHelper.ObterAliquota(EditandoSegmento);
+    public string PremioTotalLabel => $"PT c/ IOF {AliquotaIof:0.##}% (R$)";
+
+    partial void OnEditandoValorChanged(decimal? value)
+    {
+        OnPropertyChanged(nameof(PremioTotalEditavel)); OnPropertyChanged(nameof(PremioTotalSomenteLeitura));
+        if (_atualizandoPremio) return;
+        _atualizandoPremio = true;
+        EditandoPremioTotal = value is > 0 ? IofHelper.PlParaPt(value.Value, AliquotaIof) : null;
+        _atualizandoPremio = false;
+    }
+
+    partial void OnEditandoPremioTotalChanged(decimal? value)
+    {
+        if (_atualizandoPremio || !PremioTotalEditavel) return;
+        _atualizandoPremio = true;
+        EditandoValor = value is > 0 ? IofHelper.PtParaPl(value.Value, AliquotaIof) : null;
+        _atualizandoPremio = false;
+        OnPropertyChanged(nameof(PremioTotalEditavel)); OnPropertyChanged(nameof(PremioTotalSomenteLeitura));
+    }
+
+    partial void OnEditandoSegmentoChanged(string value)
+    {
+        OnPropertyChanged(nameof(AliquotaIof));
+        OnPropertyChanged(nameof(PremioTotalLabel));
+        if (_atualizandoPremio || EditandoValor is not > 0) return;
+        _atualizandoPremio = true;
+        EditandoPremioTotal = IofHelper.PlParaPt(EditandoValor!.Value, AliquotaIof);
+        _atualizandoPremio = false;
+    }
 
     public bool IsAdmin => _sessao.IsAdmin;
     public bool TemRegistroSelecionado => EditandoId != 0;
 
     public ObservableCollection<string> ProdutoresDisponiveis { get; } = [];
     public ObservableCollection<string> ListaProdutores { get; } = [];
+    public ObservableCollection<string> NomesClientesDisponiveis { get; } = [];
 
     public static string[] Segmentos { get; } =
     [
@@ -86,11 +126,12 @@ public partial class SeguroNovosViewModel : ObservableObject
             AppDomain.CurrentDomain.BaseDirectory,
             "Anexos", "SeguroNovos", id.ToString());
 
-    public SeguroNovosViewModel(SeguroNovoService service, SessaoService sessao, UsuarioService usuarios)
+    public SeguroNovosViewModel(SeguroNovoService service, SessaoService sessao, UsuarioService usuarios, ClienteService clientes)
     {
         _service = service;
         _sessao = sessao;
         _usuarios = usuarios;
+        _clientes = clientes;
         _editandoProdutor = _sessao.NomeUsuario;
         _filtroProdutor = _sessao.NomeUsuario;
     }
@@ -115,6 +156,7 @@ public partial class SeguroNovosViewModel : ObservableObject
         EditandoPl           = r.Pl;
         EditandoFator        = r.Fator;
         EditandoValor        = r.Valor;
+        EditandoPremioTotal  = r.PremioTotal;
         EditandoFormaPagamento = r.FormaPagamento;
         EditandoParcelas     = r.Parcelas;
         EditandoAssinaturaFeita = r.AssinaturaFeita;
@@ -138,6 +180,7 @@ public partial class SeguroNovosViewModel : ObservableObject
         EditandoPl           = null;
         EditandoFator        = null;
         EditandoValor        = null;
+        EditandoPremioTotal  = null;
         EditandoFormaPagamento = string.Empty;
         EditandoParcelas     = null;
         EditandoAssinaturaFeita = false;
@@ -165,6 +208,8 @@ public partial class SeguroNovosViewModel : ObservableObject
             foreach (var u in usuarios.Where(u => u.Ativo).OrderBy(u => u.Login))
                 ListaProdutores.Add(u.Login);
 
+            await CarregarClientesAsync();
+
             _colecao = new ObservableCollection<SeguroNovo>(lista);
             _view = (ListCollectionView)CollectionViewSource.GetDefaultView(_colecao);
             _view.Filter = FiltroItem;
@@ -172,6 +217,17 @@ public partial class SeguroNovosViewModel : ObservableObject
         }
         finally { IsLoading = false; }
     }
+
+    private async Task CarregarClientesAsync()
+    {
+        _clientesCadastrados = await _clientes.GetTodosAsync();
+        NomesClientesDisponiveis.Clear();
+        foreach (var c in _clientesCadastrados) NomesClientesDisponiveis.Add(c.Nome);
+    }
+
+    private Cliente? BuscarClienteCadastrado(string nome) =>
+        _clientesCadastrados.FirstOrDefault(c =>
+            string.Equals(c.Nome?.Trim(), nome.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private bool FiltroItem(object obj)
     {
@@ -207,12 +263,38 @@ public partial class SeguroNovosViewModel : ObservableObject
     private void Novo() => LimparFormulario();
 
     [RelayCommand]
+    private async Task SelecionarClienteAsync() => await AbrirSeletorClienteAsync(EditandoSegurado);
+
+    private async Task AbrirSeletorClienteAsync(string buscaInicial)
+    {
+        var dialog = new AnalistaPalmaseg.App.Views.ClienteSelectorDialog(_clientes, buscaInicial)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dialog.ShowDialog() != true || dialog.ClienteSelecionado == null) return;
+
+        if (!_clientesCadastrados.Any(c => c.Id == dialog.ClienteSelecionado.Id))
+            await CarregarClientesAsync();
+
+        EditandoSegurado = dialog.ClienteSelecionado.Nome;
+    }
+
+    [RelayCommand]
     private async Task SalvarAsync()
     {
         if (string.IsNullOrWhiteSpace(EditandoSegurado))
         {
             MessageBox.Show("Informe o nome do segurado.", "Campo obrigatório",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (BuscarClienteCadastrado(EditandoSegurado) == null)
+        {
+            MessageBox.Show(
+                "Esse cliente ainda não está cadastrado. Selecione um cliente existente ou cadastre um novo na tela de pesquisa.",
+                "Cliente não encontrado", MessageBoxButton.OK, MessageBoxImage.Warning);
+            await AbrirSeletorClienteAsync(EditandoSegurado);
             return;
         }
 
@@ -231,6 +313,7 @@ public partial class SeguroNovosViewModel : ObservableObject
                 Pl              = EditandoPl,
                 Fator           = EditandoFator,
                 Valor           = EditandoValor,
+                PremioTotal     = EditandoPremioTotal,
                 FormaPagamento  = EditandoFormaPagamento,
                 Parcelas        = EditandoParcelas,
                 AssinaturaFeita = EditandoAssinaturaFeita,

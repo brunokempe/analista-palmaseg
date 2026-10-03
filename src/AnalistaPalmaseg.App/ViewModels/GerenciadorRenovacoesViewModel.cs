@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 using Microsoft.Win32;
@@ -535,6 +536,13 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             { UseShellExecute = true });
     }
 
+    [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
+    private void AbrirCadastroCliente()
+    {
+        if (string.IsNullOrWhiteSpace(RegistroSelecionado?.DocumentoPrincipal)) return;
+        WeakReferenceMessenger.Default.Send(new AbrirClienteMessage(RegistroSelecionado.DocumentoPrincipal));
+    }
+
     // ── Seleção em massa ───────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -565,5 +573,6 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         GerarFolhaAmarelaCommand.NotifyCanExecuteChanged();
         AnexarArquivosCommand.NotifyCanExecuteChanged();
         AbrirPastaAnexosCommand.NotifyCanExecuteChanged();
+        AbrirCadastroClienteCommand.NotifyCanExecuteChanged();
     }
 }

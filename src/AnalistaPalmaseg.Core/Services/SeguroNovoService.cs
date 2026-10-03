@@ -53,6 +53,16 @@ public class SeguroNovoService(IDbContextFactory<AppDbContext> contextFactory)
         await context.SaveChangesAsync();
     }
 
+    public async Task SalvarObservacaoBoletosAsync(int id, string? observacao)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+
+        var entidade = await context.SeguroNovos.FindAsync(id);
+        if (entidade == null) return;
+        entidade.ObservacaoBoletos = observacao;
+        await context.SaveChangesAsync();
+    }
+
     public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
     {
         await using var context = await contextFactory.CreateDbContextAsync();

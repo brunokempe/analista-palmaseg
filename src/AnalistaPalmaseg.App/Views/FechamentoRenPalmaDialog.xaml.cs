@@ -2,12 +2,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using AnalistaPalmaseg.Core.Models;
+using AnalistaPalmaseg.Core.Services;
 
 namespace AnalistaPalmaseg.App.Views;
 
 public partial class FechamentoRenPalmaDialog : Window
 {
     private readonly RelatorioRenovacao _reg;
+    private readonly decimal _aliquotaIof;
+    private bool _atualizando;
 
     private record AnexoItem(string Nome, string Caminho, long TamanhoBytes)
     {
@@ -30,7 +33,11 @@ public partial class FechamentoRenPalmaDialog : Window
 
         // Pré-preenche com dados existentes
         SeguradoraCombo.Text = reg.FechamentoSeguradora ?? string.Empty;
+        ObservacaoTextBox.Text = reg.FechamentoObservacao ?? string.Empty;
+        _aliquotaIof = IofHelper.ObterAliquota(reg.Ramo);
+        PremioTotalLabel.Text = $"Prêmio Total c/ IOF {_aliquotaIof:0.##}% (R$)";
         PremioTextBox.Text   = reg.FechamentoPremioLiquido?.ToString("N2") ?? string.Empty;
+        AtualizarPremioTotal();
         ComissaoTextBox.Text = reg.FechamentoComissao?.ToString("N2") ?? string.Empty;
 
         SelecionarComboBoxItem(FormaPagamentoCombo, reg.FechamentoFormaPagamento);
@@ -54,6 +61,59 @@ public partial class FechamentoRenPalmaDialog : Window
                 .Select(a => new AnexoItem(a.NomeArquivo, a.CaminhoArquivo, a.TamanhoBytes))
                 .ToList();
         }
+    }
+
+    // Máscara de valor: só dígitos, preenchidos da direita (centavos) → 1.234,56
+    private void Valor_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e) =>
+        e.Handled = e.Text.Any(c => !char.IsDigit(c));
+
+    /// <summary>Reformata o texto como valor monetário. Retorna true se alterou (o TextChanged será disparado de novo).</summary>
+    private static bool AplicarMascara(System.Windows.Controls.TextBox tb)
+    {
+        var digitos = new string(tb.Text.Where(char.IsDigit).ToArray()).TrimStart('0');
+        var novo = digitos.Length == 0
+            ? string.Empty
+            : (decimal.Parse(digitos, System.Globalization.CultureInfo.InvariantCulture) / 100m)
+                .ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+        if (novo == tb.Text) return false;
+        tb.Text = novo;
+        tb.CaretIndex = novo.Length;
+        return true;
+    }
+
+    private void PremioTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (AplicarMascara(PremioTextBox)) return;
+        if (_atualizando) return;
+        AtualizarPremioTotal();
+    }
+
+    // PL zerado: PT editável e calcula o PL automaticamente.
+    private void PremioTotalTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (!PremioTotalTextBox.IsReadOnly && AplicarMascara(PremioTotalTextBox)) return;
+        if (_atualizando || PremioTotalTextBox.IsReadOnly) return;
+        var pt = ParseDecimal(PremioTotalTextBox.Text);
+        _atualizando = true;
+        PremioTextBox.Text = pt is > 0 ? IofHelper.PtParaPl(pt.Value, _aliquotaIof).ToString("N2") : string.Empty;
+        _atualizando = false;
+    }
+
+    private void AtualizarPremioTotal()
+    {
+        var pl = ParseDecimal(PremioTextBox.Text);
+        _atualizando = true;
+        if (pl is > 0)
+        {
+            PremioTotalTextBox.IsReadOnly = true;
+            PremioTotalTextBox.Text = IofHelper.PlParaPt(pl.Value, _aliquotaIof).ToString("N2");
+        }
+        else
+        {
+            PremioTotalTextBox.IsReadOnly = false;
+            PremioTotalTextBox.Text = string.Empty;
+        }
+        _atualizando = false;
     }
 
     private static void SelecionarComboBoxItem(System.Windows.Controls.ComboBox combo, string? valor)
@@ -90,7 +150,9 @@ public partial class FechamentoRenPalmaDialog : Window
         }
 
         _reg.FechamentoSeguradora    = seguradora;
+        _reg.FechamentoObservacao    = string.IsNullOrWhiteSpace(ObservacaoTextBox.Text) ? null : ObservacaoTextBox.Text.Trim();
         _reg.FechamentoPremioLiquido = ParseDecimal(PremioTextBox.Text);
+        _reg.FechamentoPremioTotal   = ParseDecimal(PremioTotalTextBox.Text);
         _reg.FechamentoComissao      = ParseDecimal(ComissaoTextBox.Text);
 
         _reg.FechamentoFormaPagamento =

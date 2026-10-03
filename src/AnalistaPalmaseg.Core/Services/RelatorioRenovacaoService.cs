@@ -176,7 +176,9 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
                 var observacao               = existing.Observacao;
                 var situacaoAcompanhamento   = existing.SituacaoAcompanhamento;
                 var fechamentoSeguradora     = existing.FechamentoSeguradora;
+                var fechamentoObservacao     = existing.FechamentoObservacao;
                 var fechamentoPremioLiquido  = existing.FechamentoPremioLiquido;
+                var fechamentoPremioTotal    = existing.FechamentoPremioTotal;
                 var fechamentoFormaPagamento = existing.FechamentoFormaPagamento;
                 var fechamentoComissao       = existing.FechamentoComissao;
                 var fechamentoParcelamento   = existing.FechamentoParcelamento;
@@ -197,7 +199,9 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
                 existing.Observacao               = observacao;
                 existing.SituacaoAcompanhamento   = situacaoAcompanhamento;
                 existing.FechamentoSeguradora     = fechamentoSeguradora;
+                existing.FechamentoObservacao     = fechamentoObservacao;
                 existing.FechamentoPremioLiquido  = fechamentoPremioLiquido;
+                existing.FechamentoPremioTotal    = fechamentoPremioTotal;
                 existing.FechamentoFormaPagamento = fechamentoFormaPagamento;
                 existing.FechamentoComissao       = fechamentoComissao;
                 existing.FechamentoParcelamento   = fechamentoParcelamento;
@@ -326,6 +330,14 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
         await context.SaveChangesAsync();
     }
 
+    public async Task SalvarObservacaoBoletosAsync(int id, string? observacao)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        await context.Database.ExecuteSqlRawAsync(
+            "UPDATE \"RelatorioRenovacoes\" SET \"ObservacaoBoletos\" = {0} WHERE \"Id\" = {1}",
+            observacao ?? string.Empty, id);
+    }
+
     public async Task SalvarBoletosGeradosAsync(int id, int boletosGerados)
     {
         await using var context = await contextFactory.CreateDbContextAsync();
@@ -343,7 +355,9 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
 
         entry.Property(x => x.SituacaoAcompanhamento).IsModified   = true;
         entry.Property(x => x.FechamentoSeguradora).IsModified      = true;
+        entry.Property(x => x.FechamentoObservacao).IsModified      = true;
         entry.Property(x => x.FechamentoPremioLiquido).IsModified   = true;
+        entry.Property(x => x.FechamentoPremioTotal).IsModified     = true;
         entry.Property(x => x.FechamentoFormaPagamento).IsModified  = true;
         entry.Property(x => x.FechamentoComissao).IsModified        = true;
         entry.Property(x => x.FechamentoParcelamento).IsModified    = true;
@@ -359,7 +373,9 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
         var entry = context.Entry(reg);
 
         entry.Property(x => x.FechamentoSeguradora).IsModified      = true;
+        entry.Property(x => x.FechamentoObservacao).IsModified      = true;
         entry.Property(x => x.FechamentoPremioLiquido).IsModified   = true;
+        entry.Property(x => x.FechamentoPremioTotal).IsModified     = true;
         entry.Property(x => x.FechamentoFormaPagamento).IsModified  = true;
         entry.Property(x => x.FechamentoComissao).IsModified        = true;
         entry.Property(x => x.FechamentoParcelamento).IsModified    = true;
@@ -389,6 +405,31 @@ public class RelatorioRenovacaoService(IDbContextFactory<AppDbContext> contextFa
             stats.Count(x => x.AssinaturaFeita),
             stats.Count(x => x.SeguroEmitido),
             stats.Sum(x => x.FechamentoPremioLiquido ?? 0));
+    }
+
+    // Projeção enxuta para a tela inicial: só os campos necessários aos indicadores,
+    // restrita às renovações já atribuídas a um produtor (e a ele, quando informado).
+    public async Task<List<RelatorioRenovacao>> GetResumoInicioAsync(string? produtor)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.RelatorioRenovacoes
+            .AsNoTracking()
+            .Where(r => r.NovoProdutor != null && r.NovoProdutor != ""
+                        && (produtor == null || r.NovoProdutor == produtor))
+            .Select(r => new RelatorioRenovacao
+            {
+                Id = r.Id,
+                NomeCliente = r.NomeCliente,
+                Ramo = r.Ramo,
+                Seguradora = r.Seguradora,
+                VigenciaFinal = r.VigenciaFinal,
+                NovoProdutor = r.NovoProdutor,
+                SituacaoAcompanhamento = r.SituacaoAcompanhamento,
+                AssinaturaFeita = r.AssinaturaFeita,
+                SeguroEmitido = r.SeguroEmitido,
+                FechamentoPremioLiquido = r.FechamentoPremioLiquido
+            })
+            .ToListAsync();
     }
 
     public async Task<List<RelatorioRenovacao>> GetRenPalmaAsync()

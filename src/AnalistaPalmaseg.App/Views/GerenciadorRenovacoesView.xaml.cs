@@ -10,6 +10,34 @@ public partial class GerenciadorRenovacoesView : UserControl
     public GerenciadorRenovacoesView()
     {
         InitializeComponent();
+        DataContextChanged += (_, e) =>
+        {
+            if (e.OldValue is GerenciadorRenovacoesViewModel antigo)
+                antigo.PropertyChanged -= Vm_PropertyChanged;
+            if (e.NewValue is GerenciadorRenovacoesViewModel novo)
+            {
+                novo.PropertyChanged += Vm_PropertyChanged;
+                AtualizarColunaDiaSemana(novo);
+            }
+        };
+    }
+
+    private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(GerenciadorRenovacoesViewModel.AgrupamentoSelecionado)
+            && sender is GerenciadorRenovacoesViewModel vm)
+            AtualizarColunaDiaSemana(vm);
+    }
+
+    // Quando agrupado por data de vencimento o dia da semana vai no título do grupo,
+    // então a coluna do grid fica oculta.
+    private void AtualizarColunaDiaSemana(GerenciadorRenovacoesViewModel vm)
+    {
+        var coluna = MainGrid.Columns.FirstOrDefault(c => c.Header as string == "Dia da Semana");
+        if (coluna != null)
+            coluna.Visibility = vm.AgrupamentoSelecionado == "Data de vencimento"
+                ? System.Windows.Visibility.Collapsed
+                : System.Windows.Visibility.Visible;
     }
 
     // Atualiza o resumo quando o usuário marca/desmarca um checkbox
@@ -17,6 +45,13 @@ public partial class GerenciadorRenovacoesView : UserControl
     {
         if (DataContext is GerenciadorRenovacoesViewModel vm)
             vm.NotificarMarcacao();
+    }
+
+    // Seleciona a linha sob o cursor antes de abrir o menu de contexto
+    private void DataGridRow_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is DataGridRow row)
+            row.IsSelected = true;
     }
 
     // Persiste edição de NovoProdutor / Observacao ao sair da linha

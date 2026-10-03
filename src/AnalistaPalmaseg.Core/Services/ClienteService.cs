@@ -54,11 +54,19 @@ public class ClienteService(IDbContextFactory<AppDbContext> contextFactory)
 
     public async Task SincronizarClientesAsync(IEnumerable<RelatorioRenovacao> registros)
     {
-        var validos = registros
+        var agrupados = registros
             .Where(r => !string.IsNullOrWhiteSpace(r.DocumentoPrincipal) && !string.IsNullOrWhiteSpace(r.NomeCliente))
             .GroupBy(r => r.DocumentoPrincipal!)
+            .ToList();
+
+        var validos = agrupados
             .Select(g => g.OrderByDescending(r => r.ImportadoEm).First())
             .ToList();
+
+        // Primeira observação preenchida entre as linhas do mesmo cliente na planilha
+        var observacoes = agrupados.ToDictionary(
+            g => g.Key,
+            g => g.Select(r => r.Observacao).FirstOrDefault(o => !string.IsNullOrWhiteSpace(o))?.Trim());
 
         if (validos.Count == 0) return;
 
@@ -75,14 +83,18 @@ public class ClienteService(IDbContextFactory<AppDbContext> contextFactory)
             var cpf = reg.DocumentoPrincipal!;
             if (existentes.TryGetValue(cpf, out var existente))
             {
-                // Atualiza dados básicos vindos da planilha; preserva Observacoes e Historico
+                // Atualiza dados básicos vindos da planilha; preserva Observacoes e Historico.
+                // O Historico só é preenchido com a observação da planilha (Agger) se estiver em branco.
                 AtualizarDadosDaRenovacao(existente, reg);
+                if (string.IsNullOrWhiteSpace(existente.Historico) && observacoes[cpf] is { } obs)
+                    existente.Historico = obs;
                 existente.AtualizadoEm = agora;
             }
             else
             {
                 var novo = new Cliente { Cpf = cpf, CriadoEm = agora };
                 AtualizarDadosDaRenovacao(novo, reg);
+                novo.Historico = observacoes[cpf];
                 context.Clientes.Add(novo);
             }
         }

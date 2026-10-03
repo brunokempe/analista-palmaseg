@@ -150,7 +150,9 @@ public class RelatorioRenovacao : INotifyPropertyChanged
 
     // Campos de fechamento (preenchidos no popup ao definir Ren. Palma)
     public string? FechamentoSeguradora { get; set; }
+    public string? FechamentoObservacao { get; set; }
     public decimal? FechamentoPremioLiquido { get; set; }
+    public decimal? FechamentoPremioTotal { get; set; }
     public string? FechamentoFormaPagamento { get; set; }
     public decimal? FechamentoComissao { get; set; }
     public string? FechamentoParcelamento { get; set; }
@@ -173,6 +175,7 @@ public class RelatorioRenovacao : INotifyPropertyChanged
 
     public string? EmitidoPor { get; set; }
     public int BoletosGerados { get; set; }
+    public string? ObservacaoBoletos { get; set; }
 
     private string _situacaoAcompanhamento = "À Renovar";
     public string SituacaoAcompanhamento

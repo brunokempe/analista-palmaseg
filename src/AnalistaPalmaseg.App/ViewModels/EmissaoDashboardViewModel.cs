@@ -58,6 +58,24 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     public static string[] StatusSegNovoOpcoes { get; } =
         ["Todos", "Endosso", "Mensal", "Mercado", "Novo", "Prospecção", "Renovação"];
 
+    // ── Filtros de Contratos Ren. Palma ───────────────────────────────────────
+    [ObservableProperty] private string _filtroRenPalmaSegurado = string.Empty;
+    [ObservableProperty] private string _filtroRenPalmaStatus   = "Todos";
+
+    public ObservableCollection<string> StatusRenPalmaOpcoes { get; } = ["Todos"];
+
+    partial void OnFiltroRenPalmaSeguradoChanged(string _)
+    {
+        AplicarFiltro();
+        AtualizarCards();
+    }
+
+    partial void OnFiltroRenPalmaStatusChanged(string _)
+    {
+        AplicarFiltro();
+        AtualizarCards();
+    }
+
     partial void OnFiltroSegNovSeguradoChanged(string _)
     {
         AplicarFiltroSeguroNovos();
@@ -140,6 +158,7 @@ public partial class EmissaoDashboardViewModel : ObservableObject
             AtualizarCards();
             AtualizarResumoProdutor();
             AtualizarListaFiltro();
+            AtualizarStatusRenPalma();
             AplicarFiltro();
             AplicarFiltroSeguroNovos();
         }
@@ -184,6 +203,25 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         }
     }
 
+    private void AtualizarStatusRenPalma()
+    {
+        var atual = FiltroRenPalmaStatus;
+        var status = TodosPeriodo()
+            .Select(r => r.Status)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .Distinct()
+            .OrderBy(s => s)
+            .ToList();
+
+        StatusRenPalmaOpcoes.Clear();
+        StatusRenPalmaOpcoes.Add("Todos");
+        foreach (var s in status)
+            StatusRenPalmaOpcoes.Add(s);
+
+        FiltroRenPalmaStatus = StatusRenPalmaOpcoes.Contains(atual) ? atual : "Todos";
+    }
+
     private void AtualizarListaFiltro()
     {
         var renPalma = TodosPeriodo()
@@ -212,6 +250,13 @@ public partial class EmissaoDashboardViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(FiltroProdutor))
             fonte = fonte.Where(r =>
                 (string.IsNullOrWhiteSpace(r.NovoProdutor) ? "(Sem produtor)" : r.NovoProdutor) == FiltroProdutor);
+
+        if (!string.IsNullOrWhiteSpace(FiltroRenPalmaSegurado))
+            fonte = fonte.Where(r => (r.NomeCliente ?? string.Empty).Contains(
+                FiltroRenPalmaSegurado, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(FiltroRenPalmaStatus) && FiltroRenPalmaStatus != "Todos")
+            fonte = fonte.Where(r => r.Status == FiltroRenPalmaStatus);
 
         if (FiltroData.HasValue)
             fonte = fonte.Where(r =>
