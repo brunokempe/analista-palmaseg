@@ -7,9 +7,30 @@ namespace AnalistaPalmaseg.App.Views;
 
 public partial class GerenciadorRenovacoesView : UserControl
 {
+    private const string ChaveColunas = "gerenciador-renovacoes";
+    private readonly System.Windows.Threading.DispatcherTimer _salvarColunasTimer;
+
     public GerenciadorRenovacoesView()
     {
         InitializeComponent();
+        ColunasGridStore.Restaurar(MainGrid, ChaveColunas);
+
+        // O atraso junta o arraste inteiro em uma única gravação, já com o valor final.
+        _salvarColunasTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        _salvarColunasTimer.Tick += (_, _) =>
+        {
+            _salvarColunasTimer.Stop();
+            ColunasGridStore.Salvar(MainGrid, ChaveColunas);
+        };
+        var larguraProp = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(
+            DataGridColumn.WidthProperty, typeof(DataGridColumn));
+        foreach (var coluna in MainGrid.Columns)
+            larguraProp.AddValueChanged(coluna, (_, _) =>
+            {
+                _salvarColunasTimer.Stop();
+                _salvarColunasTimer.Start();
+            });
+
         DataContextChanged += (_, e) =>
         {
             if (e.OldValue is GerenciadorRenovacoesViewModel antigo)
@@ -73,6 +94,7 @@ public partial class GerenciadorRenovacoesView : UserControl
             "Gerenciador de Renovações",
             e, MainGrid,
             vm.RegistrosView as System.Windows.Data.ListCollectionView,
-            r => r.DocumentoPrincipal ?? string.Empty);
+            vm.ChaveGrupo,
+            vm.AgrupamentoSelecionado == "Cliente" ? null : vm.CompararGrupos);
     }
 }

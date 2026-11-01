@@ -131,6 +131,7 @@
                         <DataGridTextColumn Header="Segurado" Binding="{Binding Segurado}" Width="*" MinWidth="100"/>
                         <DataGridTextColumn Header="Cia" Binding="{Binding Cia}" Width="120"/>
                         <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
+                        <DataGridTextColumn Header="Status do seguro" Binding="{Binding StatusSeguro}" Width="130"/>
                         <DataGridTextColumn Header="Vigência" Width="100">
                             <DataGridTextColumn.Binding>
                                 <Binding Path="Vigencia" StringFormat="dd/MM/yyyy"/>
@@ -373,7 +374,30 @@
                                       VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Linha 7: Observação -->
+                    <!-- Linha 6b: Status do seguro -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Status do seguro" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox SelectedValue="{Binding EditandoStatusSeguro}"
+                                  ItemsSource="{x:Static vm:SeguroNovosViewModel.StatusSeguroOpcoes}"
+                                  materialDesign:HintAssist.Hint="Selecione"
+                                  Style="{StaticResource MaterialDesignComboBox}"
+                                  FontSize="13"/>
+                    </StackPanel>
+
+                    <!-- Linha 7: Origem -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Origem" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding EditandoOrigem, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Origem do seguro..."
+                                 Style="{StaticResource MaterialDesignTextBox}"
+                                 FontSize="13"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="72"
+                                 VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+
+                    <!-- Linha 8: Observação -->
                     <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="Observação" Style="{StaticResource FieldLabel}"/>
                         <TextBox Text="{Binding EditandoObservacao, UpdateSourceTrigger=PropertyChanged}"

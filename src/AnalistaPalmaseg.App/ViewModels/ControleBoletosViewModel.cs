@@ -38,6 +38,11 @@ public partial class ControleBoletosViewModel : ObservableObject
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private bool _apenasPendentes;
+    [ObservableProperty] private string _produtorSelecionado = TodosProdutores;
+    [ObservableProperty] private string _buscaCliente = string.Empty;
+
+    public const string TodosProdutores = "Todos os produtores";
+    public ObservableCollection<string> Produtores { get; } = [TodosProdutores];
 
     public ObservableCollection<ItemControleBoleto> Itens { get; } = [];
     public ObservableCollection<ItemControleBoleto> ItensFiltrados { get; } = [];
@@ -99,6 +104,14 @@ public partial class ControleBoletosViewModel : ObservableObject
                 });
             }
 
+            var atual = ProdutorSelecionado;
+            Produtores.Clear();
+            Produtores.Add(TodosProdutores);
+            foreach (var p in Itens.Select(i => i.Produtor).Where(p => !string.IsNullOrWhiteSpace(p))
+                         .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(p => p))
+                Produtores.Add(p);
+            ProdutorSelecionado = Produtores.Contains(atual) ? atual : TodosProdutores;
+
             AplicarFiltro();
         }
         finally
@@ -108,11 +121,18 @@ public partial class ControleBoletosViewModel : ObservableObject
     }
 
     partial void OnApenasPendentesChanged(bool _) => AplicarFiltro();
+    partial void OnProdutorSelecionadoChanged(string _) => AplicarFiltro();
+    partial void OnBuscaClienteChanged(string _) => AplicarFiltro();
 
     private void AplicarFiltro()
     {
         ItensFiltrados.Clear();
         var fonte = ApenasPendentes ? Itens.Where(i => !i.Completo) : Itens.AsEnumerable();
+        if (!string.IsNullOrEmpty(ProdutorSelecionado) && ProdutorSelecionado != TodosProdutores)
+            fonte = fonte.Where(i => string.Equals(i.Produtor, ProdutorSelecionado, StringComparison.OrdinalIgnoreCase));
+        var busca = BuscaCliente?.Trim();
+        if (!string.IsNullOrEmpty(busca))
+            fonte = fonte.Where(i => i.Segurado.Contains(busca, StringComparison.OrdinalIgnoreCase));
         foreach (var item in fonte.OrderBy(i => i.Vigencia))
             ItensFiltrados.Add(item);
     }

@@ -24,7 +24,8 @@ internal static class RelatorioRenovacaoSortHelper
         DataGridSortingEventArgs e,
         DataGrid grid,
         ListCollectionView? listView,
-        Func<RelatorioRenovacao, string> chaveGrupo)
+        Func<RelatorioRenovacao, string> chaveGrupo,
+        Comparison<RelatorioRenovacao>? ordemFixaDosGrupos = null)
     {
         var column = e.Column;
         var header = column.Header?.ToString() ?? "(sem título)";
@@ -72,27 +73,44 @@ internal static class RelatorioRenovacaoSortHelper
 
         var sw = Stopwatch.StartNew();
         var itens = listView.SourceCollection.Cast<RelatorioRenovacao>().ToList();
-        var menorValorPorGrupo = itens
-            .GroupBy(chaveGrupo)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(r => propriedade.GetValue(r))
-                      .Aggregate((menor, atual) => CompareValores(atual, menor) < 0 ? atual : menor));
+
+        // Valor e chave de grupo de cada registro são lidos uma única vez (reflexão é cara demais
+        // para ficar dentro do comparador, que roda N·log N vezes).
+        var valorPorItem = new Dictionary<RelatorioRenovacao, object?>(itens.Count, ReferenceEqualityComparer.Instance);
+        var chavePorItem = new Dictionary<RelatorioRenovacao, string>(itens.Count, ReferenceEqualityComparer.Instance);
+        var menorValorPorGrupo = new Dictionary<string, object?>();
+        foreach (var r in itens)
+        {
+            var valor = propriedade.GetValue(r);
+            var chave = chaveGrupo(r);
+            valorPorItem[r] = valor;
+            chavePorItem[r] = chave;
+            if (!menorValorPorGrupo.TryGetValue(chave, out var atual) || CompareValores(valor, atual) < 0)
+                menorValorPorGrupo[chave] = valor;
+        }
 
         listView.CustomSort = Comparer<object>.Create((a, b) =>
         {
             var ra = (RelatorioRenovacao)a;
             var rb = (RelatorioRenovacao)b;
-            var chaveA = chaveGrupo(ra);
-            var chaveB = chaveGrupo(rb);
+            var chaveA = chavePorItem[ra];
+            var chaveB = chavePorItem[rb];
 
             if (chaveA != chaveB)
             {
+                // Agrupamentos com ordem própria (data, vendedor...) mantêm os grupos no lugar
+                // e a coluna clicada ordena apenas as linhas dentro de cada grupo.
+                if (ordemFixaDosGrupos != null)
+                {
+                    var cmpFixo = ordemFixaDosGrupos(ra, rb);
+                    return cmpFixo != 0 ? cmpFixo : string.CompareOrdinal(chaveA, chaveB);
+                }
+
                 var cmpGrupo = fatorDirecao * CompareValores(menorValorPorGrupo[chaveA], menorValorPorGrupo[chaveB]);
                 return cmpGrupo != 0 ? cmpGrupo : string.CompareOrdinal(chaveA, chaveB);
             }
 
-            var cmpValor = fatorDirecao * CompareValores(propriedade.GetValue(ra), propriedade.GetValue(rb));
+            var cmpValor = fatorDirecao * CompareValores(valorPorItem[ra], valorPorItem[rb]);
             return cmpValor != 0 ? cmpValor : fatorDirecao * Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
         });
         sw.Stop();

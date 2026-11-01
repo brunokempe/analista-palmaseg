@@ -51,7 +51,47 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     public ObservableCollection<string> MesesDisponiveis { get; } = [];
     public ObservableCollection<string> UsuariosDisponiveis { get; } = [];
 
-    public string[] TiposAgrupamento { get; } = ["Cliente", "Data de vencimento"];
+    public string[] TiposAgrupamento { get; } = ["Cliente", "Data de vencimento", "Vendedor", "Ramo", "Status"];
+
+    // Chave do grupo de cada registro conforme o agrupamento atual (vazio vira "(Sem ...)").
+    // Usada também pela ordenação por clique no cabeçalho, para manter os grupos contíguos.
+    public string ChaveGrupo(RelatorioRenovacao r) => AgrupamentoSelecionado switch
+    {
+        "Data de vencimento" => r.VencimentoLabel,
+        "Vendedor"           => ValorOuSem(r.VendedorPrincipal, "(Sem vendedor)"),
+        "Ramo"               => ValorOuSem(r.Ramo, "(Sem ramo)"),
+        "Status"             => ValorOuSem(r.Status, "(Sem status)"),
+        _                    => r.NomeCliente ?? string.Empty,
+    };
+
+    // Ordem natural dos grupos: data cronológica ou ordem alfabética da chave.
+    public int CompararGrupos(RelatorioRenovacao a, RelatorioRenovacao b) =>
+        AgrupamentoSelecionado == "Data de vencimento"
+            ? Nullable.Compare(a.VigenciaFinal, b.VigenciaFinal)
+            : string.Compare(ChaveGrupo(a), ChaveGrupo(b), StringComparison.CurrentCultureIgnoreCase);
+
+    // Ordem padrão das linhas dentro de cada grupo: vendedor de A a Z (sem vendedor por último).
+    private static int CompararVendedor(RelatorioRenovacao a, RelatorioRenovacao b)
+    {
+        var va = a.VendedorPrincipal;
+        var vb = b.VendedorPrincipal;
+        var vazioA = string.IsNullOrWhiteSpace(va);
+        var vazioB = string.IsNullOrWhiteSpace(vb);
+        if (vazioA || vazioB) return vazioA == vazioB ? 0 : (vazioA ? 1 : -1);
+        return string.Compare(va, vb, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    private static string ValorOuSem(string? valor, string vazio) =>
+        string.IsNullOrWhiteSpace(valor) ? vazio : valor;
+
+    private sealed class SemValorConverter(string vazio) : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            ValorOuSem(value as string, vazio);
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
 
     // Filtros de múltipla seleção — vazio significa "sem filtro" (mostra todos)
     public ObservableCollection<string> StatusSelecionados { get; } = [];
@@ -217,6 +257,34 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
                 var ra = (RelatorioRenovacao)a;
                 var rb = (RelatorioRenovacao)b;
                 var cmpData = Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
+                if (cmpData != 0) return cmpData;
+                var cmpVend = CompararVendedor(ra, rb);
+                return cmpVend != 0 ? cmpVend : string.CompareOrdinal(ra.NomeCliente ?? string.Empty, rb.NomeCliente ?? string.Empty);
+            });
+        }
+        else if (AgrupamentoSelecionado is "Vendedor" or "Ramo" or "Status")
+        {
+            var (caminho, vazio) = AgrupamentoSelecionado switch
+            {
+                "Vendedor" => (nameof(RelatorioRenovacao.VendedorPrincipal), "(Sem vendedor)"),
+                "Ramo"     => (nameof(RelatorioRenovacao.Ramo), "(Sem ramo)"),
+                _          => (nameof(RelatorioRenovacao.Status), "(Sem status)"),
+            };
+            _view.GroupDescriptions.Add(new PropertyGroupDescription(caminho, new SemValorConverter(vazio)));
+
+            // Grupos em ordem alfabética; dentro de cada um, por vencimento e cliente.
+            _view.CustomSort = Comparer<object>.Create((a, b) =>
+            {
+                var ra = (RelatorioRenovacao)a;
+                var rb = (RelatorioRenovacao)b;
+                var cmpGrupo = string.Compare(ChaveGrupo(ra), ChaveGrupo(rb), StringComparison.CurrentCultureIgnoreCase);
+                if (cmpGrupo != 0) return cmpGrupo;
+                if (AgrupamentoSelecionado != "Vendedor")
+                {
+                    var cmpVend = CompararVendedor(ra, rb);
+                    if (cmpVend != 0) return cmpVend;
+                }
+                var cmpData = Nullable.Compare(ra.VigenciaFinal, rb.VigenciaFinal);
                 return cmpData != 0 ? cmpData : string.CompareOrdinal(ra.NomeCliente ?? string.Empty, rb.NomeCliente ?? string.Empty);
             });
         }
@@ -293,13 +361,11 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
 
         if (!string.IsNullOrWhiteSpace(FiltroTexto))
         {
-            var txt = FiltroTexto.Trim().ToLowerInvariant();
-            return (r.NomeCliente?.ToLowerInvariant().Contains(txt) == true) ||
-                   (r.Proposta?.ToLowerInvariant().Contains(txt) == true) ||
-                   (r.Apolice?.ToLowerInvariant().Contains(txt) == true) ||
-                   (r.Placa?.ToLowerInvariant().Contains(txt) == true) ||
-                   (r.DocumentoPrincipal?.ToLowerInvariant().Contains(txt) == true) ||
-                   (r.NovoProdutor?.ToLowerInvariant().Contains(txt) == true);
+            var txt = FiltroTexto.Trim();
+            static bool Tem(string? campo, string t) =>
+                campo != null && campo.Contains(t, StringComparison.OrdinalIgnoreCase);
+            return Tem(r.NomeCliente, txt) || Tem(r.Proposta, txt) || Tem(r.Apolice, txt) ||
+                   Tem(r.Placa, txt) || Tem(r.DocumentoPrincipal, txt) || Tem(r.NovoProdutor, txt);
         }
         return true;
     }
@@ -315,11 +381,6 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
     {
         if (_view == null) { Resumo = string.Empty; return; }
         var itens = _view.Cast<RelatorioRenovacao>().ToList();
-
-        // Alternância de cor por linha, calculada pela posição visível atual (não pelo
-        // AlternationIndex do DataGrid, que reinicia a cada grupo).
-        for (int i = 0; i < itens.Count; i++)
-            itens[i].LinhaAlternada = i % 2 == 1;
 
         var total = itens.Sum(r => r.PremioLiquido);
         var marcados = itens.Count(r => r.IsChecked);

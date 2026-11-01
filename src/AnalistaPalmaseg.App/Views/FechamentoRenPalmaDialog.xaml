@@ -125,10 +125,10 @@
                               Height="46" FontSize="13">
                         <ComboBoxItem Content="Boleto" />
                         <ComboBoxItem Content="Cartão de Crédito" />
+                        <ComboBoxItem Content="Cartão Porto" />
                         <ComboBoxItem Content="Débito em Conta" />
                         <ComboBoxItem Content="PIX" />
-                        <ComboBoxItem Content="Débito Automático" />
-                        <ComboBoxItem Content="Financiamento" />
+                        <ComboBoxItem Content="Fatura" />
                     </ComboBox>
                 </StackPanel>
 

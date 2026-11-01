@@ -224,6 +224,8 @@
                   VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                   VirtualizingPanel.ScrollUnit="Pixel"
                   ScrollViewer.CanContentScroll="True"
+                  HorizontalScrollBarVisibility="Visible"
+                  VerticalScrollBarVisibility="Auto"
                   Sorting="MainGrid_Sorting">
 
             <!-- Linha vertical entre os títulos das colunas -->
@@ -259,7 +261,47 @@
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                    <!-- Template próprio, sem o overlay de hover do Material Design. -->
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridRow">
+                                <Border x:Name="DGR_Border"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        SnapsToDevicePixels="True">
+                                    <SelectiveScrollingGrid>
+                                        <SelectiveScrollingGrid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </SelectiveScrollingGrid.ColumnDefinitions>
+                                        <SelectiveScrollingGrid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </SelectiveScrollingGrid.RowDefinitions>
+                                        <DataGridCellsPresenter Grid.Column="1"
+                                                                ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                        <DataGridDetailsPresenter Grid.Column="1" Grid.Row="1"
+                                                                  SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                                                  Visibility="{TemplateBinding DetailsVisibility}" />
+                                        <DataGridRowHeader Grid.RowSpan="2"
+                                                           SelectiveScrollingGrid.SelectiveScrollingOrientation="Vertical"
+                                                           Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                    </SelectiveScrollingGrid>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                     <Style.Triggers>
+                        <!-- Status em tratativa: Calculado (azul claro) e Procurado (bege claro).
+                             Vêm antes dos alertas de vencimento, que prevalecem sobre eles. -->
+                        <DataTrigger Binding="{Binding SituacaoAcompanhamento}" Value="Calculado">
+                            <Setter Property="Background" Value="#B3E5FC"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding SituacaoAcompanhamento}" Value="Procurado">
+                            <Setter Property="Background" Value="#F5E6C8"/>
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding RenovacaoRealizada}" Value="True">
                             <Setter Property="Background" Value="#C8E6C9"/>
                         </DataTrigger>
@@ -280,6 +322,100 @@
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="Bold"/>
                         </DataTrigger>
+
+                        <!-- Sem efeito de hover: ao passar o mouse a linha mantém a cor do seu estado.
+                             Declarados por último para prevalecer sobre o hover do estilo base. -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding SituacaoAcompanhamento}" Value="Calculado"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#B3E5FC"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding SituacaoAcompanhamento}" Value="Procurado"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#F5E6C8"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoRealizada}" Value="True"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#C8E6C9"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoNaoRealizada}" Value="True"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#FFCDD2"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoVenceEmBreve}" Value="True"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#FFD600"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoVencida}" Value="True"/>
+                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#B71C1C"/>
+                        </MultiDataTrigger>
+                        <!-- Seleção (clique): único estado que muda a cor da linha, em tom mais escuro do estado. -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="#BBDEFB"/>
+                        </Trigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding SituacaoAcompanhamento}" Value="Calculado"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#81D4FA"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding SituacaoAcompanhamento}" Value="Procurado"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#E6CFA0"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoRealizada}" Value="True"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#81C784"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoNaoRealizada}" Value="True"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#EF9A9A"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoVenceEmBreve}" Value="True"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#FFAB00"/>
+                        </MultiDataTrigger>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding RenovacaoVencida}" Value="True"/>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#7F0000"/>
+                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
@@ -289,6 +425,14 @@
                 <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                     <Setter Property="BorderBrush" Value="Black"/>
                     <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Black"/>
+                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}"/>
+                        </Trigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.CellStyle>
 
@@ -401,7 +545,7 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Cliente" Binding="{Binding NomeCliente}"
-                                    Width="*" MinWidth="80" FontSize="14">
+                                    Width="250" MinWidth="80" FontSize="14">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>

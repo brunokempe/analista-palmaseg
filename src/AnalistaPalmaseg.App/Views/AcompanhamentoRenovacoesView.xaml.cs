@@ -9,9 +9,30 @@ namespace AnalistaPalmaseg.App.Views;
 
 public partial class AcompanhamentoRenovacoesView : UserControl
 {
+    private const string ChaveColunas = "acompanhamento-renovacoes";
+    private readonly DispatcherTimer _salvarColunasTimer;
+
     public AcompanhamentoRenovacoesView()
     {
         InitializeComponent();
+        ColunasGridStore.Restaurar(MainGrid, ChaveColunas);
+
+        // Qualquer mudança de largura de coluna agenda a gravação. O atraso junta o arraste inteiro
+        // (e o reset de largura feito ao trocar de mês) em uma única gravação, já com o valor final.
+        _salvarColunasTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        _salvarColunasTimer.Tick += (_, _) =>
+        {
+            _salvarColunasTimer.Stop();
+            ColunasGridStore.Salvar(MainGrid, ChaveColunas);
+        };
+        var larguraProp = DependencyPropertyDescriptor.FromProperty(DataGridColumn.WidthProperty, typeof(DataGridColumn));
+        foreach (var coluna in MainGrid.Columns)
+            larguraProp.AddValueChanged(coluna, (_, _) =>
+            {
+                _salvarColunasTimer.Stop();
+                _salvarColunasTimer.Start();
+            });
+
         DataContextChanged += OnDataContextChanged;
     }
 

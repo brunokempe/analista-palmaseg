@@ -1058,6 +1058,10 @@ namespace AnalistaPalmaseg.Core.Migrations
                     b.Property<string>("ObservacaoBoletos")
                         .HasColumnType("text");
 
+                    b.Property<string>("Origem")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int?>("Parcelas")
                         .HasColumnType("integer");
 
@@ -1079,6 +1083,10 @@ namespace AnalistaPalmaseg.Core.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StatusSeguro")
                         .IsRequired()
                         .HasColumnType("text");
 

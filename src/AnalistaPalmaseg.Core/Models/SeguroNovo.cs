@@ -38,6 +38,8 @@ public class SeguroNovo : INotifyPropertyChanged
     public int BoletosGerados { get; set; }
     public string? ObservacaoBoletos { get; set; }
     public string Observacao { get; set; } = string.Empty;
+    public string Origem { get; set; } = string.Empty;
+    public string StatusSeguro { get; set; } = string.Empty;
     public DateTime CriadoEm { get; set; } = DateTime.Now;
     public string? CriadoPor { get; set; }
     public string? EmitidoPor { get; set; }

@@ -15,6 +15,8 @@ public partial class ClientesViewModel : ObservableObject
     private readonly SessaoService _sessao;
     private ObservableCollection<Cliente> _colecao = [];
     private ListCollectionView? _view;
+    private bool _carregandoFormulario;
+    private static readonly System.Net.Http.HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(8) };
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private Cliente? _clienteSelecionado;
@@ -75,7 +77,48 @@ public partial class ClientesViewModel : ObservableObject
         _ = CarregarSegurosAsync(value.Cpf);
     }
 
+    partial void OnEditandoCepChanged(string value)
+    {
+        if (_carregandoFormulario) return;
+        var digitos = new string((value ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (digitos.Length == 8) _ = BuscarEnderecoPorCepAsync(digitos);
+    }
+
+    private async Task BuscarEnderecoPorCepAsync(string cep)
+    {
+        try
+        {
+            using var resp = await _http.GetAsync($"https://viacep.com.br/ws/{cep}/json/");
+            if (!resp.IsSuccessStatusCode) return;
+            using var doc = await System.Text.Json.JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync());
+            var root = doc.RootElement;
+            if (root.TryGetProperty("erro", out _)) return;
+
+            // Ignora resposta atrasada se o CEP já foi alterado
+            var atual = new string(EditandoCep.Where(char.IsDigit).ToArray());
+            if (atual != cep) return;
+
+            string Get(string k) => root.TryGetProperty(k, out var v) ? v.GetString() ?? string.Empty : string.Empty;
+
+            EditandoEndereco = Get("logradouro");
+            EditandoBairro   = Get("bairro");
+            EditandoCidade   = Get("localidade");
+            EditandoEstado   = Get("uf");
+        }
+        catch
+        {
+            // Sem conexão ou CEP inválido: o usuário pode preencher manualmente.
+        }
+    }
+
     private void PopularFormulario(Cliente c)
+    {
+        _carregandoFormulario = true;
+        try { PopularFormularioInterno(c); }
+        finally { _carregandoFormulario = false; }
+    }
+
+    private void PopularFormularioInterno(Cliente c)
     {
         EditandoId            = c.Id;
         EditandoCpf           = c.Cpf;
@@ -107,6 +150,13 @@ public partial class ClientesViewModel : ObservableObject
     }
 
     private void LimparFormulario()
+    {
+        _carregandoFormulario = true;
+        try { LimparFormularioInterno(); }
+        finally { _carregandoFormulario = false; }
+    }
+
+    private void LimparFormularioInterno()
     {
         EditandoId            = 0;
         EditandoCpf           = string.Empty;

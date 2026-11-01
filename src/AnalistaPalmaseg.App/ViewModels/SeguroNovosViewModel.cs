@@ -45,6 +45,8 @@ public partial class SeguroNovosViewModel : ObservableObject
     [ObservableProperty] private int? _editandoParcelas;
     [ObservableProperty] private bool _editandoAssinaturaFeita;
     [ObservableProperty] private string _editandoObservacao = string.Empty;
+    [ObservableProperty] private string _editandoOrigem = string.Empty;
+    [ObservableProperty] private string _editandoStatusSeguro = string.Empty;
 
     private bool _atualizandoPremio;
 
@@ -112,8 +114,14 @@ public partial class SeguroNovosViewModel : ObservableObject
 
     public static string[] FormasPagamento { get; } =
     [
-        "À vista", "Boleto", "Cartão de crédito", "Débito em conta",
-        "Débito automático", "Financiamento", "Parcelado no cartão"
+        "Boleto", "Cartão de crédito", "Cartão Porto", "Débito em conta",
+        "Fatura", "Parcelado no cartão", "PIX"
+    ];
+
+    public static string[] StatusSeguroOpcoes { get; } =
+    [
+        "Para contato", "Agendado", "Procurado", "Fechado na Palma",
+        "Fechado em outro", "Não fechado", "Recusado", "Emitido", "Cancelado"
     ];
 
     public static int[] Parcelamentos { get; } =
@@ -161,6 +169,8 @@ public partial class SeguroNovosViewModel : ObservableObject
         EditandoParcelas     = r.Parcelas;
         EditandoAssinaturaFeita = r.AssinaturaFeita;
         EditandoObservacao   = r.Observacao;
+        EditandoOrigem       = r.Origem;
+        EditandoStatusSeguro = r.StatusSeguro;
         OnPropertyChanged(nameof(TemRegistroSelecionado));
         AnexarArquivosCommand.NotifyCanExecuteChanged();
         AbrirPastaAnexosCommand.NotifyCanExecuteChanged();
@@ -185,6 +195,8 @@ public partial class SeguroNovosViewModel : ObservableObject
         EditandoParcelas     = null;
         EditandoAssinaturaFeita = false;
         EditandoObservacao   = string.Empty;
+        EditandoOrigem       = string.Empty;
+        EditandoStatusSeguro = string.Empty;
         RegistroSelecionado  = null;
         OnPropertyChanged(nameof(TemRegistroSelecionado));
         AnexarArquivosCommand.NotifyCanExecuteChanged();
@@ -318,7 +330,9 @@ public partial class SeguroNovosViewModel : ObservableObject
                 Parcelas        = EditandoParcelas,
                 AssinaturaFeita = EditandoAssinaturaFeita,
                 Observacao      = EditandoObservacao.Trim(),
-                CriadoEm        = DateTime.Now,
+                Origem          = EditandoOrigem.Trim(),
+                StatusSeguro    = EditandoStatusSeguro,
+                CriadoEm       = DateTime.Now,
                 CriadoPor       = string.IsNullOrWhiteSpace(EditandoProdutor)
                                     ? (EditandoId == 0 ? _sessao.NomeUsuario : _criadoPorOriginal)
                                     : EditandoProdutor.Trim(),
