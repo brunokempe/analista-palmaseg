@@ -15,6 +15,9 @@ public partial class App : Application
 {
     private IHost? _host;
 
+    /// <summary>Provedor de serviços da aplicação (para controles criados em XAML).</summary>
+    public IServiceProvider? Services => _host?.Services;
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

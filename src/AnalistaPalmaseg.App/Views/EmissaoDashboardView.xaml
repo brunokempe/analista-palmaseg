@@ -214,14 +214,15 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Top" Background="{StaticResource AccentBlueBrush}"
                                 CornerRadius="8,8,0,0" Padding="14,8">
-                            <StackPanel Orientation="Horizontal">
+                            <DockPanel LastChildFill="False">
                                 <materialDesign:PackIcon Kind="AccountGroup" Width="16" Height="16"
                                                          Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="Por Produtor" FontSize="12" FontWeight="SemiBold"
                                            Foreground="White" VerticalAlignment="Center"/>
-                            </StackPanel>
+                                <controls:ExportarExcelButton DockPanel.Dock="Right" VerticalAlignment="Center" Height="28" Foreground="White" BorderBrush="#99FFFFFF" GridName="ProdutorGrid" Titulo="Emissão - Por Produtor" />
+                            </DockPanel>
                         </Border>
-                        <DataGrid ItemsSource="{Binding ResumoProdutor}"
+                        <DataGrid x:Name="ProdutorGrid" ItemsSource="{Binding ResumoProdutor}"
                                   IsReadOnly="True" AutoGenerateColumns="False"
                                   CanUserSortColumns="True" CanUserResizeColumns="False"
                                   HeadersVisibility="Column"
@@ -339,11 +340,12 @@
                                               SelectedItem="{Binding FiltroRenPalmaStatus}"
                                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                               Width="140" FontSize="12"/>
+                                    <controls:ExportarExcelButton Margin="12,0,0,0" VerticalAlignment="Center" GridName="RegistrosGrid" Titulo="Emissão - Contratos Ren. Palma" />
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <DataGrid ItemsSource="{Binding Registros}"
+                        <DataGrid x:Name="RegistrosGrid" ItemsSource="{Binding Registros}"
                                   SelectedItem="{Binding RenPalmaSelecionado}"
                                   controls:DataGridScroll.AutoScrollToSelected="True"
                                   IsReadOnly="True" AutoGenerateColumns="False"
@@ -640,12 +642,13 @@
                                               SelectedItem="{Binding FiltroSegNovStatus}"
                                               Style="{StaticResource MaterialDesignOutlinedComboBox}"
                                               Width="140" FontSize="12"/>
+                                    <controls:ExportarExcelButton Margin="12,0,0,0" VerticalAlignment="Center" GridName="SeguroNovosGrid" Titulo="Emissão - Seguros Novos" />
                                 </StackPanel>
                             </Grid>
                         </Border>
 
                         <!-- Grid -->
-                        <DataGrid ItemsSource="{Binding SeguroNovos}"
+                        <DataGrid x:Name="SeguroNovosGrid" ItemsSource="{Binding SeguroNovos}"
                                   SelectedItem="{Binding SeguroNovoSelecionado}"
                                   controls:DataGridScroll.AutoScrollToSelected="True"
                                   AutoGenerateColumns="False" IsReadOnly="True"

@@ -23,6 +23,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBox Grid.Column="0"
@@ -37,6 +38,7 @@
                             ToolTip="Limpar filtros" Width="40" Padding="0" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="18" Height="18" />
                     </Button>
+                    <controls:ExportarExcelButton Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" GridName="MainGrid" Titulo="Acompanhamento de Renovações" />
                 </Grid>
 
                 <Grid>

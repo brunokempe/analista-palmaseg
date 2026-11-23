@@ -63,6 +63,7 @@
                     <ColumnDefinition Width="190"
                                       x:Name="ColProdutor"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
@@ -103,6 +104,7 @@
                         ToolTip="Limpar filtros" Width="40" Padding="0" VerticalAlignment="Center">
                     <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="18" Height="18"/>
                 </Button>
+                <controls:ExportarExcelButton Grid.Column="3" Margin="8,0,0,0" VerticalAlignment="Center" GridName="MainGrid" Titulo="Seguros Novos" />
             </Grid>
         </materialDesign:Card>
 
@@ -116,7 +118,7 @@
             <!-- ── Lista ── -->
             <Border Grid.Column="0" BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
                     Background="White" Margin="0,8,0,0">
-                <DataGrid ItemsSource="{Binding RegistrosView}"
+                <DataGrid x:Name="MainGrid" ItemsSource="{Binding RegistrosView}"
                           SelectedItem="{Binding RegistroSelecionado}"
                           controls:DataGridScroll.AutoScrollToSelected="True"
                           AutoGenerateColumns="False"
