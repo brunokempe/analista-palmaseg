@@ -264,6 +264,15 @@ public partial class SeguroNovosViewModel : ObservableObject
     partial void OnFiltroTextoChanged(string value) => AplicarFiltro();
     partial void OnFiltroProdutorChanged(string value) => AplicarFiltro();
 
+    // Abre um registro vindo de outra tela (ex.: Seguros Relacionados do cliente).
+    public void SelecionarRegistro(int id)
+    {
+        var reg = _colecao.FirstOrDefault(r => r.Id == id);
+        if (reg == null) return;
+        LimparFiltros();
+        RegistroSelecionado = reg;
+    }
+
     [RelayCommand]
     private void LimparFiltros()
     {

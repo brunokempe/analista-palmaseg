@@ -171,6 +171,29 @@ public partial class EmissaoDashboardViewModel : ObservableObject
     [RelayCommand]
     private async Task CarregarPorPeriodo() => await CarregarAsync();
 
+    // Abre um registro vindo de outra tela (ex.: Seguros Relacionados do cliente): carrega o
+    // mês de referência sem filtros e seleciona a renovação ou o seguro novo correspondente.
+    public async Task AbrirRegistroAsync(DateTime? referencia, int? renovacaoId, int? seguroNovoId)
+    {
+        if (referencia.HasValue)
+        {
+            AtualMes = referencia.Value.Month;
+            AtualAno = referencia.Value.Year;
+        }
+        FiltroData             = null;
+        FiltroEmissao          = "Todos";
+        FiltroProdutor         = string.Empty;
+        FiltroRenPalmaSegurado = string.Empty;
+        FiltroRenPalmaStatus   = "Todos";
+        FiltroSegNovSegurado   = string.Empty;
+        FiltroSegNovStatus     = "Todos";
+
+        await CarregarAsync();
+
+        RenPalmaSelecionado   = renovacaoId.HasValue  ? Registros.FirstOrDefault(r => r.Id == renovacaoId)  : null;
+        SeguroNovoSelecionado = seguroNovoId.HasValue ? SeguroNovos.FirstOrDefault(s => s.Id == seguroNovoId) : null;
+    }
+
     private IEnumerable<RelatorioRenovacao> TodosPeriodo() =>
         _todos.Where(r =>
             r.VigenciaFinal.HasValue &&

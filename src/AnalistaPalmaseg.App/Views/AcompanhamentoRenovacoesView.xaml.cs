@@ -83,6 +83,17 @@ public partial class AcompanhamentoRenovacoesView : UserControl
         }));
     }
 
+    private void ClienteCell_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2) return;
+        if (DataContext is not AcompanhamentoRenovacoesViewModel vm) return;
+        if (sender is FrameworkElement { DataContext: RelatorioRenovacao item })
+            vm.RegistroSelecionado = item;
+        if (vm.AbrirCadastroClienteCommand.CanExecute(null))
+            vm.AbrirCadastroClienteCommand.Execute(null);
+        e.Handled = true;
+    }
+
     private void MainGrid_Sorting(object sender, DataGridSortingEventArgs e)
     {
         if (DataContext is not AcompanhamentoRenovacoesViewModel vm) return;

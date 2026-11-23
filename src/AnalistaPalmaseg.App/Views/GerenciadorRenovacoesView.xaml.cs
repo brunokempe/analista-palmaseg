@@ -14,6 +14,7 @@ public partial class GerenciadorRenovacoesView : UserControl
     {
         InitializeComponent();
         ColunasGridStore.Restaurar(MainGrid, ChaveColunas);
+        AplicarOrdemColunas();
 
         // O atraso junta o arraste inteiro em uma única gravação, já com o valor final.
         _salvarColunasTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
@@ -41,6 +42,29 @@ public partial class GerenciadorRenovacoesView : UserControl
                 AtualizarColunaDiaSemana(novo);
             }
         };
+    }
+
+    // Ordem de exibição pedida; colunas não listadas seguem depois, na ordem original.
+    private static readonly string[] OrdemColunas =
+    [
+        "Dia da Semana", "Vig. Fim", "#marcar", "Seguradora", "Status", "Ramo", "Vendedor",
+        "Novo Produtor", "Cliente", "Observação do Cliente", "Preposto", "Histórico do Cliente",
+        "Prêmio Líquido", "Comissão em %", "Comissão em R$", "% Mín. Comissão",
+        "Apólice", "CPF/CNPJ", "Proposta",
+    ];
+
+    private void AplicarOrdemColunas()
+    {
+        var ordenadas = OrdemColunas
+            .Select(nome => nome == "#marcar"
+                ? ColunaMarcar
+                : MainGrid.Columns.FirstOrDefault(c => c.Header as string == nome))
+            .OfType<DataGridColumn>()
+            .ToList();
+        ordenadas.AddRange(MainGrid.Columns.Except(ordenadas));
+
+        for (var i = 0; i < ordenadas.Count; i++)
+            ordenadas[i].DisplayIndex = i;
     }
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

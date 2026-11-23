@@ -241,6 +241,10 @@
                               Command="{Binding PlacementTarget.DataContext.AbrirCadastroClienteCommand,
                                         RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                               FontSize="13"/>
+                    <MenuItem Header="Copiar nome do cliente"
+                              Command="{Binding PlacementTarget.DataContext.CopiarNomeClienteCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              FontSize="13"/>
                     <Separator/>
                     <MenuItem Header="Gerar folha amarela"
                               Command="{Binding PlacementTarget.DataContext.GerarFolhaAmarelaCommand,
@@ -477,7 +481,7 @@
                 <DataGridTextColumn Header="Vig. Fim"
                                     Binding="{Binding VigenciaFinal, StringFormat=dd/MM/yyyy}"    Width="115" IsReadOnly="True"/>
 
-                <DataGridTemplateColumn Width="52" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
+                <DataGridTemplateColumn x:Name="ColunaMarcar" Width="52" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
                     <DataGridTemplateColumn.HeaderTemplate>
                         <DataTemplate>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

@@ -210,6 +210,7 @@
         <DataGrid Grid.Row="4" x:Name="MainGrid"
                   ItemsSource="{Binding RegistrosView}"
                   SelectedItem="{Binding RegistroSelecionado}"
+                  controls:DataGridScroll.AutoScrollToSelected="True"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   CanUserAddRows="False"
@@ -550,6 +551,7 @@
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center"/>
                             <Setter Property="Margin" Value="4,0"/>
+                            <EventSetter Event="MouseLeftButtonDown" Handler="ClienteCell_MouseLeftButtonDown"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>

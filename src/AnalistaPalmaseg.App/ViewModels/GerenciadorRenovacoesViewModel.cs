@@ -168,8 +168,7 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             if (!_filtroProdutorInicializado)
             {
                 _filtroProdutorInicializado = true;
-                if (ProdutoresDisponiveis.Contains(_sessao.NomeUsuario))
-                    ProdutoresSelecionados.Add(_sessao.NomeUsuario);
+                ProdutoresSelecionados.Add(SemProdutorDefinido);
             }
 
             var usuarios = await _usuarioService.ListarAsync();
@@ -235,6 +234,14 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             if (token.IsCancellationRequested) return;
             Application.Current?.Dispatcher.Invoke(AplicarFiltro);
         }, TaskScheduler.Default);
+    }
+
+    // Deixar o produtor em massa vazio desmarca todos os registros.
+    partial void OnNovoProdutorEmMassaChanged(string value)
+    {
+        if (!string.IsNullOrEmpty(value) || !_todos.Any(r => r.IsChecked)) return;
+        foreach (var r in _todos) r.IsChecked = false;
+        AtualizarResumo();
     }
 
     partial void OnAgrupamentoSelecionadoChanged(string value) => ConfigurarAgrupamento();
@@ -400,6 +407,7 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         RamosSelecionados.Clear();
         VendedoresSelecionados.Clear();
         ProdutoresSelecionados.Clear();
+        ProdutoresSelecionados.Add(SemProdutorDefinido);
         MesSelecionado = "Todos";
     }
 
@@ -423,10 +431,14 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
             if (!string.IsNullOrEmpty(NovoProdutorEmMassa) && !ProdutoresDisponiveis.Contains(NovoProdutorEmMassa))
                 ProdutoresDisponiveis.Add(NovoProdutorEmMassa);
 
+            var produtorAtribuido = NovoProdutorEmMassa;
+            foreach (var r in _todos) r.IsChecked = false;
+            NovoProdutorEmMassa = string.Empty;
+
             _view?.Refresh();
             AtualizarResumo();
 
-            MessageBox.Show($"Produtor \"{NovoProdutorEmMassa}\" atribuído a {marcados.Count} registro(s).",
+            MessageBox.Show($"Produtor \"{produtorAtribuido}\" atribuído a {marcados.Count} registro(s).",
                 "Atribuição concluída", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -604,6 +616,16 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new AbrirClienteMessage(RegistroSelecionado.DocumentoPrincipal));
     }
 
+    [RelayCommand(CanExecute = nameof(TemRegistroSelecionado))]
+    private void CopiarNomeCliente()
+    {
+        var nome = RegistroSelecionado?.NomeCliente;
+        if (string.IsNullOrWhiteSpace(nome)) return;
+
+        try { System.Windows.Clipboard.SetText(nome); }
+        catch (System.Runtime.InteropServices.COMException) { /* área de transferência ocupada */ }
+    }
+
     // ── Seleção em massa ───────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -635,5 +657,6 @@ public partial class GerenciadorRenovacoesViewModel : ObservableObject
         AnexarArquivosCommand.NotifyCanExecuteChanged();
         AbrirPastaAnexosCommand.NotifyCanExecuteChanged();
         AbrirCadastroClienteCommand.NotifyCanExecuteChanged();
+        CopiarNomeClienteCommand.NotifyCanExecuteChanged();
     }
 }

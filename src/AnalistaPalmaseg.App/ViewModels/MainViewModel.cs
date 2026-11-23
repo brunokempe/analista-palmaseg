@@ -198,6 +198,11 @@ public partial class MainViewModel : ObservableObject
             _ = AbrirCadastroClienteAsync(m.DocumentoPrincipal);
         });
 
+        WeakReferenceMessenger.Default.Register<AbrirSeguroRelacionadoMessage>(this, (_, m) =>
+        {
+            _ = AbrirSeguroRelacionadoAsync(m.Seguro);
+        });
+
         WeakReferenceMessenger.Default.Register<NavegarMenuMessage>(this, (_, m) =>
         {
             _ = NavFavoritoAsync(m.Chave);
@@ -331,7 +336,7 @@ public partial class MainViewModel : ObservableObject
         CurrentView = AcompanhamentoRenovacoesVm;
         TituloAtivo = "Acompanhamento de Renovações";
     }
-    [RelayCommand] private void Sair() => Application.Current.Shutdown();
+    [RelayCommand] private void Sair() => Application.Current.MainWindow?.Close(); // dispara a confirmação do MainWindow
 
     [RelayCommand]
     private async Task NavGerenciarUsuariosAsync()
@@ -392,6 +397,28 @@ public partial class MainViewModel : ObservableObject
     {
         await NavClientesAsync();
         ClientesVm.SelecionarPorDocumento(documentoPrincipal);
+    }
+
+    // Duplo clique em Seguros Relacionados (cadastro de clientes)
+    private async Task AbrirSeguroRelacionadoAsync(SeguroRelacionado seguro)
+    {
+        if (seguro.RenovadoNaPalma)
+        {
+            await EmissaoDashboardVm.AbrirRegistroAsync(
+                seguro.DataReferencia, seguro.Renovacao?.Id, seguro.SeguroNovo?.Id);
+            CurrentView = EmissaoDashboardVm;
+            TituloAtivo = "Dashboard de Emissão";
+        }
+        else if (seguro.Renovacao != null)
+        {
+            await NavAcompanhamentoRenovacoesAsync();
+            AcompanhamentoRenovacoesVm.SelecionarRegistro(seguro.Renovacao.Id);
+        }
+        else if (seguro.SeguroNovo != null)
+        {
+            await NavSeguroNovosAsync();
+            SeguroNovosVm.SelecionarRegistro(seguro.SeguroNovo.Id);
+        }
     }
 
     [RelayCommand]

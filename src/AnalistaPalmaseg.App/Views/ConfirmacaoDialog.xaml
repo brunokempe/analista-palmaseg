@@ -1,0 +1,54 @@
+<Window x:Class="AnalistaPalmaseg.App.Views.ConfirmacaoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Width="400" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False"
+        TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
+        TextElement.FontFamily="{materialDesign:MaterialDesignFont}">
+    <Border Margin="14" CornerRadius="10"
+            Background="{DynamicResource MaterialDesign.Brush.Background}"
+            materialDesign:ElevationAssist.Elevation="Dp8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.35" />
+        </Border.Effect>
+        <StackPanel>
+            <Border CornerRadius="10,10,0,0" Padding="24,20,24,16">
+                <Border.Background>
+                    <SolidColorBrush Color="{DynamicResource MaterialDesign.Color.Primary}" Opacity="0.08" />
+                </Border.Background>
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="44" Height="44" CornerRadius="22"
+                            Background="{DynamicResource MaterialDesign.Brush.Primary}">
+                        <materialDesign:PackIcon x:Name="Icone" Kind="PowerStandby"
+                                                 Width="26" Height="26"
+                                                 Foreground="White"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock x:Name="TituloText" Margin="16,0,0,0"
+                               VerticalAlignment="Center"
+                               FontSize="18" FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="MensagemText" Margin="24,18,24,8"
+                       FontSize="14" TextWrapping="Wrap"
+                       Opacity="0.85" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        Margin="24,16,24,20">
+                <Button x:Name="NaoButton" IsCancel="True"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Height="38" MinWidth="96" Margin="0,0,10,0"
+                        Click="Nao_Click" />
+                <Button x:Name="SimButton" IsDefault="True"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Height="38" MinWidth="96"
+                        Click="Sim_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

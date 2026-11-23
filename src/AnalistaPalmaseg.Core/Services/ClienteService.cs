@@ -25,6 +25,20 @@ public class ClienteService(IDbContextFactory<AppDbContext> contextFactory)
             .ToListAsync();
     }
 
+    // Seguros novos não guardam o CPF — o vínculo com o cliente é pelo nome do segurado,
+    // o mesmo critério usado no cadastro de seguros novos (BuscarClienteCadastrado).
+    public async Task<List<SeguroNovo>> GetSegurosNovosDoClienteAsync(string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome)) return [];
+        var nomeNormalizado = nome.Trim().ToLower();
+        await using var context = await contextFactory.CreateDbContextAsync();
+        return await context.SeguroNovos
+            .AsNoTracking()
+            .Where(s => s.Segurado.Trim().ToLower() == nomeNormalizado)
+            .OrderByDescending(s => s.Vigencia)
+            .ToListAsync();
+    }
+
     public async Task<Cliente> SalvarAsync(Cliente cliente)
     {
         await using var context = await contextFactory.CreateDbContextAsync();

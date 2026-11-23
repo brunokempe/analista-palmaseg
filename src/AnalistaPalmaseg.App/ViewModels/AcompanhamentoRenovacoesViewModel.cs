@@ -484,6 +484,28 @@ public partial class AcompanhamentoRenovacoesViewModel : ObservableObject
         AbrirCadastroClienteCommand.NotifyCanExecuteChanged();
     }
 
+    // Abre um registro vindo de outra tela (ex.: Seguros Relacionados do cliente): remove os
+    // filtros que poderiam escondê-lo e posiciona na aba do mês do vencimento.
+    public void SelecionarRegistro(int id)
+    {
+        var reg = _todos.FirstOrDefault(r => r.Id == id);
+        if (reg == null) return;
+
+        FiltroTexto = string.Empty;
+        SituacoesSelecionadas.Clear();
+        ProdutoresSelecionados.Clear();
+        RamosSelecionados.Clear();
+        if (string.IsNullOrWhiteSpace(reg.NovoProdutor)) SomenteComProdutor = false;
+
+        var abaMes = reg.VigenciaFinal.HasValue
+            ? _mesLookup.FirstOrDefault(kv => kv.Value.Year == reg.VigenciaFinal.Value.Year &&
+                                              kv.Value.Month == reg.VigenciaFinal.Value.Month).Key
+            : null;
+        MesSelecionado = abaMes ?? "Todos";
+
+        RegistroSelecionado = reg;
+    }
+
     [RelayCommand]
     private void LimparFiltros()
     {

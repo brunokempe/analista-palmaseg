@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using AnalistaPalmaseg.Core.Models;
 using AnalistaPalmaseg.Core.Services;
 
@@ -56,8 +57,8 @@ public partial class ClientesViewModel : ObservableObject
     [ObservableProperty] private string _editandoObservacoes = string.Empty;
     [ObservableProperty] private string _editandoHistorico = string.Empty;
 
-    // Seguros relacionados ao cliente selecionado
-    [ObservableProperty] private ObservableCollection<RelatorioRenovacao> _seguros = [];
+    // Seguros relacionados ao cliente selecionado (renovações + seguros novos)
+    [ObservableProperty] private ObservableCollection<SeguroRelacionado> _seguros = [];
 
     public bool TemClienteSelecionado => EditandoId != 0 || ClienteSelecionado != null;
     public bool IsNovo                => EditandoId == 0;
@@ -74,7 +75,7 @@ public partial class ClientesViewModel : ObservableObject
     {
         if (value == null) return;
         PopularFormulario(value);
-        _ = CarregarSegurosAsync(value.Cpf);
+        _ = CarregarSegurosAsync(value.Cpf, value.Nome);
     }
 
     partial void OnEditandoCepChanged(string value)
@@ -203,15 +204,26 @@ public partial class ClientesViewModel : ObservableObject
         finally { IsLoading = false; }
     }
 
-    private async Task CarregarSegurosAsync(string cpf)
+    private async Task CarregarSegurosAsync(string cpf, string nome)
     {
-        if (string.IsNullOrWhiteSpace(cpf))
-        {
-            Seguros.Clear();
-            return;
-        }
-        var lista = await _service.GetSegurosDoClienteAsync(cpf);
-        Seguros = new ObservableCollection<RelatorioRenovacao>(lista);
+        var renovacoes = string.IsNullOrWhiteSpace(cpf)
+            ? []
+            : await _service.GetSegurosDoClienteAsync(cpf);
+        var segurosNovos = await _service.GetSegurosNovosDoClienteAsync(nome);
+
+        var lista = renovacoes.Select(SeguroRelacionado.De)
+            .Concat(segurosNovos.Select(SeguroRelacionado.De))
+            .OrderByDescending(s => s.DataOrdenacao);
+        Seguros = new ObservableCollection<SeguroRelacionado>(lista);
+    }
+
+    // Duplo clique na aba Seguros Relacionados: fechado na Palma abre no Dashboard de Emissões;
+    // caso contrário abre em Apólices → Renovações ou Apólices → Seguros Novos.
+    [RelayCommand]
+    private void AbrirSeguro(SeguroRelacionado? seguro)
+    {
+        if (seguro == null) return;
+        WeakReferenceMessenger.Default.Send(new AbrirSeguroRelacionadoMessage(seguro));
     }
 
     private bool FiltroItem(object obj)

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:converters="clr-namespace:AnalistaPalmaseg.App.Converters"
+             xmlns:controls="clr-namespace:AnalistaPalmaseg.App.Controls"
              xmlns:vm="clr-namespace:AnalistaPalmaseg.App.ViewModels"
              x:Name="Root"
              Background="{StaticResource PageBgBrush}"
@@ -117,6 +118,7 @@
                     Background="White" Margin="0,8,0,0">
                 <DataGrid ItemsSource="{Binding RegistrosView}"
                           SelectedItem="{Binding RegistroSelecionado}"
+                          controls:DataGridScroll.AutoScrollToSelected="True"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           SelectionMode="Single"

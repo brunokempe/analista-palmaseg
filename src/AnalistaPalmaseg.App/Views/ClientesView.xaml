@@ -444,8 +444,16 @@
                                       MaxHeight="300"
                                       GridLinesVisibility="Horizontal"
                                       HorizontalGridLinesBrush="{StaticResource BorderLightBrush}"
-                                      FontSize="12">
+                                      FontSize="12"
+                                      ToolTip="Duplo clique para abrir o seguro">
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                        <EventSetter Event="MouseDoubleClick" Handler="SeguroRow_MouseDoubleClick"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                    </Style>
+                                </DataGrid.RowStyle>
                                 <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tipo"           Binding="{Binding Tipo}"          Width="90"/>
                                     <DataGridTextColumn Header="Proposta"       Binding="{Binding Proposta}"      Width="100"/>
                                     <DataGridTextColumn Header="Apólice"        Binding="{Binding Apolice}"       Width="100"/>
                                     <DataGridTextColumn Header="Seguradora"     Binding="{Binding Seguradora}"    Width="120"/>
@@ -463,10 +471,10 @@
                                     <DataGridTextColumn Header="Forma Pgto."   Binding="{Binding FormaPagamento}" Width="110"/>
                                     <DataGridTextColumn Header="Parcelas"       Binding="{Binding NumeroParcelas}" Width="70"/>
                                     <DataGridTextColumn Header="Status"         Binding="{Binding Status}"        Width="90"/>
-                                    <DataGridTextColumn Header="Vendedor"       Binding="{Binding VendedorPrincipal}" Width="120"/>
+                                    <DataGridTextColumn Header="Vendedor"       Binding="{Binding Vendedor}"      Width="120"/>
                                     <DataGridTextColumn Header="Placa"          Binding="{Binding Placa}"         Width="80"/>
                                     <DataGridTextColumn Header="Modelo"         Binding="{Binding Modelo}"        Width="120"/>
-                                    <DataGridTextColumn Header="Situação"       Binding="{Binding SituacaoAcompanhamento}" Width="110"/>
+                                    <DataGridTextColumn Header="Situação"       Binding="{Binding Situacao}"      Width="110"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 
